@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import os
+import runpy
 import subprocess
 import sys
 from pathlib import Path
@@ -17,18 +20,39 @@ CLEAN = '{"note": "Node 17, Zone C at 06:30"}'
 
 
 def run_hook(
-    name: str, event: dict[str, object], root: Path, *args: str
+    name: str, event: dict[str, object], root: Path, *args: str, path: str | None = None
 ) -> subprocess.CompletedProcess[str]:
-    env = {**os.environ, "C2R_ROOT": str(root), "TEMP": str(root / "temp")}
-    env.pop("PYTHONPATH", None)
-    return subprocess.run(
-        [sys.executable, str(HOOKS / name), *args],
-        input=json.dumps(event),
-        capture_output=True,
-        text=True,
-        cwd=str(root),
-        env=env,
-        check=False,
+    """Run a hook the way Claude Code does (stdin JSON, exit code, stdout/stderr) but in this
+    process: `runpy` instead of a Python start-up per test, which was 30 s of the gate. One test
+    (`test_phi_guard_fails_open_on_bad_stdin`) still spawns the real interpreter."""
+    hook = HOOKS / name
+    wanted = {"C2R_ROOT": str(root), "TEMP": str(root / "temp")}
+    if path is not None:
+        wanted["PATH"] = path
+    saved = {key: os.environ.get(key) for key in (*wanted, "PYTHONPATH")}
+    os.environ.update(wanted)
+    os.environ.pop("PYTHONPATH", None)
+    out, err = io.StringIO(), io.StringIO()
+    argv, stdin, cwd = sys.argv, sys.stdin, os.getcwd()
+    sys.argv, sys.stdin = [str(hook), *args], io.StringIO(json.dumps(event))
+    os.chdir(root)
+    code = 0
+    try:
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            try:
+                runpy.run_path(str(hook), run_name="__main__")
+            except SystemExit as exc:
+                code = exc.code if isinstance(exc.code, int) else int(bool(exc.code))
+    finally:
+        sys.argv, sys.stdin = argv, stdin
+        os.chdir(cwd)
+        for key, value in saved.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+    return subprocess.CompletedProcess(
+        [sys.executable, str(hook), *args], code, out.getvalue(), err.getvalue()
     )
 
 
@@ -313,17 +337,7 @@ def run_without_path(
 ) -> subprocess.CompletedProcess[str]:
     empty = root / "nopath"
     empty.mkdir(exist_ok=True)
-    env = {**os.environ, "C2R_ROOT": str(root), "TEMP": str(root / "temp"), "PATH": str(empty)}
-    env.pop("PYTHONPATH", None)
-    return subprocess.run(
-        [sys.executable, str(HOOKS / name)],
-        input=json.dumps(event),
-        capture_output=True,
-        text=True,
-        cwd=str(root),
-        env=env,
-        check=False,
-    )
+    return run_hook(name, event, root, path=str(empty))
 
 
 def settings_hook_commands() -> list[str]:

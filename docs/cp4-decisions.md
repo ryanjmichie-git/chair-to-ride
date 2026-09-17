@@ -13,7 +13,8 @@ lives. Every number is from a command run on 2026-09-17 on Ryan's laptop (13th-g
 | a one-iteration solve, profiled | 9.86 s: 2,044 `moves.apply` calls, each rebuilding the manifest (6.1 s in `routing.build_manifest`); 1.8 million `to_min` calls (1.1 s); 214,000 rebuilds of `State.patients` (0.9 s with `patient_of`) | `cProfile` on `solve(short)` |
 | first parallel attempt | 10 xdist workers, loadscope: 46 s with 271 tests; 68-77 s once the CP4 tests were added, because five workers each built their own fake run and ten solver processes throttled the laptop's all-core clock (the `test_tools` fixture took 28 s under load against 10 s alone) | `pytest -n 10 --durations` |
 | second attempt (what the review saw) | 4 workers, 292-301 passed: 35-56 s in this session but 86-97 s in the reviewer's two runs. The speed-ups the docs credited (memoized `to_min`, cached `State` dicts, the fake run cached by digest) had **not** landed: the bash command that wrote them also held an `rm -rf` and was refused whole by `danger_guard`; only its second half was re-run, so the timings came from a lock-shared fake run built inside a worker on a cool laptop. The fake run's own clock (`elapsed_s`, asserted <= 60 s) was also measured while three other workers ran solvers: 61.6 s in the reviewer's first run | reviewer report; `git show 5a87c4c -- src/` |
-| final | **4 workers, 306 passed: 48.7 s with a cold fake-run cache (11.2 s serial build + 35.4 s pytest), 35.2 s warm** (`GATE PASS`), against the 60 s line and the Stop hook's 90 s subprocess timeout; the hook tests alone were a 41 s critical path and are now two modules | `time uv run python evals/run_evals.py --gate` after the review fixes |
+| after the review fixes | 4 workers, 306 passed: 48.7 s cold (11.2 s serial build + 35.4 s pytest), 35.2 s warm on a cool laptop; **74.2 s cold** (15.6 s build + 56.3 s pytest) a few minutes later once the laptop had heated up under the repeated runs. The 86 hook tests each started a Python process (about 30 s of CPU) and were the critical path | `time uv run python evals/run_evals.py --gate`, three runs |
+| final | **4 workers, 306 passed: 46.9 s with a cold fake-run cache (11.7 s serial build + 32.8 s pytest), 32.2 s warm, measured on the still-hot laptop** (`GATE PASS`), against the 60 s line and the Stop hook's 90 s subprocess timeout. The hook tests now run in-process (`runpy`, same stdin JSON, exit code and streams; one test still spawns the real interpreter), and the git-driven ones sit in their own module | `time uv run python evals/run_evals.py --gate` after the hook-runner change |
 
 What made the difference, in order:
 1. `pytest-xdist` (`-n 4 --dist loadscope`, `evals/run_evals.py WORKERS`). Four workers beat ten:
@@ -32,9 +33,16 @@ What made the difference, in order:
    and `j_after` against the module's solve, instead of two extra solves compared with each other.
    Byte-for-byte determinism of a whole run stays with I18 (ledger replay) in `test_mediator`
    and `test_perturb`.
-5. `evals/repo/test_hooks.py` split: the git-driven K2 and freeze tests moved to
-   `test_hooks_git.py` (the `repo` fixture to `evals/repo/conftest.py`), because under loadscope
-   one module is one worker and 86 subprocess tests were a 41 s critical path.
+5. `evals/repo/test_hooks.py` drives each hook in-process with `runpy` (stdin JSON, argv,
+   env, cwd, exit code and both streams exactly as the subprocess did) instead of a Python
+   start-up per test; `test_phi_guard_fails_open_on_bad_stdin` still spawns the interpreter so
+   the entry point is proven once. The git-driven K2 and freeze tests moved to
+   `test_hooks_git.py` (the `repo` fixture to `evals/repo/conftest.py`) so loadscope can spread
+   them. The repo suite went from 41 s to 22 s serial.
+
+Variance to expect: the laptop (a 15 W part) clocks down under sustained load, so the same
+gate measured 35 s and 56 s of pytest time twenty minutes apart before the hook change. The
+final numbers above were taken hot; a cool machine is faster.
 
 ## The five gate criteria (spec DoD) and where each is checked
 | Criterion | Check | Where |
@@ -108,7 +116,8 @@ Fixed, tests first, all offline:
 - The gate was 86-97 s in the reviewer's runs and the credited speed-ups were not in the code
   (see the gate table). Landed for real: `evals/fakerun.py` digest cache built serially by
   `--gate`, `lru_cache` on `to_min`, `cached_property` on `State`; hook tests split in two.
-  Re-measured: 48.7 s cold, 35.2 s warm.
+  Re-measured: 48.7 s cold, 35.2 s warm; a later hot-laptop run at 74.2 s cold led to the
+  in-process hook runner, after which the hot laptop gives 46.9 s cold and 32.2 s warm.
 - The fake run's 60 s clock was asserted on a run built under xdist contention; it is now built
   before pytest starts.
 - `git commit -a` / `-am` / `--all` / `--include` / a pathspec bypassed the freeze hook (only the

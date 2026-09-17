@@ -5,7 +5,7 @@ Every number below is from a command run this session and is also in docs/cp4-de
 with the file it came from.
 
 ## Built this session
-CP4 landed in six `cp4:` commits on top of `3284b10` (details in docs/cp4-decisions.md):
+CP4 landed in seven `cp4:` commits on top of `3284b10` (details in docs/cp4-decisions.md):
 
 - Gate under 60 s: `evals/run_evals.py --gate` runs the four offline suites (`evals/repo`,
   `evals/data`, `evals/invariants`, `evals/scenarios`) with pytest-xdist, 4 workers, loadscope.
@@ -13,8 +13,10 @@ CP4 landed in six `cp4:` commits on top of `3284b10` (details in docs/cp4-decisi
   under `runs/.fake-run-cache/<digest of src/c2r, config, data/synthetic/42,
   prompts/mediator.v1.md, pyproject.toml>` (`evals/fakerun.py`, `evals/conftest.py`).
   `timeutil.to_min` is memoized and `State`'s lookup dicts are cached per instance. The hook
-  tests are two modules. Measured after the review fixes: 95 s serial at the start -> 48.7 s
-  cold cache (11.2 s build + 35.4 s tests) / 35.2 s warm, 306 tests.
+  tests run in-process (`runpy`) and the git-driven ones are their own module. Measured last,
+  on a hot laptop: 95 s serial at the start -> 46.9 s cold cache (11.7 s build + 32.8 s tests)
+  / 32.2 s warm, 306 tests. Expect 35-56 s of pytest time depending on how hot the machine is;
+  before the hook change a hot cold-cache run reached 74.2 s.
 - The five gate criteria: `evals/scenarios/test_baseline.py` (the fake run against
   `evals/golden/baseline.json`, written by `--golden-baseline`; the 9.B outcomes) and
   `evals/scenarios/test_receipts.py` (`evals/golden/receipts.json`, written by `--record` from
@@ -58,6 +60,8 @@ CP4 landed in six `cp4:` commits on top of `3284b10` (details in docs/cp4-decisi
    danger guard refused the whole command, and only its second half was re-run. The reviewer
    caught it; the code landed in the review-fix commit and the numbers were re-measured. A
    lesson line in CLAUDE.md records it.
+11. The hook tests run in-process: 86 interpreter start-ups were 30 s of CPU and the gate's
+   critical path; one test still spawns the real interpreter.
 8. `test_solver_is_deterministic` does one extra solve (first bundle, j_before, j_after against
    the module's solve); byte-for-byte determinism stays with I18 replay.
 9. Money: $2.31 for the live suite (approved estimate $5-8; two of six live cells did not run),
@@ -76,9 +80,9 @@ CP4 landed in six `cp4:` commits on top of `3284b10` (details in docs/cp4-decisi
 - `cost_report.md` (committed): regenerated at the end of `--full`.
 
 ## Acceptance status
-- `time uv run python evals/run_evals.py --gate`: `GATE PASS`, 306 passed, 48.7 s with a cold
-  fake-run cache and 35.2 s warm, machine otherwise idle. Receipts on the line: judge golden
-  12/12, demo $0.83, day 56.9 s, re-plan 13.3 s.
+- `time uv run python evals/run_evals.py --gate`: `GATE PASS`, 306 passed, 46.9 s with a cold
+  fake-run cache and 32.2 s warm (hot laptop, otherwise idle). Receipts on the line: judge
+  golden 12/12, demo $0.83, day 56.9 s, re-plan 13.3 s.
 - `uv run --env-file .env python evals/run_evals.py --full`: kicked off in the background at
   18:08, cells done by 18:15, batch submitted 18:17:52 and collected 18:20:15, `FULL FAIL` for
   the reason above (baseline PASS on all seeds; breakdown not wired on 43 and 44).
