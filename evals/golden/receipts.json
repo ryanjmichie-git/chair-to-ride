@@ -1,0 +1,45 @@
+{
+  "demo": {
+    "cost_usd": 0.8267,
+    "day": {
+      "cache_read_share": 0.8344,
+      "cost_usd": 0.7188,
+      "effort": "medium",
+      "elapsed_s": 56.9,
+      "model_id": "claude-fable-5-1",
+      "run_id": "20260917T181530Z-ba850d",
+      "source": "runs/cp2"
+    },
+    "replan": {
+      "cache_read_share": 0.94,
+      "cost_usd": 0.1079,
+      "effort": "low",
+      "elapsed_s": 13.3,
+      "model_id": "claude-fable-5-1",
+      "run_id": "20260917T190337Z-ba88be",
+      "source": "runs/cp3"
+    }
+  },
+  "git_sha": "3284b10eafde33caf72faf7fbabb7fdd68331b62-dirty",
+  "judge_golden": {
+    "agreed": 12,
+    "agreement": "12/12",
+    "cost_usd": 0.7843,
+    "count": 12,
+    "effort": "low",
+    "mean_scores": {
+      "accuracy": 1.83,
+      "actionable": 1.75,
+      "complete": 1.17,
+      "plain": 1.75,
+      "safe": 1.75,
+      "tone": 1.83
+    },
+    "model_id": "claude-fable-5-1",
+    "pass_rate": 0.5833,
+    "prompt": "judge.v1.md",
+    "prompt_sha": "sha256:fceb9de70e9eef9322e6628ef29c89441f5545328a0ac61e8ba1137828bde6a6",
+    "source": "runs/golden-judge"
+  },
+  "recorded": "2026-09-17"
+}

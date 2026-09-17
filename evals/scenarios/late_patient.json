@@ -1,0 +1,12 @@
+{
+  "name": "late_patient",
+  "source": "CHAIR-TO-RIDE-HANDOFF.md section 9.B",
+  "event": {"type": "late_arrival", "at": null},
+  "wired": false,
+  "not_wired_reason": "handler not written; the event time is the patient's chair start and varies by seed (read it from events.jsonl)",
+  "required": {
+    "session_full_duration": true,
+    "downstream_conflicts_max": 0,
+    "other_patients_touched_max": 2
+  }
+}

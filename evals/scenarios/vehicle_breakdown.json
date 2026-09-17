@@ -1,0 +1,12 @@
+{
+  "name": "vehicle_breakdown",
+  "source": "CHAIR-TO-RIDE-HANDOFF.md section 9.B",
+  "event": {"type": "vehicle_down", "at": "13:40"},
+  "wired": true,
+  "required": {
+    "none_stranded": true,
+    "violations_max": 0,
+    "replan_s_max": 30,
+    "s2_mean_post_wait_max": 35
+  }
+}

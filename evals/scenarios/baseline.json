@@ -1,0 +1,13 @@
+{
+  "name": "baseline",
+  "source": "CHAIR-TO-RIDE-HANDOFF.md section 9.B",
+  "event": null,
+  "wired": true,
+  "required": {
+    "mean_post_wait_max": 25,
+    "p90_post_wait_max": 45,
+    "wait_removed_share_min": 0.6,
+    "queue_share_max": 0.15,
+    "runtime_s_max": 90
+  }
+}

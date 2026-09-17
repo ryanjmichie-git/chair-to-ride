@@ -1,0 +1,11 @@
+{
+  "name": "over_capacity_day",
+  "source": "CHAIR-TO-RIDE-HANDOFF.md section 9.B",
+  "event": {"type": "add_on_patient", "at": "09:00"},
+  "wired": false,
+  "not_wired_reason": "no free patient, rider or trip ids in the schemas; verify H2 forbids adding a patient; no incremental chair placement exists",
+  "required": {
+    "violations_max": 0,
+    "queue_carries_request_extra_capacity": true
+  }
+}

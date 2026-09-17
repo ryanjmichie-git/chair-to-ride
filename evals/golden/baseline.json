@@ -1,0 +1,35 @@
+{
+  "after": {
+    "conflicts": 0,
+    "early_wait_mean": 9.41,
+    "equity_gap": 0.89,
+    "mean_post_wait": 1.71,
+    "p90_post_wait": 6.0,
+    "riders_flagged": 1,
+    "vehicle_min": 572.0,
+    "wait_min_total": 29.0,
+    "within_30_share": 1.0
+  },
+  "before": {
+    "conflicts": 0,
+    "early_wait_mean": 9.41,
+    "equity_gap": 32.14,
+    "mean_post_wait": 70.21,
+    "p90_post_wait": 131.0,
+    "riders_flagged": 4,
+    "vehicle_min": 523.0,
+    "wait_min_total": 983.0,
+    "within_30_share": 0.2857
+  },
+  "bundles_applied": 4,
+  "j_after": 128.6,
+  "j_before": 1117.15,
+  "mediator": "fake-mediator",
+  "queue_share": 0.0556,
+  "recorded": "2026-09-17",
+  "return_riders": 18,
+  "scenario": "baseline",
+  "seed": 42,
+  "tolerance": 0.15,
+  "wait_removed_share": 0.9705
+}

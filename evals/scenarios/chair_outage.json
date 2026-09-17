@@ -1,0 +1,12 @@
+{
+  "name": "chair_outage",
+  "source": "CHAIR-TO-RIDE-HANDOFF.md section 9.B",
+  "event": {"type": "chair_down", "at": "11:00"},
+  "wired": false,
+  "not_wired_reason": "no move type changes a patient's chair and verify has no chair-availability check; needs solver, verify and party work under a spec update",
+  "required": {
+    "violations_max": 0,
+    "no_session_shortened": true,
+    "queued_reason_codes": ["CLINICAL_NOTE", "NO_FEASIBLE_WINDOW"]
+  }
+}

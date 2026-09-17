@@ -17,6 +17,7 @@ dev = [
     "ruff",
     "datamodel-code-generator",
     "textstat",
+    "pytest-xdist>=3.8.0",
 ]
 
 [build-system]

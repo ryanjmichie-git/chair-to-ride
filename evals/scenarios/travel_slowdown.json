@@ -1,0 +1,11 @@
+{
+  "name": "travel_slowdown",
+  "source": "CHAIR-TO-RIDE-HANDOFF.md section 9.B (stretch)",
+  "event": {"type": "travel_slowdown", "at": "15:00"},
+  "wired": false,
+  "not_wired_reason": "scaling the travel matrix makes verify H9 flag stops already made before the event; H9 needs a now guard first",
+  "required": {
+    "ride_time_cap_respected": true,
+    "windows_inside_negotiation_band": true
+  }
+}

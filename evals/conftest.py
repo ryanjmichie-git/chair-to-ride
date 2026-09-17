@@ -11,7 +11,7 @@ from c2r import orchestrator
 from c2r.llm import FakeMediator
 from c2r.solver import Result
 
-DATA = Path(__file__).resolve().parents[2] / "data" / "synthetic" / "42"
+DATA = Path(__file__).resolve().parents[1] / "data" / "synthetic" / "42"
 
 
 @dataclass
