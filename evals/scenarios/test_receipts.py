@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from c2r.judge import PROMPT
+from c2r.judge import GOLDEN, PROMPT
 from c2r.orchestrator import frontmatter, sha
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,6 +43,14 @@ def test_judge_receipt_was_measured_on_the_prompt_on_disk(receipts: dict) -> Non
     _, body = frontmatter(PROMPT.read_text(encoding="utf-8"))
     assert judge["prompt_sha"] == sha(body.strip()), (
         f"{PROMPT.name} changed since the golden set was judged; run --judge-only"
+    )
+
+
+def test_judge_receipt_was_measured_on_the_golden_set_on_disk(receipts: dict) -> None:
+    judge = receipts["judge_golden"]
+    assert judge["golden_set"] == GOLDEN.name
+    assert judge["golden_set_sha"] == sha(GOLDEN.read_text(encoding="utf-8")), (
+        f"{GOLDEN.name} changed since it was judged; run --judge-only"
     )
 
 

@@ -26,6 +26,11 @@ FREEZE = Path(".claude") / "freeze.json"
 QUOTED = re.compile(r"\"[^\"]*\"|'[^']*'")
 COMMIT = re.compile(r"\bgit\s+commit\b")
 ADD = re.compile(r"\bgit\s+add\b")
+# `git commit -a` / `-am` / `--all` / `--include` / `-i`, or a pathspec after the options, commits
+# the working tree rather than the index; those are checked like `git add && git commit`.
+TREE_COMMIT = re.compile(
+    r"\bgit\s+commit\b(?:.*\s(?:-[a-zA-Z]*a[a-zA-Z]*|--all|--include|-i)(?:\s|$)|.*\s--\s|.*\ssrc/)"
+)
 
 
 def load_freeze(root: Path) -> dict | None:
@@ -93,7 +98,8 @@ def main() -> int:
     masked = QUOTED.sub(lambda m: m.group(0)[0] * 2 + " " * (len(m.group(0)) - 2), command)
     if not COMMIT.search(masked):
         return 0
-    paths = commit_paths(root, adds_first=bool(ADD.search(masked)))
+    tree = bool(ADD.search(masked) or TREE_COMMIT.search(masked))
+    paths = commit_paths(root, adds_first=tree)
     hits = sorted({p for p in paths or [] if frozen(freeze, p)})
     if hits:
         deny(_reason(freeze, hits, "this commit"))

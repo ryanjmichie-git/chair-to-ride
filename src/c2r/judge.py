@@ -202,7 +202,7 @@ def _book(
         judge.model_id,
         judge.effort,
         {"judge": version},
-        {**hashes, "judge.v1.md": sha(system)},
+        {**hashes, PROMPT.name: sha(system)},
     )
 
 
@@ -299,6 +299,10 @@ def judge_collect(state_path: Path, writer, echo=print) -> dict[str, Any]:
     """Fetch a submitted batch's results and write every run's verdicts, ledger and usage."""
     state = json.loads(state_path.read_text(encoding="utf-8"))
     batch_id = state["batch_id"]
+    status = writer.status(batch_id)
+    if status["processing_status"] != "ended":
+        echo(f"judge batch {batch_id} is still {status['processing_status']}; collect later")
+        return {**state, "status": status["processing_status"]}
     results = writer.collect(batch_id)
     summaries: dict[str, Any] = {}
     for index, name in enumerate(state["runs"]):

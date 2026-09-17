@@ -20,13 +20,15 @@
       "source": "runs/cp3"
     }
   },
-  "git_sha": "3284b10eafde33caf72faf7fbabb7fdd68331b62-dirty",
+  "git_sha": "3e19247b85ce9d7c75cdce1f48185e3d1b9b0861-dirty",
   "judge_golden": {
     "agreed": 12,
     "agreement": "12/12",
     "cost_usd": 0.7843,
     "count": 12,
     "effort": "low",
+    "golden_set": "golden_explanations.json",
+    "golden_set_sha": "sha256:a0236b43d62216f448660cc7ad5f607b7d9f1abf4253c8793eefa77bf851b735",
     "mean_scores": {
       "accuracy": 1.83,
       "actionable": 1.75,

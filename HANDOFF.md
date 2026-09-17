@@ -1,116 +1,103 @@
 # Session handoff
 
-Updated 2026-09-17 at the end of CP3 (perturb, explain, judge). Start a fresh session from here.
+Updated 2026-09-17 at the end of CP4 (evals + freeze). Start a fresh session from here.
+Every number below is from a command run this session and is also in docs/cp4-decisions.md
+with the file it came from.
 
 ## Built this session
-CP3 landed in seven `cp3:` commits, each under 400 changed `src/` lines (details in
-docs/cp3-decisions.md):
+CP4 landed in six `cp4:` commits on top of `3284b10` (details in docs/cp4-decisions.md):
 
-- `src/c2r/state.py`: `State.now` (minutes since midnight when a re-plan runs; `None` for a day).
-- `src/c2r/verify.py`: a down vehicle keeps its stops before its shift end (`t_down`) and may
-  take none after it (`H9_SHIFT`); with `now` set, a started chair cannot move (H3) and served
-  stops and opened windows cannot change (`h9_past_is_frozen`, code `H9_PAST`).
-- `src/c2r/orchestrator.py`: `run_session` (the loop) split from `run` (the full day);
-  `margin_s`, `stop_after_apply`, and a failed model call halts the loop instead of raising.
-- `src/c2r/perturb.py`: `load_event`, `event_state` (day on disk + the source run's
-  `schedule_after.json` + the event; pure, replayable), `EVENTS` registry (`vehicle_down` only),
-  `run` with a 30 s / 4-turn clock, effort low, 12 s turn timeout, no retry, 15 s margin.
-  `python -m c2r.perturb --event vehicle_down --at 13:40 [--run runs/cp2] [--out runs/cp3] [--fake]`.
-- `src/c2r/facts.py`: facts cards per subject and audience; refs `L-n`, `S-id`, `B-id`, `R-item`.
-- `src/c2r/explain.py`: Sonnet 5 phrases the card; Python fills times, refs, reading grade;
-  I16 per record (`check_numbers`), the two-times rule (`missing_times`), K6 (no rider note
-  while queued). `python -m c2r.explain runs/cp2 [--fake]`.
-- `src/c2r/judge.py`: Fable 5.1 low, strict JSON, six dimensions 0-2; Python overrides
-  (invented number => accuracy 0, grade > 8 => plain <= 1, pass = total >= 10 and accuracy 2);
-  golden and calibration passes. `python -m c2r.judge runs/cp2 [--fake]`, `--golden`.
-- `src/c2r/llm.py`: `AnthropicWriter` (one structured-output call, retries, JSON re-ask),
-  `Completion`, `MediatorError`, `FakeWriter`, `FakeJudge`, Sonnet 5 prices.
-- `src/c2r/viz/timeline.py`: the heading names the event when a run has `event.json`.
-- `prompts/explainer.v1.md`, `prompts/judge.v1.md`: both carry a one-line `eval_result` from
-  the live passes and are frozen; the next edit is a `v2` file.
-- `evals/data/golden_explanations.json` (12: 7 pass, 5 fail one bucket each),
-  `evals/data/judge_calibration.json` (10 live notes, `human_pass: null` for B).
-- `evals/invariants/`: `conftest.py` (one shared fake mediator run per session),
-  `test_perturb.py`, `test_explain.py`, `test_judge.py`, `test_cp3_live.py` (`llm`), additions to
-  `test_verify.py`. `evals/repo/test_prompts.py` (frontmatter and PHI contract).
-  `evals/run_evals.py --judge-only`.
-- `Makefile`: `perturb`, `perturb-fake`, `explain`, `judge`, `judge-only`; `demo` = `mediate`
-  then `perturb`. `docs/llms.txt`, `docs/cp3-decisions.md`, `specs/INDEX.md` (CP2 done, CP3
-  active).
+- Gate under 60 s: `evals/run_evals.py --gate` runs the four offline suites (`evals/repo`,
+  `evals/data`, `evals/invariants`, `evals/scenarios`) with pytest-xdist, 4 workers, loadscope.
+  The shared fake mediator run is built serially by `--gate` before pytest and cached on disk
+  under `runs/.fake-run-cache/<digest of src/c2r, config, data/synthetic/42,
+  prompts/mediator.v1.md, pyproject.toml>` (`evals/fakerun.py`, `evals/conftest.py`).
+  `timeutil.to_min` is memoized and `State`'s lookup dicts are cached per instance. The hook
+  tests are two modules. Measured after the review fixes: 95 s serial at the start -> 48.7 s
+  cold cache (11.2 s build + 35.4 s tests) / 35.2 s warm, 306 tests.
+- The five gate criteria: `evals/scenarios/test_baseline.py` (the fake run against
+  `evals/golden/baseline.json`, written by `--golden-baseline`; the 9.B outcomes) and
+  `evals/scenarios/test_receipts.py` (`evals/golden/receipts.json`, written by `--record` from
+  `runs/golden-judge`, `runs/cp2`, `runs/cp3`: judge agreement 12/12 with the `judge.v1.md`
+  hash, demo $0.83, day 56.9 s, re-plan 13.3 s). The gate's summary line prints the receipts.
+- Six section-9.B scenario files in `evals/scenarios/`; `baseline` and `vehicle_breakdown` are
+  `wired: true`, the other four `wired: false` with the reason.
+- Batch judge: `llm.AnthropicBatchWriter` (one Message Batch, half price, 1-h cached system
+  block, results keyed by custom_id), `judge.judge_batch` / `judge_collect` (resumable from
+  `judge_batch.json`), `cost_usd(batch=True)`. `orchestrator.build_blocks`/`run` and
+  `perturb.run` take `cache_ttl` (block text and hashes unchanged; demo keeps 5 min).
+- `--full` (`evals/suite.py`): one cell per seed x scenario under `runs/full/<seed>/<scenario>/`,
+  baseline = live day run + Sonnet notes, breakdown = re-plan against that day + notes, one judge
+  batch for every note, `summary.json` with `pass^k` per scenario, `progress.log`, resumable;
+  `--full --fake` rehearses into `runs/full-fake/`. `make full`, `full-fake`, `full-collect`.
+- `cost_report.md` at the repo root from `evals/cost_report.py` (every ledger under `runs/`;
+  `make cost-report`). Seeds 43 and 44 generated and committed under `data/synthetic/`.
+- Code freeze: `.claude/freeze.json` (`src/c2r/**` frozen, `viz/**` open, waivers with spec and
+  reviewer) enforced by `.claude/hooks/code_freeze.py` on Edit|Write and on `git commit`
+  (index, or the working tree for `-a`/`--all`/`--include`/pathspec/`git add &&`). Active
+  from the final commit.
+- CLAUDE.md: one Rules line (the freeze) and one Lessons line added, 39 lines. `/doctor`
+  itself is interactive and was not run by this session.
 
-## Decisions made (details in docs/cp3-decisions.md)
-1. Event semantics live in `verify.py`: down = fleet `status: down` + shift end `t`; H9 flags
-   only stops after `t_down`. The clock (`State.now`) freezes the past under H3 and H9.
-2. The perturbed running state at 13:40 is the session's baseline; the morning's chair moves
-   are booked into `moves_this_week`, so the change budget starts again at the event.
-3. Same loop and prompt as CP2 (`run_session`); blocks A-C byte-identical to the day run, so a
-   `mediate` then `perturb` demo reads them from cache (94 % on the live run).
-4. The harness ends the re-plan itself once an apply meets the stop rule (`stop_after_apply`);
-   the first live run spent 33.2 s on a timeout, a retry and a `finish` turn, the second 13.3 s.
-5. Ledger refs are addresses (`L-n`, `S-id`, `B-id`, `R-item`); I16 matches a note's numbers
-   against its own refs only.
-6. Python builds the facts card and fills every number; the model phrases. Dispatcher notes are
-   exempt from the two-times rule; a rider in the queue gets no note.
-7. Judge overrides in code; a refusal is `unscored` (needs a human edit), no fallback model;
-   a single non-accuracy zero cannot fail a note, so the golden failures lose >= 3 points.
-8. Only `vehicle_down`; an outbound leg on a down van raises `NotImplementedError`; the other
-   four events are CP4's, through `perturb.EVENTS`.
-9. Calibration is B's: `human_pass: null` until graded; the judge gates nothing until CP4.
-10. Money: about $2.20 before the live test module, about $2.85 after it, against the $4 line.
+## Decisions made (details in docs/cp4-decisions.md)
+1. `--full` scope = wired scenarios only (Ryan, 2026-09-17): baseline + vehicle_breakdown on
+   seeds 42/43/44; the four other events need solver/verify work and are reported NOT WIRED.
+2. Four xdist workers, not ten: the solver is CPU-bound and the laptop clocks down under all-core
+   load (a fixture that takes 10 s alone took 28 s with ten workers).
+3. The fake run is cached by input digest; it is a pure function of those inputs, so a hit is
+   the same run the gate would have rebuilt.
+4. The judge, cost and runtime gate criteria are receipts from the last live artefacts, linked
+   by the judge prompt's hash; the gate cannot call the API in under 60 s.
+5. A seed the breakdown handler cannot take (outbound leg on the down van) is `not wired for
+   seed` and fails the scenario under `pass^k`; the suite never drops a seed to pass.
+6. Batch custom ids use a hyphen (`0-E01r`): the API rejected the colon on the first live submit.
+7. The freeze file was committed inactive while the src fixes landed and is active in the
+   final commit; the plan said "after all src work".
+10. The first speed-up commit's message and the docs claimed a digest cache and memoization
+   that were not in the code: the bash command carrying them also held an `rm -rf`, the
+   danger guard refused the whole command, and only its second half was re-run. The reviewer
+   caught it; the code landed in the review-fix commit and the numbers were re-measured. A
+   lesson line in CLAUDE.md records it.
+8. `test_solver_is_deterministic` does one extra solve (first bundle, j_before, j_after against
+   the module's solve); byte-for-byte determinism stays with I18 replay.
+9. Money: $2.31 for the live suite (approved estimate $5-8; two of six live cells did not run),
+   $0 offline. `cost_report.md` totals $5.68 across all ledgers since CP2.
 
 ## Artifacts (git-ignored; the Makefile regenerates them)
-- `runs/cp3/`: the live re-plan (V3 down at 13:40 against `runs/cp2`): `event.json`,
-  ledger, bundles, review queue, schedules, `verify_after.json`, `metrics.json` (with
-  `usage` and `usage_explain`), `explanations.json`, `explain.jsonl`, timeline.
-- `runs/cp2/`: the CP2 live run plus its 16 explanations (`explanations.json`, `explain.jsonl`).
-- `runs/cp3-fake/`: the offline re-plan (`make perturb-fake`).
-- `runs/golden-judge/`: `judge_scores.json`, `judge_summary.json` (12/12), `judge.jsonl`,
-  `calibration_scores.json` (9/10 pass; C10 fails).
-- Live re-plan: 13.3 s in the loop, 21.4 s for the command, 2 turns, 1 bundle (P15f -> V4,
-  P29f -> V2), P16f held (`R01`), P30f stretcher (`R02`), J 163.05 -> 134.9, $0.07, 0 violations.
+- `runs/full/`: `42/baseline` ($1.21, 71.4 s loop, 16 notes 100 % judge pass),
+  `42/vehicle_breakdown` ($0.23, 13.8 s, 4 notes 100 %), `43/baseline` ($1.43, 88.9 s, 19 notes
+  100 %), `44/baseline` ($1.20, 61.8 s, 17 notes 94 %, `E28r` needs a human edit);
+  `43/vehicle_breakdown` and `44/vehicle_breakdown` not wired (`P36t`, `P25t` outbound on V3);
+  `summary.json` (`FULL FAIL`, 4/18 cells ok, $2.31, cache read 89 %), `judge_batch.json`
+  (`msgbatch_012HzJKr28ac5ZWL1D7yehRm`, 56 verdicts, collected), `progress.log`.
+- `runs/full-fake/`: the offline rehearsal (seeds 42, 43).
+- `runs/.fake-run-cache/<digest>/`: the gate's shared fake run (safe to delete; rebuilt in 14 s).
+- `runs/cp2`, `runs/cp3`, `runs/golden-judge`: unchanged from CP3; the receipts point at them.
+- `cost_report.md` (committed): regenerated at the end of `--full`.
 
 ## Acceptance status
-- `time uv run --env-file .env python -m c2r.perturb --event vehicle_down --at 13:40`:
-  `elapsed_s` 13.3, real 21.4 s, 0 violations, no V3 stop after 13:40, every affected trip
-  re-homed or queued.
-- `uv run --env-file .env python evals/run_evals.py --judge-only`: golden agreement 12/12,
-  22 calls, golden cost $0.78, 188.5 s, `JUDGE PASS`; calibration 0/10 graded by B. Run before
-  `judge_calibration` booked its calls (reviewer M1, waived: a re-run costs about $1.45, over
-  the $4 line; the prompt hash in `runs/golden-judge/judge.jsonl` matches HEAD and the booking
-  path has an offline test). `make judge-only` refreshes the artefacts.
-- `uv run --env-file .env python -m pytest evals/invariants/test_cp3_live.py -k "not golden"`:
-  2 passed in 66.8 s: the re-plan fixture 25.5 s including artefacts with `elapsed_s` under 30,
-  explain + judge 39.9 s, every live note passed I16 and the two-times rule, at most one
-  judge failure among them (the assertion). The golden test was deselected (see below).
-- `uv run python -m pytest evals/repo evals/invariants/test_judge.py evals/invariants/test_explain.py -q`:
-  138 passed. `uv run ruff check .`: clean.
-- `make gate`: 271 passed, GATE PASS, 102.1 s after the review fixes (94.5 s before them, with
-  nine fewer tests; run-to-run noise is about 5 s). Over the Stop hook's 90 s subprocess timeout: a
-  timeout skips the gate with a notice instead of blocking, so the hook does not guard a stop
-  right now. Raising the timeout in `.claude/hooks/eval_gate.py` to 110 s was refused by the
-  session's permission mode. Ryan accepted the gap on 2026-09-17 until CP4 brings the gate
-  under 60 s; do not raise it again before then.
-- Not done: B's hand-grading of the 10 calibration notes; agreement is reported by
-  `--judge-only` once `human_pass` is filled. The golden test in `test_cp3_live.py` was not run
-  live (its function, `judge.judge_golden`, is what `--judge-only` ran: 12/12).
-- Reviewer: one pass. Six should-fix items fixed with tests in the seventh commit (verify no
-  longer pins a queued trip's stale window; a stop at exactly `t_down` is flagged; bookkeeping
-  numbers stripped from refs; contact from the card; two-times and contact checks in the judge;
-  a failed-call test). The rest waived with reasons in docs/cp3-decisions.md.
+- `time uv run python evals/run_evals.py --gate`: `GATE PASS`, 306 passed, 48.7 s with a cold
+  fake-run cache and 35.2 s warm, machine otherwise idle. Receipts on the line: judge golden
+  12/12, demo $0.83, day 56.9 s, re-plan 13.3 s.
+- `uv run --env-file .env python evals/run_evals.py --full`: kicked off in the background at
+  18:08, cells done by 18:15, batch submitted 18:17:52 and collected 18:20:15, `FULL FAIL` for
+  the reason above (baseline PASS on all seeds; breakdown not wired on 43 and 44).
+- `uv run ruff check .`: clean. `pytest evals/repo` 134 passed (hook tests included).
+- Reviewer: one pass on the whole CP4 range; verdict then "not done" (gate 86-97 s in its runs,
+  speed-ups missing from the code, freeze inactive, hook gap on `git commit -a`). All
+  must-fix and should-fix items fixed, one waived; docs/cp4-decisions.md "Reviewer findings".
+- Not done: `/doctor` (interactive); B's hand-grading of the calibration notes (unchanged from
+  CP3); the four unwired events; re-homing an outbound leg on a down van.
 
 ## What's next
-1. B's grading does not block CP4 (the judge gates nothing until then). Send B
-   `docs/calibration_sheet.md` (the ten notes with a Pass/Fail column, written for a
-   non-technical reader); copy the verdicts into `human_pass` / `human_notes` in
-   `evals/data/judge_calibration.json`; run `make judge-only`. Under 8/10 agreement, write
-   `prompts/judge.v2.md` (v1 is frozen) and re-run.
-2. `/kickoff cp4`: the other four events in `perturb.EVENTS` (`chair_down`, `late_arrival`,
-   `add_on_patient`, `travel_slowdown`) for the `--full` suite (5 scenarios x 3 seeds); the
-   gate back under 60 s (the fake mediator run is shared already; the chained-bundle greedy
-   pass inside `generate_candidates` costs about 5 s per call and is the lever); code freeze
-   except `viz/`.
-3. Demo path: `make demo` runs `mediate` then `perturb`; `make explain` and `make judge` on both
-   runs afterwards; `make timeline` still points at `runs/cp1` (run
-   `python -m c2r.viz.timeline runs/cp3` for the re-plan).
-4. Watch the re-plan clock on camera: 13.3 s with two turns; a timed-out turn costs 12 s and
-   the margin ends the run at 15 s, so a run can finish forced but never late.
+1. `/kickoff cp5`: two timed dry runs of `make demo`, `docs/backup.mp4`, `docs/demo_script.md`
+   (the `demo-narrator` subagent). No `src/c2r/` change is allowed; a viz fix goes through
+   `src/c2r/viz/` only. Anything else needs a spec update, reviewer sign-off and a waiver in
+   `.claude/freeze.json`.
+2. Watch the day-run clock on camera: seed 43 took 88.9 s in the loop against the 90 s rule;
+   the demo seed (42) took 56.9 s and 71.4 s on its two live runs.
+3. After the event: wire `late_arrival` first (a `late_start_min` bump, the cheapest handler),
+   then outbound re-homing for `vehicle_down`; each is a spec update. `make full` re-runs only
+   the cells that are not `ok`; `make full-collect` finishes a batch that outlived the process.
+4. `E28r` (seed 44) failed the judge; `runs/full/44/baseline/judge_scores.json` has the
+   rationale. Nothing gates on it.

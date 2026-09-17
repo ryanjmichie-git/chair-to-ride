@@ -298,8 +298,9 @@ class AnthropicBatchWriter:
             if kind == "succeeded":
                 found[result.custom_id] = _completion(self.model_id, result.result.message, True)
             else:
-                error = getattr(result.result, "error", None)
-                text = f"{kind}: {getattr(error, 'type', '')} {getattr(error, 'message', '')}"
+                error = getattr(result.result, "error", None)  # an ErrorResponse wrapper
+                inner = getattr(error, "error", error)
+                text = f"{kind}: {getattr(inner, 'type', '')} {getattr(inner, 'message', '')}"
                 found[result.custom_id] = Completion(None, text.strip(), zero, 0.0, kind)
         return found
 

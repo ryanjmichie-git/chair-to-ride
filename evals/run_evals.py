@@ -72,6 +72,14 @@ def _gate() -> int:
         print("GATE FAIL (no gate test directories found)")
         return 1
     started = time.monotonic()
+    sys.path.insert(0, str(ROOT / "evals"))
+    import fakerun
+
+    try:  # built serially here, so its own clock is measured on an idle machine
+        fakerun.ensure(echo=print)
+    except (RuntimeError, TimeoutError) as exc:
+        print(f"GATE FAIL (shared fake run: {exc})")
+        return 1
     proc = subprocess.run(
         [
             sys.executable,
@@ -129,6 +137,8 @@ def _judge_receipt(golden_dir: Path) -> dict[str, Any]:
     prompt = next(k for k in first["input_hashes"] if k.startswith("judge."))
     agreed, count = (int(n) for n in summary["golden_agreement"].split("/"))
     return {
+        "golden_set": "golden_explanations.json",
+        "golden_set_sha": first["input_hashes"]["golden_explanations.json"],
         "source": golden_dir.relative_to(ROOT).as_posix(),
         "agreement": summary["golden_agreement"],
         "agreed": agreed,

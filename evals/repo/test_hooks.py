@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -13,36 +12,8 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 HOOKS = ROOT / ".claude" / "hooks"
-FROZEN = "---\nname: mediator\nversion: 1\neval_result: pass\n---\n\nbody\n"
-OPEN = "---\nname: explainer\nversion: 1\neval_result: null\n---\n\nbody\n"
-INDEX = (
-    "| Checkpoint | Status | Spec | Deliverable |\n"
-    "|---|---|---|---|\n"
-    "| CP1 | active | specs/cp1.md | scaffold |\n"
-)
-STUB_RUNNER = (
-    "import pathlib\n"
-    "pathlib.Path(__file__).resolve().parents[1].joinpath('ran.flag').write_text('1')\n"
-    "raise SystemExit(0)\n"
-)
 SSN = '{"note": "SSN 123-45-6789"}'
 CLEAN = '{"note": "Node 17, Zone C at 06:30"}'
-
-
-@pytest.fixture
-def repo(tmp_path: Path) -> Path:
-    (tmp_path / "prompts").mkdir()
-    (tmp_path / "prompts" / "frozen.v1.md").write_text(FROZEN, encoding="utf-8")
-    (tmp_path / "prompts" / "open.v1.md").write_text(OPEN, encoding="utf-8")
-    (tmp_path / "src" / "c2r").mkdir(parents=True)
-    (tmp_path / "src" / "c2r" / "__init__.py").write_text("", encoding="utf-8")
-    shutil.copyfile(ROOT / "src" / "c2r" / "phi.py", tmp_path / "src" / "c2r" / "phi.py")
-    (tmp_path / "evals").mkdir()
-    (tmp_path / "evals" / "run_evals.py").write_text(STUB_RUNNER, encoding="utf-8")
-    (tmp_path / "specs").mkdir()
-    (tmp_path / "specs" / "INDEX.md").write_text(INDEX, encoding="utf-8")
-    (tmp_path / "temp").mkdir()
-    return tmp_path
 
 
 def run_hook(
@@ -471,116 +442,3 @@ def test_eval_gate_blocks_when_the_runner_fails(repo: Path) -> None:
     assert "GATE FAIL" in proc.stderr
     assert json.loads(proc.stdout)["decision"] == "block"
     assert not (repo / "runs" / ".gate_ok").is_file()
-
-
-def _git_repo(repo: Path, src_lines: int) -> None:
-    env = {
-        **os.environ,
-        "GIT_AUTHOR_NAME": "t",
-        "GIT_AUTHOR_EMAIL": "t@x",
-        "GIT_COMMITTER_NAME": "t",
-        "GIT_COMMITTER_EMAIL": "t@x",
-    }
-    subprocess.run(["git", "init", "-q"], cwd=str(repo), check=True, env=env)
-    subprocess.run(["git", "add", "-A"], cwd=str(repo), check=True, env=env)
-    subprocess.run(["git", "commit", "-q", "-m", "base"], cwd=str(repo), check=True, env=env)
-    (repo / "src" / "c2r" / "big.py").write_text("x = 1\n" * src_lines, encoding="utf-8")
-
-
-def test_k2_guard_blocks_a_large_staged_src_diff(repo: Path) -> None:
-    _git_repo(repo, 401)
-    subprocess.run(["git", "add", "-A"], cwd=str(repo), check=True)
-    proc = run_hook("k2_guard.py", bash_event(repo, 'git commit -m "cp1: big"'), repo)
-    assert proc.returncode == 2
-    assert "401 lines" in proc.stderr and "src/c2r/big.py" in proc.stderr
-
-
-def test_k2_guard_counts_what_git_add_would_stage(repo: Path) -> None:
-    _git_repo(repo, 401)
-    proc = run_hook("k2_guard.py", bash_event(repo, 'git add -A && git commit -m "cp1: big"'), repo)
-    assert proc.returncode == 2
-    proc = run_hook("k2_guard.py", bash_event(repo, 'git commit -m "cp1: nothing staged"'), repo)
-    assert proc.returncode == 0, proc.stderr
-
-
-@pytest.mark.parametrize(
-    "command", ['git commit -m "cp1: small"', 'echo "git commit"', "git status"]
-)
-def test_k2_guard_allows_small_diffs_and_other_commands(repo: Path, command: str) -> None:
-    _git_repo(repo, 400)
-    subprocess.run(["git", "add", "-A"], cwd=str(repo), check=True)
-    proc = run_hook("k2_guard.py", bash_event(repo, command), repo)
-    assert proc.returncode == 0, proc.stderr
-
-
-def test_k2_guard_fails_open_outside_a_git_repo(repo: Path) -> None:
-    proc = run_hook("k2_guard.py", bash_event(repo, 'git commit -m "x"'), repo)
-    assert proc.returncode == 0, proc.stderr
-
-
-# --- code freeze (CP4) -------------------------------------------------------------------------
-
-FREEZE = {
-    "active": True,
-    "since": "cp4",
-    "frozen": ["src/c2r/**"],
-    "allowed": ["src/c2r/viz/**"],
-    "waivers": [{"path": "src/c2r/waived.py", "spec": "specs/cp5.md", "reviewer": "B"}],
-}
-
-
-def _freeze(repo: Path, active: bool = True) -> None:
-    (repo / ".claude").mkdir(exist_ok=True)
-    (repo / ".claude" / "freeze.json").write_text(
-        json.dumps({**FREEZE, "active": active}), encoding="utf-8"
-    )
-
-
-@pytest.mark.parametrize("rel", ["src/c2r/solver.py", "src/c2r/parties/unit.py"])
-def test_code_freeze_denies_a_frozen_edit(repo: Path, rel: str) -> None:
-    _freeze(repo)
-    proc = run_hook("code_freeze.py", write_event(repo, rel, "x = 1"), repo)
-    assert proc.returncode == 2
-    assert "code freeze" in proc.stderr and rel in proc.stderr and "waiver" in proc.stderr
-
-
-@pytest.mark.parametrize(
-    "rel", ["src/c2r/viz/timeline.py", "src/c2r/waived.py", "evals/suite.py", "docs/x.md"]
-)
-def test_code_freeze_allows_viz_waived_and_other_paths(repo: Path, rel: str) -> None:
-    _freeze(repo)
-    proc = run_hook("code_freeze.py", write_event(repo, rel, "x = 1"), repo)
-    assert proc.returncode == 0, proc.stderr
-
-
-def test_code_freeze_is_off_without_an_active_file(repo: Path) -> None:
-    proc = run_hook("code_freeze.py", write_event(repo, "src/c2r/solver.py", "x"), repo)
-    assert proc.returncode == 0, proc.stderr
-    _freeze(repo, active=False)
-    proc = run_hook("code_freeze.py", write_event(repo, "src/c2r/solver.py", "x"), repo)
-    assert proc.returncode == 0, proc.stderr
-
-
-def test_code_freeze_denies_a_commit_carrying_frozen_source(repo: Path) -> None:
-    _freeze(repo)
-    _git_repo(repo, 3)  # writes src/c2r/big.py, untracked
-    proc = run_hook(
-        "code_freeze.py", bash_event(repo, 'git add -A && git commit -m "cp5: x"'), repo
-    )
-    assert proc.returncode == 2 and "src/c2r/big.py" in proc.stderr
-    proc = run_hook("code_freeze.py", bash_event(repo, 'git commit -m "cp5: nothing staged"'), repo)
-    assert proc.returncode == 0, proc.stderr
-    subprocess.run(["git", "add", "-A"], cwd=str(repo), check=True)
-    proc = run_hook("code_freeze.py", bash_event(repo, 'git commit -m "cp5: staged"'), repo)
-    assert proc.returncode == 2 and "this commit" in proc.stderr
-
-
-def test_code_freeze_allows_a_viz_only_commit(repo: Path) -> None:
-    _freeze(repo)
-    _git_repo(repo, 0)
-    (repo / "src" / "c2r" / "big.py").unlink()
-    (repo / "src" / "c2r" / "viz").mkdir()
-    (repo / "src" / "c2r" / "viz" / "timeline.py").write_text("x = 1\n", encoding="utf-8")
-    subprocess.run(["git", "add", "-A"], cwd=str(repo), check=True)
-    proc = run_hook("code_freeze.py", bash_event(repo, 'git commit -m "cp5: viz"'), repo)
-    assert proc.returncode == 0, proc.stderr

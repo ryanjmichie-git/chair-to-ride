@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from functools import cached_property
 from pathlib import Path
 from typing import Any
 
@@ -27,15 +28,18 @@ class State:
     rules: dict[str, Any]
     now: int | None = None  # minutes since midnight when a re-plan runs; None for a full day
 
-    @property
+    # Built once per State, not on every call: the solver asks for these hundreds of thousands
+    # of times per candidate. The dataclass is frozen and ``with_`` makes a new instance, so a
+    # cached dict can never outlive the roster it was built from.
+    @cached_property
     def patients(self) -> dict[str, Patient]:
         return {patient.patient_id: patient for patient in self.roster.patients}
 
-    @property
+    @cached_property
     def riders(self) -> dict[str, Rider]:
         return {rider.rider_id: rider for rider in self.roster.riders}
 
-    @property
+    @cached_property
     def broker_riders(self) -> dict[str, Rider]:
         return {r.rider_id: r for r in self.roster.riders if r.provider == Provider.broker}
 

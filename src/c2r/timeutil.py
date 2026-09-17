@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import math
 from collections.abc import Sequence
+from functools import lru_cache
 
 from c2r.models import Window
 
 
+@lru_cache(maxsize=4096)  # the solver parses the same HH:MM strings millions of times per solve
 def to_min(hhmm: str) -> int:
     hours, minutes = hhmm.split(":")
     return int(hours) * 60 + int(minutes)

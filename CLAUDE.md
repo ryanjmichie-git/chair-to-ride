@@ -9,7 +9,6 @@ An agent re-times a dialysis unit's chair schedule against a paratransit manifes
 - `make baseline` — print before-metrics for the synthetic day.
 - `make test` — run the full test suite.
 - `make gate` — run the eval gate (`evals/run_evals.py --gate`, < 60 s, offline).
-- `make full` / `make full-collect` / `make cost-report` — live scenario suite into `runs/full/`, finish its judge batch, rebuild `cost_report.md`.
 - `make demo` — run the demo.
 - `/kickoff [cpN]` — spec-check, plan mode, implement, then `/review` and `/commit`.
 - `/review` — reviewer subagent reports gaps vs. the active spec.
@@ -37,3 +36,4 @@ An agent re-times a dialysis unit's chair schedule against a paratransit manifes
 - verify() derives every bound (start, ready, chair band, load) from the roster and the stop sequence, never from a window or load_after field the solver wrote into the manifest.
 - Negotiable anchors (requested_time) are compared against the baseline, never the candidate, in verify and in the parties; the builder only sets a request for will-call riders.
 - A down vehicle keeps every stop before t_down; verify flags stops at or after it (H9). CP1's blanket 'down means no stops' rejected every CP3 re-plan candidate.
+- A bash command the danger guard refuses runs nothing, including the edits before the refused part; re-run the whole command, then check the file before claiming the change.

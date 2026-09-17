@@ -109,8 +109,12 @@ def _check_breakdown(
         tid
         for tid in event["affected"]
         if tid in trips
-        and trips[tid].status == TripStatus.scheduled
-        and trips[tid].vehicle_id in (None, van)
+        and trips[tid].status in (TripStatus.scheduled, TripStatus.will_call)
+        and (
+            trips[tid].vehicle_id == van
+            or trips[tid].status == TripStatus.scheduled
+            and trips[tid].vehicle_id is None
+        )
     ]
     waits = post_waits(state)
     s2 = [w for tid, w in waits.items() if state.patient_of(trips[tid]).shift_id == ShiftId.S2]
