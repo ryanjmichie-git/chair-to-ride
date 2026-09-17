@@ -1,252 +1,287 @@
-"""A static, readable account of one finished demo: every decision, in order, in plain English.
+"""A plain-English account of one finished demo: what happened, decision by decision.
 
-``python -m c2r.viz.story [--day runs/cp2] [--replan runs/cp3] [--out runs/demo_story.html]``
+``python -m c2r.viz.story [--day runs/cp2] [--replan runs/cp3] [--data data/synthetic/42]
+[--out runs/demo_story.html]``
 
-Unlike ``dashboard`` this page does not refresh; it is the write-up of a run that already
-happened. Every sentence with a number in it is built from the ledger, metrics, review queue
-and explanations of that run, never typed here.
+Written for an audience that has never seen a terminal. Riders are named (synthetic names from
+the roster), ids and hashes stay in the ledger. Every number is read from the run files; the
+page computes nothing.
 """
 
 from __future__ import annotations
 
 import argparse
 import html
-import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
 
 from c2r.banner import BANNER
-from c2r.viz.dashboard import _fmt, _ledger, _load
+from c2r.viz.dashboard import _ledger, _load
 
-CARDS = (
-    ("mean_post_wait", "Mean wait for the ride home", "min"),
-    ("p90_post_wait", "Slowest 10 % wait", "min"),
-    ("within_30_share", "Picked up within 30 min", "share"),
-    ("riders_flagged", "Riders handed to a person", ""),
-    ("conflicts", "Chair conflicts", ""),
-    ("equity_gap", "Wheelchair vs walking gap", "min"),
-)
+REASONS = {
+    "STRETCHER": "needs a stretcher, which no van in the fleet carries",
+    "BROKER_POLICY": "the broker's own rules say a person decides this one",
+    "CONSENT": "has not agreed to schedule changes",
+}
 STYLE = """
 :root{--ink:#14202b;--muted:#4b5a68;--paper:#fbfbf8;--line:#c9d1d9;--accent:#0b5cad}
 *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);
-font:19px/1.5 "Segoe UI",system-ui,sans-serif}
+font:20px/1.55 "Segoe UI",system-ui,sans-serif}
 .banner{background:#1f2a36;color:#fff;font-weight:700;letter-spacing:.04em;padding:.5rem 1.5rem;font-size:1rem}
-.wrap{max-width:1100px;margin:0 auto;padding:1rem 1.5rem 3rem}
-h1{font-size:2.2rem;margin:.8rem 0 .2rem}h2{font-size:1.6rem;margin:2.2rem 0 .6rem;border-bottom:3px solid var(--line);padding-bottom:.2rem}
-h3{font-size:1.2rem;margin:1.2rem 0 .4rem}.lead{font-size:1.15rem;color:var(--muted)}
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin:.8rem 0}
-.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:.7rem 1rem}
-.card .label{color:var(--muted);font-size:.95rem}.card .val{font-size:1.9rem;font-weight:700}
-.card .before{color:var(--muted)}.card .before s{margin-right:.3rem}
-.turn{background:#fff;border:1px solid var(--line);border-left:6px solid var(--accent);border-radius:10px;padding:.9rem 1.2rem;margin:.9rem 0}
-.turn .head{color:var(--muted);font-size:.95rem;margin-bottom:.3rem}.turn .said{font-size:1.15rem}
-.turn ul{margin:.5rem 0 0;padding-left:1.3rem}.turn li{margin:.2rem 0}
-.tag{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:0 .45rem;font-size:.9rem;margin-right:.3rem;background:#f1f4f7}
-.queue,.note{background:#fff;border:1px solid var(--line);border-radius:10px;padding:.9rem 1.2rem;margin:.8rem 0}
-.note .to{color:var(--muted);font-size:.95rem}.muted{color:var(--muted)}
-table{border-collapse:collapse;background:#fff}td,th{border:1px solid var(--line);padding:.35rem .9rem;text-align:left}
-details{margin:.8rem 0}summary{font-size:1.1rem;cursor:pointer}
-iframe{width:100%;height:560px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.wrap{max-width:960px;margin:0 auto;padding:1rem 1.5rem 3rem}
+h1{font-size:2.3rem;margin:.8rem 0 .2rem;line-height:1.2}
+h2{font-size:1.7rem;margin:2.4rem 0 .6rem;border-bottom:3px solid var(--line);padding-bottom:.2rem}
+h3{font-size:1.25rem;margin:1.4rem 0 .4rem;color:var(--muted)}.lead{font-size:1.2rem;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:.9rem;margin:1rem 0}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:.9rem 1.1rem}
+.card .label{color:var(--muted)}.card .val{font-size:2.3rem;font-weight:700;line-height:1.15}
+.card .was{color:var(--muted)}
+.step{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1rem 1.3rem;margin:.9rem 0;display:grid;grid-template-columns:3.2rem 1fr;gap:.6rem}
+.step .n{font-size:1.6rem;font-weight:700;color:var(--accent)}
+.step p{margin:.2rem 0}.step .own{color:var(--muted);font-size:1rem;margin:.4rem 0 0}.step .own summary{font-size:.95rem;color:var(--muted)}
+.box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1rem 1.3rem;margin:.9rem 0}
+.box .to{color:var(--muted);font-size:1rem;margin-bottom:.3rem}.muted{color:var(--muted)}
+details{margin:1rem 0}summary{font-size:1.1rem;cursor:pointer;color:var(--accent)}
+iframe{width:100%;height:560px;border:1px solid var(--line);border-radius:12px;background:#fff}
 """
 
 
+class Names:
+    """Synthetic display names and mobility, keyed by patient id ("P04") or trip id ("P04f")."""
+
+    def __init__(self, data_dir: Path) -> None:
+        roster = _load(data_dir / "roster.json") or {}
+        self.patients = {p["patient_id"]: p for p in roster.get("patients", [])}
+
+    def person(self, pid: str) -> str:
+        p = self.patients.get(pid[:3])
+        return p["display_name"] if p else pid
+
+    def trip(self, trip_id: str) -> str:
+        who = self.person(trip_id)
+        leg = "ride home" if trip_id.endswith("f") else "ride in"
+        return f"{who}'s {leg}"
+
+    def chair(self, pid: str) -> str:
+        return f"{self.person(pid)}'s chair time"
+
+    def humanize(self, text: str) -> str:
+        """Swap rider codes in recorded prose (P30, P16f) for the synthetic names."""
+        return re.sub(
+            r"(?<![A-Za-z0-9])P\d\d[tf]?(?![A-Za-z0-9])", lambda m: self.person(m.group(0)), text
+        )
+
+
+def minutes(value: Any) -> str:
+    v = float(value)
+    return f"{v:.0f} min" if v >= 10 else f"{v:.1f} min"
+
+
 def cards(metrics: dict[str, Any]) -> str:
-    before, after = metrics["before"], metrics["after"]
-    out = []
-    for key, label, unit in CARDS:
-        out.append(
-            f'<div class="card"><div class="label">{label}</div>'
-            f'<div class="val">{_fmt(key, after.get(key), unit)}</div>'
-            f'<div class="before"><s>{_fmt(key, before.get(key), unit)}</s> before</div></div>'
-        )
-    return f'<div class="cards">{"".join(out)}</div>'
-
-
-def _move(move: dict[str, Any]) -> str:
-    kind = move["type"]
-    if kind == "reassign_vehicle":
-        return f"{move['trip_id']} moves to van {move['vehicle_id']}"
-    if kind == "pair_riders":
-        return f"{' and '.join(move['trip_ids'])} ride together on van {move['vehicle_id']}"
-    if kind == "shift_pickup_window":
-        d = move["delta_min"]
-        return f"{move['trip_id']} pickup window {abs(d)} min {'earlier' if d < 0 else 'later'}"
-    if kind == "shift_chair_start":
-        d = move["delta_min"]
-        return f"{move['patient_id']} chair start {abs(d)} min {'earlier' if d < 0 else 'later'}"
-    return html.escape(json.dumps(move))
-
-
-def turns(entries: list[dict[str, Any]]) -> str:
-    by_iter: dict[int, list[dict[str, Any]]] = {}
-    for e in entries:
-        if e["actor"] == "tool" and e["event"] not in ("run_start", "run_finish"):
-            by_iter.setdefault(e["iteration"], []).append(e)
-    out = []
-    for e in entries:
-        if e["actor"] != "model":
-            continue
-        said = (
-            e["payload"].get("text") or ""
-        ).strip() or "(no comment; went straight to the tools)"
-        items = []
-        for t in by_iter.get(e["iteration"], []):
-            r = t["payload"].get("result") or {}
-            name = t["event"]
-            if name in ("propose_to_unit", "propose_to_broker"):
-                who = "Dialysis unit" if name.endswith("unit") else "Transit broker"
-                verdict = "accepted" if r.get("accepted") else f"declined ({r.get('reason_code')})"
-                items.append(f"<b>{who}</b> {verdict} {r.get('bundle_id', '')}")
-            elif name == "verify":
-                m = r.get("metrics") or {}
-                items.append(
-                    f"<b>Verifier</b>: {len(r.get('violations') or [])} violations; "
-                    f"mean wait would be {m.get('mean_post_wait')} min, "
-                    f"{m.get('riders_flagged')} riders still unplaced"
-                )
-            elif name == "apply_bundle":
-                bundle = r.get("bundle") or {}
-                moves = "; ".join(_move(m) for m in bundle.get("moves", []))
-                state = "Applied" if r.get("applied") else "Refused"
-                items.append(f"<b>{state}</b> {bundle.get('bundle_id', '')}: {html.escape(moves)}")
-            elif name == "flag_for_review":
-                items.append(
-                    f"<b>Handed to a person</b>: {r.get('subject')} (item {r.get('item_id')})"
-                )
-            elif name == "finish":
-                items.append(
-                    f"<b>Finished</b>: {r.get('applied')} bundles applied, {r.get('flagged')} handed over"
-                )
-            else:
-                items.append(f"<b>{html.escape(name)}</b>")
-        out.append(
-            f'<div class="turn"><div class="head">Turn {e["iteration"]} · {html.escape(e["model_id"])}'
-            f" · ${float(e['cost_usd']):.3f} · {int(e['usage']['cache_read'])} prompt tokens read from cache</div>"
-            f'<div class="said">{html.escape(said)}</div><ul>{"".join(f"<li>{i}</li>" for i in items)}</ul></div>'
-        )
-    return "".join(out)
-
-
-def queue(run_dir: Path) -> str:
-    items = _load(run_dir / "review_queue.json") or []
-    if not items:
-        return '<p class="muted">Nothing handed to a person.</p>'
-    out = []
-    for it in items:
-        tried = "".join(f"<li>{html.escape(str(t))}</li>" for t in it.get("what_was_tried", []))
-        out.append(
-            f'<div class="queue"><span class="tag">{html.escape(it["reason_code"])}</span>'
-            f'<span class="tag">owner: {html.escape(it["owner"])}</span>'
-            f'<span class="tag">{html.escape(it["urgency"])}</span> <b>{html.escape(it["subject"])}</b>'
-            f"<p>{html.escape(it['recommended_action'])}</p>"
-            f'<p class="muted">Draft message: {html.escape(it["draft_message"])}</p>'
-            f"{'<p class=muted>What was tried:</p><ul>' + tried + '</ul>' if tried else ''}</div>"
-        )
-    return "".join(out)
-
-
-def notes(run_dir: Path, ids: list[str] | None = None) -> str:
-    records = _load(run_dir / "explanations.json") or []
-    if ids:
-        records = [r for r in records if r["explanation_id"] in ids]
-    out = []
-    for r in records:
-        n = r["explanation"]
-        checks = r.get("checks") or {}
-        out.append(
-            f'<div class="note"><div class="to">To the {html.escape(n["audience"])} · {html.escape(n["subject_id"])}'
-            f" · reading grade {n['reading_grade']} · numbers checked against the ledger"
-            f" ({len(checks.get('unverified_numbers') or [])} unverified)</div>"
-            f"<p>{html.escape(n['what_changed'])}</p><p>{html.escape(n['why'])}</p>"
-            f'<p class="muted">Who to call: {html.escape(n["contact"])}</p></div>'
-        )
-    return "".join(out) or '<p class="muted">No notes in this run.</p>'
-
-
-def receipts(day: dict[str, Any], replan: dict[str, Any]) -> str:
-    rows = ""
-    for name, m in (("Day run", day), ("Re-plan", replan)):
-        u = m["usage"]
-        rows += (
-            f"<tr><th>{name}</th><td>{u['iterations']}</td><td>{u['tool_calls']}</td>"
-            f"<td>{m['elapsed_s']} s</td><td>${u['cost_usd']:.2f}</td>"
-            f"<td>{u['cache_read_share']:.0%}</td><td>{html.escape(u['model_id'])}</td></tr>"
-        )
+    b, a = metrics["before"], metrics["after"]
+    rows = (
+        (
+            "Average wait for the ride home",
+            minutes(a["mean_post_wait"]),
+            minutes(b["mean_post_wait"]),
+        ),
+        ("Longest waits (slowest tenth)", minutes(a["p90_post_wait"]), minutes(b["p90_post_wait"])),
+        (
+            "Riders picked up within 30 minutes",
+            f"{a['within_30_share']:.0%}",
+            f"{b['within_30_share']:.0%}",
+        ),
+        ("Riders a person still has to place", str(a["riders_flagged"]), str(b["riders_flagged"])),
+    )
     return (
-        "<table><tr><th></th><th>Model turns</th><th>Tool calls</th><th>Wall time</th>"
-        f"<th>Cost</th><th>Prompt read from cache</th><th>Model</th></tr>{rows}</table>"
+        '<div class="cards">'
+        + "".join(
+            f'<div class="card"><div class="label">{label}</div><div class="val">{now}</div>'
+            f'<div class="was">was {was}</div></div>'
+            for label, now, was in rows
+        )
+        + "</div>"
     )
 
 
-def render(day_dir: Path, replan_dir: Path, out: Path) -> str:
+def _move(move: dict[str, Any], names: Names) -> str:
+    kind = move["type"]
+    if kind == "reassign_vehicle":
+        return f"{names.trip(move['trip_id'])} goes on van {move['vehicle_id'][1:]}"
+    if kind == "pair_riders":
+        a, b = move["trip_ids"]
+        return f"{names.person(a)} and {names.person(b)} share van {move['vehicle_id'][1:]}"
+    if kind == "shift_pickup_window":
+        d = move["delta_min"]
+        return f"{names.trip(move['trip_id'])} moves {abs(d)} minutes {'earlier' if d < 0 else 'later'}"
+    if kind == "shift_chair_start":
+        d = move["delta_min"]
+        return f"{names.chair(move['patient_id'])} moves {abs(d)} minutes {'earlier' if d < 0 else 'later'}"
+    return kind.replace("_", " ")
+
+
+def steps(entries: list[dict[str, Any]], names: Names) -> str:
+    tools: dict[int, list[dict[str, Any]]] = {}
+    for e in entries:
+        if e["actor"] == "tool" and e["event"] not in ("run_start", "run_finish"):
+            tools.setdefault(e["iteration"], []).append(e)
+    out = []
+    n = 0
+    for e in entries:
+        if e["actor"] != "model":
+            continue
+        n += 1
+        lines: list[str] = []
+        yes, verify, applied, handed, done = [], None, None, [], None
+        for t in tools.get(e["iteration"], []):
+            r = t["payload"].get("result") or {}
+            if t["event"] in ("propose_to_unit", "propose_to_broker"):
+                who = "the dialysis unit" if t["event"].endswith("unit") else "the transit broker"
+                yes.append(f"{who} said {'yes' if r.get('accepted') else 'no'}")
+            elif t["event"] == "verify":
+                verify = r
+            elif t["event"] == "apply_bundle" and r.get("applied"):
+                applied = r["bundle"]["moves"]
+            elif t["event"] == "flag_for_review":
+                handed.append(names.person(r.get("subject", "")))
+            elif t["event"] == "finish":
+                done = r
+        if yes:
+            lines.append("The mediator put an option to both sides: " + " and ".join(yes) + ".")
+        if verify is not None:
+            v = len(verify.get("violations") or [])
+            m = verify.get("metrics") or {}
+            lines.append(
+                f"The rule checker found {v} broken rule{'s' if v != 1 else ''}; "
+                f"average wait would fall to {minutes(m.get('mean_post_wait', 0))}."
+            )
+        if applied:
+            lines.append("Applied: " + "; ".join(_move(mv, names) for mv in applied) + ".")
+        for who in handed:
+            lines.append(f"Handed {who}'s ride to a person, with the reason and a draft message.")
+        if done:
+            lines.append(
+                f"Finished: {done.get('applied')} change set{'s' if done.get('applied') != 1 else ''}"
+                f" applied, {done.get('flagged')} rider{'s' if done.get('flagged') != 1 else ''} handed to a person."
+            )
+        said = (e["payload"].get("text") or "").strip()
+        own = (
+            '<details class="own"><summary>The mediator&#39;s exact words</summary>'
+            f"<p>{html.escape(said)}</p></details>"
+            if said
+            else ""
+        )
+        out.append(
+            f'<div class="step"><div class="n">{n}</div><div>'
+            + "".join(f"<p>{html.escape(x)}</p>" for x in lines)
+            + own
+            + "</div></div>"
+        )
+    return "".join(out)
+
+
+def queue(run_dir: Path, names: Names) -> str:
+    items = _load(run_dir / "review_queue.json") or []
+    if not items:
+        return "<p>Nobody. Every rider was placed inside the rules.</p>"
+    out = []
+    for it in items:
+        why = REASONS.get(it["reason_code"], it["reason_code"].replace("_", " ").lower())
+        out.append(
+            f'<div class="box"><p><b>{html.escape(names.person(it["subject"]))}</b>: {why}. '
+            f"Goes to the {html.escape(it['owner'])}, {html.escape(it['urgency'])}.</p>"
+            f"<p>What to do: {html.escape(names.humanize(it['recommended_action']))}</p></div>"
+        )
+    return "".join(out)
+
+
+def notes(run_dir: Path, names: Names, pick: int = 2) -> str:
+    records = _load(run_dir / "explanations.json") or []
+    chosen: list[dict[str, Any]] = []
+    for audience in ("rider", "dispatcher"):
+        for r in records:
+            if r["explanation"]["audience"] == audience:
+                chosen.append(r)
+                break
+    out = []
+    for r in chosen[:pick]:
+        n = r["explanation"]
+        who = names.person(n["subject_id"]) if n["audience"] == "rider" else "the dispatcher"
+        out.append(
+            f'<div class="box"><div class="to">Note to {html.escape(who)} · '
+            f"reads at grade {n['reading_grade']:.0f} · every number checked against the record</div>"
+            f"<p>{html.escape(n['what_changed'])}</p><p>{html.escape(n['why'])}</p>"
+            f'<p class="muted">Who to call: {html.escape(n["contact"])}</p></div>'
+        )
+    return "".join(out) or "<p class='muted'>No notes in this run.</p>"
+
+
+def frame(label: str, d: Path, out: Path) -> str:
+    if not (d / "timeline.html").is_file():
+        return ""
+    try:
+        src = (d / "timeline.html").relative_to(out.parent).as_posix()
+    except ValueError:
+        src = (d / "timeline.html").resolve().as_uri()
+    return (
+        f"<details><summary>Show the schedule before and after ({label})</summary>"
+        f'<iframe src="{src}" title="{label}"></iframe></details>'
+    )
+
+
+def render(day_dir: Path, replan_dir: Path, data_dir: Path, out: Path) -> str:
     day = _load(day_dir / "metrics.json")
     replan = _load(replan_dir / "metrics.json")
-    event = _load(replan_dir / "event.json") or {}
     if not (day and replan):
         raise SystemExit("both runs need a metrics.json")
-    ev = event.get("event", {})
-    van = ev.get("payload", {}).get("vehicle_id", "?")
-    affected = ", ".join(event.get("affected") or [])
-
-    def rel(p: Path) -> str:
-        try:
-            return p.relative_to(out.parent).as_posix()
-        except ValueError:
-            return p.resolve().as_uri()
-
-    def frame(label: str, d: Path) -> str:
-        if not (d / "timeline.html").is_file():
-            return ""
-        return (
-            f"<details><summary>{label}: the before / after Gantt</summary>"
-            f'<iframe src="{rel(d / "timeline.html")}" title="{label}"></iframe></details>'
-        )
+    names = Names(data_dir)
+    unit = (_load(data_dir / "unit.json") or {}).get("name", "the dialysis unit")
+    event = (_load(replan_dir / "event.json") or {}).get("event", {})
+    van = event.get("payload", {}).get("vehicle_id", "V?")[1:]
+    at = event.get("t", "?")
+    affected = (_load(replan_dir / "event.json") or {}).get("affected") or []
+    hit = ", ".join(names.person(t) for t in affected)
+    du, ru = day["usage"], replan["usage"]
 
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>Chair-to-Ride: one day, every decision</title><style>{STYLE}</style></head>
 <body><div class="banner">{html.escape(BANNER)}</div><div class="wrap">
-<h1>Chair-to-Ride: one day, every decision</h1>
-<p class="lead">Harborline Dialysis Unit, one synthetic Wednesday. A dialysis unit's chair schedule
-and a paratransit broker's van manifest, negotiated together by a mediator agent. The model
-chooses; deterministic code counts; nothing is applied until the verifier reports zero violations
-and both parties have said yes.</p>
+<h1>Chair-to-Ride</h1>
+<p class="lead">{html.escape(unit)}, one made-up Wednesday. Dialysis chairs are booked by the
+unit. Rides are booked by a transit broker, days ahead. Nobody lines the two up, so riders sit
+in the lobby after treatment. Chair-to-Ride is a mediator that re-times both together. It may
+only apply a change when a rule checker finds nothing broken and both sides have said yes.</p>
 
-<h2>1. The morning: what the mediator changed</h2>
-<p>Run <code>{html.escape(day["run_id"])}</code>: {day["usage"]["iterations"]} model turns,
-{day["elapsed_s"]} s, ${day["usage"]["cost_usd"]:.2f}.</p>
+<h2>1. The morning: what changed</h2>
 {cards(day)}
-<h3>The decisions, in order</h3>
-{turns(_ledger(day_dir))}
-<h3>Handed to a person</h3>
-{queue(day_dir)}
-{frame("Day run", day_dir)}
+<p class="muted">Done in {day["elapsed_s"]:.0f} seconds over {du["iterations"]} rounds, for ${du["cost_usd"]:.2f}.</p>
+<h3>Decision by decision</h3>
+{steps(_ledger(day_dir), names)}
+<h3>Who still needs a person</h3>
+{queue(day_dir, names)}
+{frame("morning", day_dir, out)}
 
-<h2>2. Then van {html.escape(van)} breaks down at {html.escape(ev.get("t", "?"))}</h2>
-<p>Returns that were on that van: {html.escape(affected)}. Same rules, same verifier, same receipts.
-Run <code>{html.escape(replan["run_id"])}</code>: {replan["usage"]["iterations"]} model turns,
-{replan["elapsed_s"]} s, ${replan["usage"]["cost_usd"]:.2f}.</p>
+<h2>2. Then van {html.escape(van)} breaks down at {html.escape(at)}</h2>
+<p>Riders who were on that van: {html.escape(hit)}. Same rules, same checker.</p>
 {cards(replan)}
-<h3>The decisions, in order</h3>
-{turns(_ledger(replan_dir))}
-<h3>Handed to a person</h3>
-{queue(replan_dir)}
-{frame("Re-plan", replan_dir)}
+<p class="muted">Done in {replan["elapsed_s"]:.0f} seconds over {ru["iterations"]} rounds, for ${ru["cost_usd"]:.2f}.</p>
+<h3>Decision by decision</h3>
+{steps(_ledger(replan_dir), names)}
+<h3>Who still needs a person</h3>
+{queue(replan_dir, names)}
+{frame("after the breakdown", replan_dir, out)}
 
-<h2>3. What riders and staff are told</h2>
-<p class="lead">Every note is drafted by the model from the ledger, then every number in it is
-checked against the ledger by code before it can be sent.</p>
-<h3>After the breakdown</h3>
-{notes(replan_dir)}
-<h3>From the morning run (a sample)</h3>
-{notes(day_dir, ["E02r", "E25r", "E30d"])}
+<h2>3. What people are told</h2>
+<p class="lead">Each rider gets a short note. The mediator drafts it; code checks every time and
+number in it against the record before it can go out.</p>
+{notes(replan_dir, names)}
 
-<h2>4. Receipts</h2>
-{receipts(day, replan)}
-<p class="muted">Every line above traces to <code>ledger.jsonl</code>, <code>metrics.json</code>,
-<code>review_queue.json</code> and <code>explanations.json</code> under {html.escape(str(day_dir))}
-and {html.escape(str(replan_dir))}. The eval gate (306 offline checks, judge golden set 12/12) runs
-in about half a minute before every commit.</p>
+<h2>4. What it cost</h2>
+<p>The morning run: ${du["cost_usd"]:.2f}, {du["cache_read_share"]:.0%} of the prompt reused from
+cache. The breakdown re-plan: ${ru["cost_usd"]:.2f}. Every decision above is in a ledger a charge
+nurse can audit, and 306 automatic checks run before any code change is accepted.</p>
 </div></body></html>
 """
 
@@ -255,11 +290,14 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--day", default="runs/cp2")
     parser.add_argument("--replan", default="runs/cp3")
+    parser.add_argument("--data", default="data/synthetic/42")
     parser.add_argument("--out", default="runs/demo_story.html")
     a = parser.parse_args()
     out = Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(render(Path(a.day), Path(a.replan), out), encoding="utf-8", newline="\n")
+    out.write_text(
+        render(Path(a.day), Path(a.replan), Path(a.data), out), encoding="utf-8", newline="\n"
+    )
     print(f"story -> {out}")
     return 0
 
