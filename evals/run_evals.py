@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+GATE_DIRS = ("evals/repo", "evals/data")
 
 
 def _count(output: str, word: str) -> int:
@@ -18,10 +19,13 @@ def _count(output: str, word: str) -> int:
 
 
 def _gate() -> int:
+    present = [d for d in GATE_DIRS if (ROOT / d).is_dir()]
+    if not present:
+        print("GATE FAIL (no gate test directories found)")
+        return 1
     started = time.monotonic()
     proc = subprocess.run(
-        [sys.executable, "-m", "pytest", "evals/repo", "evals/data", "-q",
-         "-p", "no:cacheprovider"],
+        [sys.executable, "-m", "pytest", *present, "-q", "-p", "no:cacheprovider"],
         cwd=ROOT,
         capture_output=True,
         text=True,
@@ -30,11 +34,16 @@ def _gate() -> int:
     output = proc.stdout + proc.stderr
     print(output, end="" if output.endswith("\n") else "\n")
     elapsed = round(time.monotonic() - started, 1)
+    names = ", ".join(present)
     passed = _count(output, "passed")
+    failed = _count(output, "failed")
     if proc.returncode == 0:
-        print(f"GATE PASS ({passed} passed, {elapsed}s)")
+        print(f"GATE PASS ({names}: {passed} passed, {elapsed}s)")
+    elif passed or failed:
+        print(f"GATE FAIL ({names}: {passed} passed, {failed} failed, {elapsed}s)")
     else:
-        print(f"GATE FAIL ({passed} passed, {_count(output, 'failed')} failed, {elapsed}s)")
+        print(f"GATE FAIL (pytest exit {proc.returncode})")
+        print("\n".join(output.splitlines()[-30:]))
     return proc.returncode
 
 

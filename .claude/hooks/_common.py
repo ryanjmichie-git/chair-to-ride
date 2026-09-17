@@ -28,7 +28,8 @@ def repo_root() -> Path:
 
 
 def rel_path(event: dict[str, Any]) -> str | None:
-    raw = (event.get("tool_input") or {}).get("file_path")
+    tool_input = event.get("tool_input")
+    raw = tool_input.get("file_path") if isinstance(tool_input, dict) else None
     if not raw:
         return None
     root = repo_root()

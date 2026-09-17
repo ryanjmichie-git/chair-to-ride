@@ -11,18 +11,30 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from _common import block, read_event, repo_root
 
-TRACKED = ("src", "evals", "specs", "config", "prompts")
+TRACKED = (
+    "src",
+    "evals",
+    "specs",
+    "config",
+    "prompts",
+    "scripts",
+    ".claude",
+    "CLAUDE.md",
+    "Makefile",
+    "pyproject.toml",
+)
 
 
 def _digest(root: Path) -> str:
     files: list[Path] = []
     for name in TRACKED:
-        base = root / name
-        if not base.is_dir():
-            continue
-        files += [
-            p for p in base.rglob("*") if p.is_file() and "__pycache__" not in p.parts
-        ]
+        entry = root / name
+        if entry.is_file():
+            files.append(entry)
+        elif entry.is_dir():
+            files += [
+                p for p in entry.rglob("*") if p.is_file() and "__pycache__" not in p.parts
+            ]
     sha = hashlib.sha256()
     for path in sorted(files, key=lambda p: p.relative_to(root).as_posix()):
         sha.update(path.relative_to(root).as_posix().encode("utf-8"))

@@ -13,17 +13,21 @@ from _common import deny, read_event
 
 PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (
-        re.compile(r"\brm\s+(-[a-zA-Z]*r[a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*r|-r\b|-R\b|--recursive\b)"),
+        re.compile(r"\brm\s+(-[a-zA-Z]*[rR][a-zA-Z]*f|-[a-zA-Z]*f[a-zA-Z]*[rR]|-[rR]\b|--recursive\b)"),
         "recursive rm",
     ),
     (re.compile(r"\bRemove-Item\b[^|;]*-Recurse", re.IGNORECASE), "Remove-Item -Recurse"),
-    (re.compile(r"\bgit\s+push\b[^|;]*(--force-with-lease\b|--force\b|-f\b)"), "git push --force"),
+    (
+        re.compile(r"\bgit\s+push\b[^|;]*(--force-with-lease\b|--force\b|(?<=\s)-f\b)"),
+        "git push --force",
+    ),
     (re.compile(r"\bgit\s+reset\s+--hard\b"), "git reset --hard"),
     (re.compile(r"\bgit\s+clean\b[^|;]*-[a-zA-Z]*f"), "git clean -f"),
     (re.compile(r"\bgit\s+checkout\s+--\s+\."), "git checkout -- ."),
     (re.compile(r"\bgit\s+branch\s+-D\b"), "git branch -D"),
 ]
 QUOTED = re.compile(r"\"[^\"]*\"|'[^']*'")
+SEPARATORS = re.compile(r"&&|\|\||;|\|")
 
 
 def _normalise(path: str) -> str:
@@ -43,16 +47,22 @@ def _safe_roots(event: dict[str, object]) -> list[str]:
     return [_normalise(os.path.expandvars(c)) for c in candidates if c]
 
 
-def _rm_targets_safe(command: str, roots: list[str]) -> bool:
-    match = re.search(r"\brm\b(.*)$", command)
+def _segments(command: str) -> list[tuple[str, str]]:
+    masked = QUOTED.sub(lambda m: m.group(0)[0] * 2 + " " * (len(m.group(0)) - 2), command)
+    spans: list[tuple[int, int]] = []
+    start = 0
+    for separator in SEPARATORS.finditer(masked):
+        spans.append((start, separator.start()))
+        start = separator.end()
+    spans.append((start, len(command)))
+    return [(command[a:b], masked[a:b]) for a, b in spans]
+
+
+def _rm_targets_safe(segment: str, roots: list[str]) -> bool:
+    match = re.search(r"\brm\b(.*)$", segment)
     if not match or not roots:
         return False
-    targets: list[str] = []
-    for token in match.group(1).split():
-        if token in ("&&", "||", "|", ";"):
-            break
-        if not token.startswith("-"):
-            targets.append(token.strip("\"'"))
+    targets = [t.strip("\"'") for t in match.group(1).split() if not t.startswith("-")]
     if not targets:
         return False
     return all(
@@ -66,13 +76,14 @@ def main() -> int:
     command = (event.get("tool_input") or {}).get("command") or ""
     if not command:
         return 0
-    scan = QUOTED.sub('""', command)
-    hits = [label for pattern, label in PATTERNS if pattern.search(scan)]
-    if not hits:
-        return 0
-    if hits == ["recursive rm"] and _rm_targets_safe(command, _safe_roots(event)):
-        return 0
-    deny(f"blocked destructive command ({', '.join(hits)}); ask before running it")
+    roots = _safe_roots(event)
+    for raw, scan in _segments(command):
+        hits = [label for pattern, label in PATTERNS if pattern.search(scan)]
+        if not hits:
+            continue
+        if hits == ["recursive rm"] and _rm_targets_safe(raw, roots):
+            continue
+        deny(f"blocked destructive command ({', '.join(hits)}); ask before running it")
     return 0
 
 
