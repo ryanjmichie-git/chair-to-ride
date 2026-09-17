@@ -24,11 +24,12 @@ Committed at the end of the session (4 more commits, 8 for CP1 in all):
 - `Makefile`: `solve`, `timeline`; `demo` runs both. `docs/cp1-decisions.md`, `docs/llms.txt`,
   CLAUDE.md lessons 1-2.
 
-Committed after the user's follow-up (2 more commits, 10 for CP1 in all):
+Committed after the user's follow-up (3 more commits, 11 for CP1 in all):
 - `.claude/hooks/k2_guard.py` (eighth hook): refuses a `git commit` whose `src/` diff exceeds 400
   lines; tests in `evals/repo/test_hooks.py` drive it against a throwaway git repo.
 - `src/c2r/metrics.py`: `vehicle_min` counts on-task minutes (rider aboard or loading), not the
   first-to-last-stop span; `evals/invariants/test_metrics.py`.
+- `src/c2r/review.py`: the BROKER_POLICY hold message no longer blames vehicle minutes alone.
 
 ## Decisions made (details and numbers in docs/cp1-decisions.md)
 1. A shift's return pool is every van the baseline already sends for that shift's riders, either

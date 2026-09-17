@@ -89,8 +89,8 @@ def review_queue(
                     ReasonCode.BROKER_POLICY,
                     [*tried, bundle_id],
                     f"a van for this return is legal but scores J {cost:g} against {j:g} for "
-                    f"a hold (vehicle minutes); ask the dispatcher for a van at {when} or hold "
-                    "for will-call",
+                    f"a hold (J counts wait, early wait and on-task vehicle minutes); ask the "
+                    f"dispatcher for a van at {when} or hold for will-call",
                     "dispatcher",
                     "today",
                 )
