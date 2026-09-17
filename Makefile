@@ -1,4 +1,4 @@
-.PHONY: setup models synth baseline solve mediate mediate-fake perturb perturb-fake explain judge judge-only timeline dashboard dashboard-fake test test-live gate full full-fake full-collect cost-report demo check-models
+.PHONY: setup models synth baseline solve mediate mediate-fake perturb perturb-fake explain judge judge-only timeline dashboard story dashboard-fake test test-live gate full full-fake full-collect cost-report demo check-models
 
 ENV_FILE := $(wildcard .env)
 UV_RUN := uv run $(if $(ENV_FILE),--env-file $(ENV_FILE),)
@@ -46,6 +46,9 @@ timeline:
 
 dashboard:
 	$(UV_RUN) python -m c2r.viz.dashboard --watch
+
+story:
+	$(UV_RUN) python -m c2r.viz.story
 
 dashboard-fake:
 	$(UV_RUN) python -m c2r.viz.dashboard --watch --day runs/cp2-fake --replan runs/cp3-fake --out runs/demo-fake.html
