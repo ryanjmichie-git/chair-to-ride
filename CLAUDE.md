@@ -8,7 +8,8 @@ An agent re-times a dialysis unit's chair schedule against a paratransit manifes
 - `make synth` — generate synthetic data (seed 42) into `data/synthetic/42/`.
 - `make baseline` — print before-metrics for the synthetic day.
 - `make test` — run the full test suite.
-- `make gate` — run the eval gate (`evals/run_evals.py --gate`).
+- `make gate` — run the eval gate (`evals/run_evals.py --gate`, < 60 s, offline).
+- `make full` / `make full-collect` / `make cost-report` — live scenario suite into `runs/full/`, finish its judge batch, rebuild `cost_report.md`.
 - `make demo` — run the demo.
 - `/kickoff [cpN]` — spec-check, plan mode, implement, then `/review` and `/commit`.
 - `/review` — reviewer subagent reports gaps vs. the active spec.
@@ -22,6 +23,7 @@ An agent re-times a dialysis unit's chair schedule against a paratransit manifes
 - `/clear` between unrelated tasks; after two failed corrections, clear and rewrite the prompt.
 - No checkpoint starts without `/kickoff cpN` passing the spec check.
 - Manual accept for `src/c2r/verify.py` and `prompts/` edits; auto mode only for `viz/` and `docs/`.
+- `src/c2r/` is frozen since CP4 except `viz/`: a change needs a spec update, reviewer sign-off, and a waiver in `.claude/freeze.json` (hook `code_freeze.py`).
 - Diffs ≤ 400 changed lines in `src/`.
 - Every constraint lives in `verify.py`, never in a prompt.
 - Numbers come from Python; the model chooses, it never computes.

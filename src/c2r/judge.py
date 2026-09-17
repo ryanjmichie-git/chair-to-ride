@@ -249,7 +249,8 @@ def judge_run(run_dir: Path, judge: Writer, echo=print) -> list[JudgeScore]:
 
 
 def _custom_id(index: int, record: dict[str, Any]) -> str:
-    return f"{index}:{record['explanation_id']}"
+    """``<run index>-<explanation id>``: the API allows only ``[a-zA-Z0-9_-]`` in a custom_id."""
+    return f"{index}-{record['explanation_id']}"
 
 
 def judge_batch(

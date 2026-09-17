@@ -1,19 +1,47 @@
 {
-  "env": { "PYTHONUTF8": "1" },
+  "env": {
+    "PYTHONUTF8": "1"
+  },
   "hooks": {
     "PreToolUse": [
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/phi_guard.py\"", "timeout": 10 },
-          { "type": "command", "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/prompt_freeze.py\"", "timeout": 10 }
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/phi_guard.py\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/prompt_freeze.py\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/code_freeze.py\"",
+            "timeout": 15
+          }
         ]
       },
       {
         "matcher": "Bash|PowerShell",
         "hooks": [
-          { "type": "command", "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/danger_guard.py\"", "timeout": 10 },
-          { "type": "command", "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/k2_guard.py\"", "timeout": 15 }
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/danger_guard.py\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/k2_guard.py\"",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/code_freeze.py\"",
+            "timeout": 15
+          }
         ]
       }
     ],
@@ -21,20 +49,32 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/pytest_quick.py\"", "timeout": 150 }
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/pytest_quick.py\"",
+            "timeout": 150
+          }
         ]
       },
       {
         "matcher": "Write",
         "hooks": [
-          { "type": "command", "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/render_timeline.py\"", "timeout": 90 }
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/render_timeline.py\"",
+            "timeout": 90
+          }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/eval_gate.py\"", "timeout": 120 }
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/eval_gate.py\"",
+            "timeout": 120
+          }
         ]
       }
     ],
@@ -42,12 +82,20 @@
       {
         "matcher": "startup|resume|clear",
         "hooks": [
-          { "type": "command", "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/session_brief.py\"", "timeout": 15 }
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/session_brief.py\"",
+            "timeout": 15
+          }
         ]
       }
     ]
   },
   "permissions": {
-    "deny": ["Read(./data/real/**)", "Edit(./data/real/**)", "Write(./data/real/**)"]
+    "deny": [
+      "Read(./data/real/**)",
+      "Edit(./data/real/**)",
+      "Write(./data/real/**)"
+    ]
   }
 }

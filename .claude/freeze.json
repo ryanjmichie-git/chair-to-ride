@@ -1,0 +1,13 @@
+{
+  "active": false,
+  "since": "cp4",
+  "date": "2026-09-17",
+  "frozen": [
+    "src/c2r/**"
+  ],
+  "allowed": [
+    "src/c2r/viz/**"
+  ],
+  "rule": "Any further src/c2r edit needs a spec update and reviewer sign-off (specs/cp4-evals-freeze.md). Record both as a waiver below; the hook code_freeze.py refuses edits and commits without one.",
+  "waivers": []
+}

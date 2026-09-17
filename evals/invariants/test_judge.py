@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import copy
 import json
+import re
 
 import pytest
 
@@ -205,7 +206,9 @@ def test_judge_batch_writes_every_run_from_one_batch(two_runs: list, tmp_path) -
     outcome = judge.judge_batch(two_runs, writer, state_path, echo=lambda *_: None, poll_s=0)
     assert outcome["collected"] is True and outcome["batch_id"] == "fake-batch-1"
     items = writer.batches["fake-batch-1"]
-    assert {i.custom_id.split(":")[0] for i in items} == {"0", "1"}
+    assert {i.custom_id.split("-")[0] for i in items} == {"0", "1"}
+    for item in items:  # the Batches API rejects anything else (a colon cost one live submit)
+        assert re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", item.custom_id), item.custom_id
     assert outcome["items"] == len(items) == outcome["results"]
     for run_dir in two_runs:
         scores = json.loads((run_dir / "judge_scores.json").read_text(encoding="utf-8"))
@@ -228,7 +231,7 @@ def test_judge_collect_finishes_a_batch_from_the_saved_state(two_runs: list, tmp
     records = json.loads((two_runs[0] / "explanations.json").read_text(encoding="utf-8"))
     system, _ = judge._prompt()
     items = [
-        BatchItem(f"0:{r['explanation_id']}", system, judge._user(r), judge.SCHEMA) for r in records
+        BatchItem(f"0-{r['explanation_id']}", system, judge._user(r), judge.SCHEMA) for r in records
     ]
     batch_id = writer.submit(items[:-1])  # one verdict never comes back
     state_path = tmp_path / "state.json"
