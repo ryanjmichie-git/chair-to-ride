@@ -25,7 +25,7 @@ def respond(baseline: State, candidate: State, bundle: Bundle) -> PartyResponse:
         for stop in route.stops
         if stop.kind == StopKind.pickup
     }
-    requested = requested_times(candidate.manifest, baseline.manifest)
+    requested = requested_times(candidate.manifest, baseline.manifest, candidate.roster)
     unknown = [trip_id for trip_id in trips_touched(bundle) if trip_id not in trips]
     if unknown:
         return reject(ReasonCode.BROKER_POLICY, f"no such trip on the manifest: {unknown}")

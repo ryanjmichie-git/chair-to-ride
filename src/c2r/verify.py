@@ -20,12 +20,13 @@ from c2r.models import (
     Roster,
     StopKind,
     Travel,
+    Trip,
     TripStatus,
     Unit,
     VerifyResult,
     Violation,
 )
-from c2r.state import State, scheduled_ready, session_end
+from c2r.state import State, actual_ready, scheduled_ready, session_end
 from c2r.timeutil import to_hhmm, to_min, window_min
 
 Violations = list[tuple[str, str, str]]
@@ -165,27 +166,36 @@ def h6_return_window_opens_after_ready(roster: Roster, manifest: Manifest) -> Vi
     return found
 
 
-def requested_times(candidate: Manifest, baseline: Manifest) -> dict[str, str]:
-    """The negotiation anchor: the baseline's request for a standing order, else the candidate's.
+def is_will_call(trip: Trip) -> bool:
+    """A return with no standing window is a will-call: the rider's request comes when done."""
+    return trip.status == TripStatus.will_call or trip.window is None
 
-    A will-call rider has no request until they are done, so that one may be set later.
+
+def requested_times(candidate: Manifest, baseline: Manifest, roster: Roster) -> dict[str, str]:
+    """The negotiation anchor per trip, never read from a field the solver writes.
+
+    A standing order anchors on the baseline's request. A will-call rider has no request until
+    they are done, so the anchor is their actual ready time from the roster.
     """
+    patients = {patient.patient_id: patient for patient in roster.patients}
+    riders = {rider.rider_id: rider for rider in roster.riders}
     anchors = {
-        trip.trip_id: trip.requested_time
-        for trip in baseline.trips
-        if trip.status != TripStatus.will_call
+        trip.trip_id: trip.requested_time for trip in baseline.trips if not is_will_call(trip)
     }
     return {
-        trip.trip_id: anchors.get(trip.trip_id, trip.requested_time) for trip in candidate.trips
+        trip.trip_id: anchors.get(
+            trip.trip_id, to_hhmm(actual_ready(patients[riders[trip.rider_id].patient_id]))
+        )
+        for trip in candidate.trips
     }
 
 
 def h7_window_inside_negotiation_band(
-    candidate: Manifest, baseline: Manifest, rules: dict[str, Any]
+    candidate: Manifest, baseline: Manifest, roster: Roster, rules: dict[str, Any]
 ) -> Violations:
     band = rules["broker"]["ada_negotiation_min"]
     width = rules["broker"]["pickup_window_min"]
-    requested = requested_times(candidate, baseline)
+    requested = requested_times(candidate, baseline, roster)
     found: Violations = []
     for trip in candidate.trips:
         if trip.status != TripStatus.scheduled:
@@ -434,7 +444,9 @@ def all_violations(candidate: State, baseline: State) -> Violations:
         *h2_prescriptions_immutable(candidate.roster, baseline.roster),
         *h3_h4_pinned_starts(candidate.roster, baseline.roster),
         *h5_stagger_bins(candidate.unit, candidate.roster),
-        *h7_window_inside_negotiation_band(candidate.manifest, baseline.manifest, candidate.rules),
+        *h7_window_inside_negotiation_band(
+            candidate.manifest, baseline.manifest, candidate.roster, candidate.rules
+        ),
         *h11_nobody_stranded(candidate.roster, candidate.manifest),
         *h13_equity_budget(candidate.roster, baseline.roster, candidate.rules),
         *ride_violations(

@@ -17,7 +17,7 @@ from c2r.models import (
     ViolationCode,
     Window,
 )
-from c2r.state import State, load_state, scheduled_ready
+from c2r.state import State, actual_ready, load_state, scheduled_ready
 from c2r.timeutil import to_hhmm, to_min
 from c2r.verify import verify
 
@@ -236,3 +236,15 @@ def test_h9_trip_split_across_vehicles_or_dropoff_first(baseline: State, day: St
     day.manifest.routes[0].stops.reverse()
     found = [v for v in verify(day, baseline).violations if v.code.value == "H9"]
     assert any("dropoff before pickup" in v.detail for v in found)
+
+
+def test_h7_binds_a_will_call_rider_to_their_ready_time(baseline: State, day: State) -> None:
+    trip = next(t for t in day.return_trips() if t.window is None)
+    ready = actual_ready(day.patient_of(trip))
+    trip.status = TripStatus.scheduled
+    trip.requested_time = to_hhmm(ready + 300)
+    trip.window = Window(root=[to_hhmm(ready + 285), to_hhmm(ready + 315)])
+    assert any(
+        v.code.value == "H7" and v.subject_id == trip.trip_id
+        for v in verify(day, baseline).violations
+    )

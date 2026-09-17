@@ -26,10 +26,15 @@ from c2r.models import (
 )
 from c2r.state import UNIT_NODE, State, actual_ready
 from c2r.timeutil import to_hhmm, to_min, window_min
-from c2r.verify import CLASS_OF
+from c2r.verify import CLASS_OF, is_will_call
 
 EMPTY = Load(ambulatory=0, wheelchair=0, stretcher=0)
 Matrix = list[list[int]]
+MIDNIGHT = 24 * 60
+
+
+class Infeasible(ValueError):
+    """The plan cannot be laid out inside the day; the caller treats it as illegal."""
 
 
 @dataclass
@@ -103,14 +108,16 @@ def plan_from_manifest(state: State) -> Plan:
 
 
 def committed_vans(state: State) -> dict[str, set[str]]:
-    """Vans that already carry a shift's returns in the baseline: the broker's commitment."""
+    """Vans the baseline already sends for a shift's riders, either leg: the broker's commitment.
+
+    Using one of them inside an opening is not extra vehicle hours; any other van is.
+    """
     trips = {trip.trip_id: trip for trip in state.manifest.trips}
     pool: dict[str, set[str]] = {shift.shift_id.value: set() for shift in state.unit.shifts}
     for route in state.manifest.routes:
         for stop in route.stops:
-            trip = trips[stop.trip_id]
-            if trip.leg == Leg.from_ and stop.kind == StopKind.pickup:
-                pool[state.patient_of(trip).shift_id.value].add(route.vehicle_id)
+            if stop.kind == StopKind.pickup:
+                pool[state.patient_of(trips[stop.trip_id]).shift_id.value].add(route.vehicle_id)
     return pool
 
 
@@ -146,6 +153,8 @@ def _window(opens: int, width: int) -> Window:
 
 
 def _stop(trip_id: str, kind: StopKind, node: int, eta: int) -> RouteStop:
+    if eta >= MIDNIGHT:
+        raise Infeasible(f"{trip_id} {kind.value} would land after midnight")
     return RouteStop(trip_id=trip_id, kind=kind, node=node, eta=to_hhmm(eta), load_after=EMPTY)
 
 
@@ -206,7 +215,8 @@ def build_manifest(baseline: State, roster: Roster, plan: Plan) -> Manifest:
     width = broker["pickup_window_min"]
     patients = {p.patient_id: p for p in roster.patients}
     riders = baseline.riders
-    trips = {t.trip_id: t.model_copy(deep=True) for t in baseline.manifest.trips}
+    # Shallow copies: every field a move can change is reassigned below, never mutated in place.
+    trips = {t.trip_id: t.model_copy() for t in baseline.manifest.trips}
     patient: dict[str, Patient] = {
         t.trip_id: patients[riders[t.rider_id].patient_id] for t in trips.values()
     }
@@ -229,7 +239,7 @@ def build_manifest(baseline: State, roster: Roster, plan: Plan) -> Manifest:
         van = vehicles[batch.vehicle_id]
         own = tasks.setdefault(batch.vehicle_id, [])
         own.append(_place(own, batch, window_min(van.shift), van.depot_node, geo))
-    baseline_status = {t.trip_id: t.status for t in baseline.manifest.trips}
+    will_call = {t.trip_id for t in baseline.manifest.trips if is_will_call(t)}
     for trip in baseline.return_trips():
         trip = trips[trip.trip_id]
         trip.vehicle_id, trip.seq = None, None
@@ -241,7 +251,7 @@ def build_manifest(baseline: State, roster: Roster, plan: Plan) -> Manifest:
             if trip.status == TripStatus.scheduled
             else None
         )
-        if baseline_status[trip.trip_id] == TripStatus.will_call:
+        if trip.trip_id in will_call:
             # A will-call rider has no request until they are done; the plan supplies it.
             trip.requested_time = to_hhmm(plan.requested[trip.trip_id])
     routes: list[Route] = []

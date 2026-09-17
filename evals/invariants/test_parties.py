@@ -178,9 +178,12 @@ def test_broker_rejects_stretcher_out_of_band_and_uncommitted_vans(baseline: Sta
     candidate = baseline.with_(manifest=build_manifest(baseline, baseline.roster, plan))
     reply = broker.respond(baseline, candidate, bundle(window_move(trip.trip_id, 90)))
     assert reply.reason_code == ReasonCode.NO_FEASIBLE_WINDOW
+    manifest = baseline.manifest.model_copy(deep=True)
+    manifest.routes = [r for r in manifest.routes if r.vehicle_id != "V5"]
+    without_v5 = baseline.with_(manifest=manifest)
     reply = broker.respond(
-        baseline,
-        baseline,
+        without_v5,
+        without_v5,
         bundle(ReassignVehicle(type="reassign_vehicle", trip_id=trip.trip_id, vehicle_id="V5")),
     )
     assert reply.reason_code == ReasonCode.BROKER_POLICY
@@ -205,7 +208,9 @@ def test_broker_rejects_rather_than_crashes_on_bad_moves(baseline: State) -> Non
 
 
 def test_broker_accepts_uncommitted_vans_at_autonomy_2(baseline: State) -> None:
-    trusted = baseline.with_(rules={**baseline.rules, "autonomy_level": 2})
+    manifest = baseline.manifest.model_copy(deep=True)
+    manifest.routes = [r for r in manifest.routes if r.vehicle_id != "V5"]
+    trusted = baseline.with_(manifest=manifest, rules={**baseline.rules, "autonomy_level": 2})
     trip = scheduled_return(baseline)
     reply = broker.respond(
         trusted,

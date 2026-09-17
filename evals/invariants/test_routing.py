@@ -61,8 +61,12 @@ def test_rebuilding_the_baseline_from_its_own_plan_reproduces_it(baseline: State
     assert verify(baseline.with_(manifest=rebuilt), baseline).violations == []
 
 
-def test_committed_vans_are_one_per_shift_on_seed_42(baseline: State) -> None:
-    assert committed_vans(baseline) == {"S1": {"V1"}, "S2": {"V2"}, "S3": {"V3"}}
+def test_committed_vans_are_the_vans_already_sent_for_a_shift(baseline: State) -> None:
+    every = {"V1", "V2", "V3", "V4", "V5"}
+    assert committed_vans(baseline) == {"S1": every, "S2": every, "S3": every}
+    manifest = baseline.manifest.model_copy(deep=True)
+    manifest.routes = [r for r in manifest.routes if r.vehicle_id != "V5"]
+    assert "V5" not in committed_vans(baseline.with_(manifest=manifest))["S1"]
 
 
 def test_a_window_moved_to_the_ready_time_cuts_that_riders_wait(baseline: State) -> None:
@@ -133,3 +137,29 @@ def test_interleaved_pickups_and_dropoffs_stay_in_one_batch(baseline: State) -> 
     plan = plan_from_manifest(baseline.with_(manifest=manifest))
     first, second = stops[shared].trip_id, stops[shared + 2].trip_id
     assert plan.batch_of(first) is not plan.batch_of(second)
+
+
+def test_a_will_call_rider_can_be_reassigned_without_breaking_h7(baseline: State) -> None:
+    from c2r.models import Bundle, Predicted, ReassignVehicle
+    from c2r.moves import apply
+
+    plan = plan_from_manifest(baseline)
+    will_call = [t for t in baseline.return_trips() if t.window is None]
+    assert will_call
+    for trip in will_call:
+        if baseline.patient_of(trip).mobility == Mobility.stretcher:
+            continue
+        move = ReassignVehicle(type="reassign_vehicle", trip_id=trip.trip_id, vehicle_id="V1")
+        bundle = Bundle(
+            bundle_id="B-wc",
+            side="broker",
+            moves=[move],
+            predicted=Predicted(
+                delta_wait_min=0, delta_early_min=0, chair_changes=0, consent_moves=0, vehicle_min=0
+            ),
+            touches=[],
+            notes_relevant=[],
+        )
+        state, _ = apply(baseline, baseline, plan, bundle)
+        h7 = [v for v in verify(state, baseline).violations if v.code.value == "H7"]
+        assert not [v for v in h7 if v.subject_id == trip.trip_id], h7
