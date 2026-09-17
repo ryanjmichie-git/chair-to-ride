@@ -154,9 +154,62 @@ def test_h9_infeasible_timing_and_outside_shift(baseline: State, day: State) -> 
 
 
 def test_h9_down_vehicle_takes_no_stops(baseline: State, day: State) -> None:
+    """A vehicle down from the start of its shift takes no stops at all."""
     vehicle = day.fleet.vehicles[0]
     vehicle.status = VehicleStatus.down
+    vehicle.shift = Window(root=[vehicle.shift.root[0], vehicle.shift.root[0]])
     assert "H9" in codes(day, baseline)
+
+
+def test_h9_down_vehicle_keeps_the_stops_it_made_before_t_down(baseline: State, day: State) -> None:
+    """vehicle_down at t: the shift ends at t. Stops before t stand; a stop after t is H9."""
+    vehicle = next(v for v in day.fleet.vehicles if v.vehicle_id == "V3")
+    vehicle.status = VehicleStatus.down
+    vehicle.shift = Window(root=[vehicle.shift.root[0], "13:40"])
+    found = [v for v in verify(day, baseline).violations if v.code.value == "H9"]
+    assert found and all(v.subject_id == "V3" for v in found)
+    route = next(r for r in day.manifest.routes if r.vehicle_id == "V3")
+    late = {s.trip_id for s in route.stops if to_min(s.eta) >= to_min("13:40")}
+    route.stops = [s for s in route.stops if s.trip_id not in late]
+    for trip in day.manifest.trips:
+        if trip.trip_id in late:
+            trip.status = TripStatus.queued
+    assert "H9" not in codes(day, baseline)
+
+
+def test_now_freezes_chairs_already_started(baseline: State, day: State) -> None:
+    """At `now`, a patient already on the chair cannot be moved; one who starts later can."""
+    now = day.with_(now=to_min("13:40"))
+    movable = [
+        p for p in now.roster.patients if p.consent_to_move and not p.clinically_fixed
+    ]
+    started = next(p for p in movable if to_min(p.start_time) < to_min("13:40"))
+    started.start_time = to_hhmm(to_min(started.start_time) + 15)
+    assert "H3" in codes(now, baseline)
+    assert "H3" not in codes(day.with_(now=None), baseline)
+    started.start_time = baseline.patients[started.patient_id].start_time
+    later = next(p for p in movable if to_min(p.start_time) > to_min("13:40"))
+    later.start_time = to_hhmm(to_min(later.start_time) + 15)
+    assert {"H3", "H4"}.isdisjoint(codes(now, baseline))
+
+
+def test_now_freezes_stops_already_served(baseline: State, day: State) -> None:
+    """At `now`, a route stop that already happened keeps its time and van."""
+    now = day.with_(now=to_min("13:40"))
+    route = next(r for r in now.manifest.routes if to_min(r.stops[0].eta) < to_min("13:40"))
+    route.stops[0].eta = to_hhmm(to_min(route.stops[0].eta) - 1)
+    assert "H9" not in codes(day.with_(now=None), baseline)
+    assert "H9" in codes(now, baseline)
+
+
+def test_now_freezes_windows_already_open(baseline: State, day: State) -> None:
+    """At `now`, a trip whose window opened earlier keeps its window, van and status."""
+    now = day.with_(now=to_min("13:40"))
+    trip = next(t for t in now.manifest.trips if t.trip_id == "P01f")  # window 10:35-11:05
+    trip.window = Window(root=["10:40", "11:10"])
+    assert "H9" not in codes(day.with_(now=None), baseline)
+    found = [v for v in verify(now, baseline).violations if v.code.value == "H9"]
+    assert [v.subject_id for v in found] == ["P01f"]
 
 
 def test_h10_ride_too_long(baseline: State, day: State) -> None:

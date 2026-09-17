@@ -20,6 +20,10 @@ PRICES: dict[str, dict[str, float]] = {
 FAKE_MODEL = "fake-mediator"
 
 
+class MediatorError(RuntimeError):
+    """The API call failed after every retry; the loop force-finishes instead of crashing."""
+
+
 def cost_usd(model: str, usage: Usage) -> float:
     price = PRICES.get(model)
     if price is None:
@@ -103,10 +107,9 @@ class AnthropicMediator:
                 raise
             except (a.APIConnectionError, a.RateLimitError, a.InternalServerError) as exc:
                 if attempt >= self.retries:
-                    raise
+                    raise MediatorError(f"{type(exc).__name__}: {exc}") from exc
                 attempt += 1
                 time.sleep(2.0 * attempt)
-                del exc
         usage = Usage(
             input=response.usage.input_tokens,
             cache_read=response.usage.cache_read_input_tokens or 0,

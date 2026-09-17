@@ -35,13 +35,13 @@ def baseline() -> State:
 
 
 @pytest.fixture(scope="module")
-def out(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    return tmp_path_factory.mktemp("cp2-fake")
+def out(fake_run) -> Path:
+    return fake_run.out
 
 
 @pytest.fixture(scope="module")
-def result(out: Path) -> Result:
-    return orchestrator.run(DATA, out, FakeMediator(), echo=lambda *_: None)
+def result(fake_run) -> Result:
+    return fake_run.result
 
 
 @pytest.fixture(scope="module")

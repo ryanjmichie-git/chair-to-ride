@@ -31,7 +31,7 @@ from c2r.timeutil import to_hhmm, to_min, window_min
 
 Violations = list[tuple[str, str, str]]
 # Sub-codes kept for readable details; the schema only knows H1-H13.
-CODE_OF = {"H9_SHIFT": "H9", "H9_ROUTE": "H9", "BROKER_EARLIEST": "H9"}
+CODE_OF = {"H9_SHIFT": "H9", "H9_ROUTE": "H9", "H9_PAST": "H9", "BROKER_EARLIEST": "H9"}
 # Seat class each mobility occupies on a van.
 CLASS_OF = {
     "ambulatory": "ambulatory",
@@ -99,14 +99,27 @@ def h2_prescriptions_immutable(candidate: Roster, baseline: Roster) -> Violation
     return found
 
 
-def h3_h4_pinned_starts(candidate: Roster, baseline: Roster) -> Violations:
+def h3_h4_pinned_starts(candidate: Roster, baseline: Roster, now: int | None = None) -> Violations:
+    """Fixed and non-consenting starts never move; at ``now``, neither does a session that
+    has already begun (or would have to begin in the past)."""
     before = {patient.patient_id: patient.start_time for patient in baseline.patients}
     found: Violations = []
     for patient in candidate.patients:
         start = before.get(patient.patient_id, patient.start_time)
         if start == patient.start_time:
             continue
-        if patient.clinically_fixed:
+        if now is not None and min(to_min(start), to_min(patient.start_time)) < now:
+            found.append(
+                (
+                    "H3",
+                    patient.patient_id,
+                    (
+                        f"already on the chair at {to_hhmm(now)}; start {start} moved to "
+                        f"{patient.start_time}"
+                    ),
+                )
+            )
+        elif patient.clinically_fixed:
             found.append(
                 ("H3", patient.patient_id, f"fixed start {start} moved to {patient.start_time}")
             )
@@ -317,14 +330,14 @@ def h9_route_integrity(manifest: Manifest) -> Violations:
 
 
 def h9_vehicle_inside_shift(manifest: Manifest, fleet: Fleet) -> Violations:
+    """Vehicles operate only inside their shift. A down vehicle's shift ends when it went down
+    (``t_down``): the stops it made before that stand, anything after is a violation."""
     shifts = {vehicle.vehicle_id: window_min(vehicle.shift) for vehicle in fleet.vehicles}
     down = {vehicle.vehicle_id for vehicle in fleet.vehicles if vehicle.status.value == "down"}
     found: Violations = []
     for route in manifest.routes:
         if not route.stops:
             continue
-        if route.vehicle_id in down:
-            found.append(("H9_SHIFT", route.vehicle_id, "vehicle is down but has stops"))
         opens, closes = shifts[route.vehicle_id]
         first = to_min(route.stops[0].eta)
         last = to_min(route.stops[-1].eta)
@@ -332,8 +345,61 @@ def h9_vehicle_inside_shift(manifest: Manifest, fleet: Fleet) -> Violations:
             found.append(
                 ("H9_SHIFT", route.vehicle_id, f"first stop {to_hhmm(first)} before shift")
             )
-        if last > closes:
+        if route.vehicle_id in down:
+            for stop in route.stops:
+                if to_min(stop.eta) > closes:
+                    found.append(
+                        (
+                            "H9_SHIFT",
+                            route.vehicle_id,
+                            (
+                                f"down at {to_hhmm(closes)} but {stop.trip_id} "
+                                f"{stop.kind.value} at {stop.eta}"
+                            ),
+                        )
+                    )
+        elif last > closes:
             found.append(("H9_SHIFT", route.vehicle_id, f"last stop {to_hhmm(last)} after shift"))
+    return found
+
+
+def h9_past_is_frozen(candidate: Manifest, baseline: Manifest, now: int) -> Violations:
+    """At ``now``, every stop already made and every window already open stays as it was."""
+    when = to_hhmm(now)
+
+    def served(manifest: Manifest) -> dict[tuple[str, str, str], tuple[str, int]]:
+        return {
+            (route.vehicle_id, stop.trip_id, stop.kind.value): (stop.eta, stop.node)
+            for route in manifest.routes
+            for stop in route.stops
+            if to_min(stop.eta) < now
+        }
+
+    before, after = served(baseline), served(candidate)
+    found: Violations = []
+    for (vehicle, trip_id, kind), (eta, _) in sorted(before.items()):
+        if after.get((vehicle, trip_id, kind)) != before[(vehicle, trip_id, kind)]:
+            found.append(("H9_PAST", vehicle, f"{trip_id} {kind} at {eta} happened before {when}"))
+    for (vehicle, trip_id, kind), (eta, _) in sorted(after.items() - before.items()):
+        if (vehicle, trip_id, kind) not in before:
+            found.append(("H9_PAST", vehicle, f"{trip_id} {kind} at {eta} is before {when}"))
+    trips = {trip.trip_id: trip for trip in candidate.trips}
+    for trip in baseline.trips:
+        if trip.window is None or window_min(trip.window)[0] >= now:
+            continue
+        now_trip = trips.get(trip.trip_id)
+        if now_trip is None or (now_trip.vehicle_id, now_trip.window, now_trip.status) != (
+            trip.vehicle_id,
+            trip.window,
+            trip.status,
+        ):
+            found.append(
+                (
+                    "H9_PAST",
+                    trip.trip_id,
+                    f"window opened {trip.window.root[0]}, before {when}; it cannot change",
+                )
+            )
     return found
 
 
@@ -442,7 +508,7 @@ def all_violations(candidate: State, baseline: State) -> Violations:
     return [
         *h1_chairs_never_overlap(candidate.unit, candidate.roster),
         *h2_prescriptions_immutable(candidate.roster, baseline.roster),
-        *h3_h4_pinned_starts(candidate.roster, baseline.roster),
+        *h3_h4_pinned_starts(candidate.roster, baseline.roster, candidate.now),
         *h5_stagger_bins(candidate.unit, candidate.roster),
         *h7_window_inside_negotiation_band(
             candidate.manifest, baseline.manifest, candidate.roster, candidate.rules
@@ -451,6 +517,11 @@ def all_violations(candidate: State, baseline: State) -> Violations:
         *h13_equity_budget(candidate.roster, baseline.roster, candidate.rules),
         *ride_violations(
             candidate.roster, candidate.manifest, candidate.fleet, candidate.travel, candidate.rules
+        ),
+        *(
+            h9_past_is_frozen(candidate.manifest, baseline.manifest, candidate.now)
+            if candidate.now is not None
+            else []
         ),
     ]
 

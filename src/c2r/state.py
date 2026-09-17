@@ -25,6 +25,7 @@ class State:
     fleet: Fleet
     travel: Travel
     rules: dict[str, Any]
+    now: int | None = None  # minutes since midnight when a re-plan runs; None for a full day
 
     @property
     def patients(self) -> dict[str, Patient]:
