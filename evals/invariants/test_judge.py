@@ -120,3 +120,13 @@ def test_judge_golden_writes_scores_summary_and_ledger_to_a_new_dir(tmp_path) ->
     assert len(ledger.read(out / "judge.jsonl")) == 12
     written = json.loads((out / "judge_summary.json").read_text(encoding="utf-8"))
     assert written["golden_agreement"] == summary["golden_agreement"]
+
+
+def test_judge_calibration_books_its_calls_in_their_own_ledger(tmp_path) -> None:
+    out = tmp_path / "golden-judge"
+    status = judge.judge_calibration(FakeJudge(), out, echo=lambda *_: None)
+    assert status["items"] == 10 and (out / "calibration_scores.json").is_file()
+    entries = ledger.read(out / "calibration.jsonl")
+    assert len(entries) == 10 and {e.run_id for e in entries} == {"calibration"}
+    assert status["usage"]["iterations"] == 10  # the fake model has no price, so no cost check
+    assert status["usage"]["tokens"]["input"] == 10 * entries[0].usage.input

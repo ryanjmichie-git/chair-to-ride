@@ -188,6 +188,7 @@ def test_a_tampered_verify_hash_breaks_i19(entries: list[LedgerEntry]) -> None:
 def test_the_harness_forces_finish_at_the_iteration_cap(tmp_path: Path) -> None:
     rules = copy.deepcopy(load_rules())
     rules["stop"]["max_iterations"] = 1
+    rules["max_moves_per_bundle"] = 1  # the cap is what is under test, not the chained bundle
     out = tmp_path / "capped"
     result = orchestrator.run(DATA, out, FakeMediator(), echo=lambda *_: None, rules=rules)
     entries = ledger.read(out / "ledger.jsonl")

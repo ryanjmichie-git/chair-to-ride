@@ -132,6 +132,9 @@ def test_apply_refuses_a_hash_from_an_earlier_version(scripted: Scripted) -> Non
 def test_autonomy_zero_never_applies() -> None:
     rules = copy.deepcopy(load_rules())
     rules["autonomy_level"] = 0
+    rules["max_moves_per_bundle"] = (
+        1  # skip the chained bundle's 3 s greedy pass; any candidate will do
+    )
     session = tools.new_session(load_state(DATA, rules))
     generated = tools.dispatch(session, "generate_candidates", {"side": "broker", "k": 2})
     bid = generated["candidates"][0]["bundle_id"]

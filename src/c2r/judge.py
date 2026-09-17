@@ -164,12 +164,14 @@ def _write(out_dir: Path, verdicts: list[JudgeScore], summary: dict[str, Any]) -
         )
 
 
-def _book(out_dir: Path, run_id: str, judge: Writer, hashes: dict[str, str]) -> Ledger:
+def _book(
+    out_dir: Path, run_id: str, judge: Writer, hashes: dict[str, str], name: str = "judge.jsonl"
+) -> Ledger:
     system, version = _prompt()
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "judge.jsonl").write_text("", encoding="utf-8")
+    (out_dir / name).write_text("", encoding="utf-8")
     return Ledger(
-        out_dir / "judge.jsonl",
+        out_dir / name,
         run_id,
         git_sha(),
         judge.model_id,
@@ -233,7 +235,7 @@ def judge_golden(judge: Writer, out_dir: Path, echo=print) -> dict[str, Any]:
 
 def calibration_status(
     path: Path = CALIBRATION, verdicts: dict[str, bool] | None = None
-) -> dict[str, int]:
+) -> dict[str, Any]:
     """How many of the ten items the clinical teammate has graded, and how many agree with
     the judge's verdicts (when given)."""
     items = json.loads(path.read_text(encoding="utf-8"))
@@ -253,14 +255,23 @@ def judge_calibration(judge: Writer, out_dir: Path, echo=print) -> dict[str, Any
         record = dict(item["record"])
         record["explanation_id"] = item["calibration_id"]
         records.append(record)
-    verdicts = judge_records(records, judge, echo)
+    book = _book(
+        out_dir,
+        "calibration",
+        judge,
+        {"judge_calibration.json": sha(CALIBRATION.read_text(encoding="utf-8"))},
+        name="calibration.jsonl",
+    )
+    verdicts = judge_records(records, judge, echo, book)
     (out_dir / "calibration_scores.json").write_text(
         json.dumps([v.model_dump(by_alias=True) for v in verdicts], indent=2, sort_keys=True)
         + "\n",
         encoding="utf-8",
         newline="\n",
     )
-    return calibration_status(verdicts={v.explanation_id: v.pass_ for v in verdicts})
+    status = calibration_status(verdicts={v.explanation_id: v.pass_ for v in verdicts})
+    status["usage"] = usage_summary(book.entries)
+    return status
 
 
 def main() -> int:

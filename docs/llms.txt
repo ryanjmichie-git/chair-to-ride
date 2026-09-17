@@ -6,12 +6,12 @@ An agent re-times a dialysis unit's chair schedule against a paratransit manifes
 - [CHAIR-TO-RIDE-HANDOFF.md](../CHAIR-TO-RIDE-HANDOFF.md): the full product and technical spec this repo is built from.
 - [CLAUDE.md](../CLAUDE.md): commands, rules of engagement, and lessons for a Claude Code session.
 - [KICKOFF.md](../KICKOFF.md): tonight's build runbook — roles, session table, emergency cut.
-- [Makefile](../Makefile): `setup`, `models`, `synth`, `baseline`, `solve`, `mediate` (live Fable 5.1 loop into `runs/cp2`), `mediate-fake` (offline), `timeline`, `test`, `test-live` (with the API key from `.env`), `gate`, `demo`, `check-models` targets.
+- [Makefile](../Makefile): `setup`, `models`, `synth`, `baseline`, `solve`, `mediate` (live Fable 5.1 loop into `runs/cp2`), `mediate-fake` (offline), `perturb` (V3 down at 13:40 against `runs/cp2`, into `runs/cp3`), `perturb-fake`, `explain` (Sonnet 5 notes for both runs), `judge` (Fable 5.1 low on both runs), `judge-only` (the golden set), `timeline`, `test`, `test-live`, `gate`, `demo` (mediate then perturb), `check-models` targets.
 - [pyproject.toml](../pyproject.toml): package `c2r`, dependencies, ruff/pytest config.
 - [config/](../config/): `rules.yaml` (constants + weights), `unit_policy.md`, `broker_policy.md`.
 - [data/](../data/): `names.json` and `synthetic/<seed>/` — the only data this project ever reads.
-- [docs/](../docs/): this index, `cp0-deviations.md`, `cp1-decisions.md`, `cp2-decisions.md`, and `demo_script.md` / `backup.mp4` once CP5 lands.
-- [evals/](../evals/): `invariants/` (I1–I20), `scenarios/`, `golden/`, `repo/`, `data/`, `run_evals.py`.
+- [docs/](../docs/): this index, `cp0-deviations.md`, `cp1-decisions.md`, `cp2-decisions.md`, `cp3-decisions.md`, and `demo_script.md` / `backup.mp4` once CP5 lands.
+- [evals/](../evals/): `invariants/` (I1–I20, `conftest.py` shares one offline mediator run), `scenarios/`, `golden/`, `repo/` (`test_prompts.py`: frontmatter and PHI contract), `data/` (`golden_explanations.json`, 12 hand-verdicted notes; `judge_calibration.json`, 10 notes for the clinical teammate), `run_evals.py` (`--gate`, `--judge-only`).
 - [prompts/](../prompts/): versioned LLM prompts (`synth_notes`, `mediator`, `explainer`, `judge`).
 - [runs/](../runs/): per-run outputs — schedules, ledger, metrics, timeline.
 - [scripts/](../scripts/): `spec_check.py`, `add_lesson.py`, `check_models.py`.
@@ -27,16 +27,20 @@ An agent re-times a dialysis unit's chair schedule against a paratransit manifes
 - [src/c2r/metrics.py](../src/c2r/metrics.py): `compute_metrics()` — the one place wait/equity numbers are computed.
 - [src/c2r/timeutil.py](../src/c2r/timeutil.py): `to_min`, `to_hhmm`, `p90` helpers.
 - [src/c2r/banner.py](../src/c2r/banner.py): the required "SYNTHETIC DATA" output banner.
-- [src/c2r/state.py](../src/c2r/state.py): `State` (unit, roster, manifest, fleet, travel, rules), `load_state`, `scheduled_ready`, `actual_ready`.
-- [src/c2r/verify.py](../src/c2r/verify.py): `verify(candidate, baseline)` — H1-H13, metrics and hash, recomputed from the roster and stop sequence.
+- [src/c2r/state.py](../src/c2r/state.py): `State` (unit, roster, manifest, fleet, travel, rules, `now` for a re-plan), `load_state`, `scheduled_ready`, `actual_ready`.
+- [src/c2r/verify.py](../src/c2r/verify.py): `verify(candidate, baseline)` — H1-H13, metrics and hash, recomputed from the roster and stop sequence; a down van's shift ends at `t_down`; at `now`, started chairs and served stops are frozen.
 - [src/c2r/routing.py](../src/c2r/routing.py): `Plan`/`Batch`, `plan_from_manifest`, `committed_vans`, `build_manifest` — the only place ETAs are laid out.
 - [src/c2r/moves.py](../src/c2r/moves.py): `apply`, `j_score`, `honest_opens`, single-step move enumeration and window fixes.
 - [src/c2r/solver.py](../src/c2r/solver.py): `generate_candidates`, greedy `solve`, review queue, run artefacts (`python -m c2r.solver <data_dir> --out runs/<name>`).
 - [src/c2r/claims.py](../src/c2r/claims.py): K4 helpers — `numeric_claims`, `numbers_in`, the 4k-token message budget, `state_delta`.
 - [src/c2r/ledger.py](../src/c2r/ledger.py): `Ledger` writer (one line per model turn, tool call, run start/finish), `read`, `replay` (I18), `usage_summary` (tokens, cache share, dollars).
-- [src/c2r/llm.py](../src/c2r/llm.py): `AnthropicMediator` (effort, adaptive thinking, timeouts, retries, usage and cost) and the offline `FakeMediator`.
+- [src/c2r/llm.py](../src/c2r/llm.py): `AnthropicMediator` (the tool loop), `AnthropicWriter` (one structured-output call), prices, and the offline `FakeMediator`, `FakeWriter`, `FakeJudge`.
 - [src/c2r/tools.py](../src/c2r/tools.py): the eight strict tools, `Session`, `dispatch` — `apply_bundle` refuses without a clean verify on the current version and both parties' acceptance.
-- [src/c2r/orchestrator.py](../src/c2r/orchestrator.py): the mediator loop — cache blocks A-C, turns, tool dispatch, ledger, run artefacts (`python -m c2r.orchestrator <data_dir> [--out runs/cp2] [--fake]`).
+- [src/c2r/orchestrator.py](../src/c2r/orchestrator.py): the mediator loop — cache blocks A-C, `run_session` (turns, tool dispatch, ledger, run artefacts, force-finish on the clock, a failed call or the stop rule), `run` for a full day (`python -m c2r.orchestrator <data_dir> [--out runs/cp2] [--fake]`).
+- [src/c2r/perturb.py](../src/c2r/perturb.py): replay an `events.jsonl` entry against a finished run and re-plan under a 30 s clock (`python -m c2r.perturb --event vehicle_down --at 13:40 [--run runs/cp2] [--out runs/cp3] [--fake]`); `event_state` is pure, `EVENTS` is the handler registry (only `vehicle_down` at CP3).
+- [src/c2r/facts.py](../src/c2r/facts.py): facts cards per subject and audience from a run's files; refs `L-n`, `S-id`, `B-id`, `R-item`.
+- [src/c2r/explain.py](../src/c2r/explain.py): Sonnet 5 phrases a card, Python fills times, refs and reading grade, checks numbers per ref (I16) (`python -m c2r.explain runs/cp2 [--fake]`).
+- [src/c2r/judge.py](../src/c2r/judge.py): Fable 5.1 (low) scores six dimensions 0-2; Python zeroes accuracy on an unsourced number, caps plain over grade 8, recomputes pass (`python -m c2r.judge runs/cp2 [--fake]`, `--golden`).
 - [src/c2r/parties/](../src/c2r/parties/): `unit.respond` and `broker.respond` — deterministic accept/reject with reason codes and hints.
 - [src/c2r/viz/timeline.py](../src/c2r/viz/timeline.py): before/after Gantt as one self-contained HTML file (`python -m c2r.viz.timeline runs/<name>`).
 

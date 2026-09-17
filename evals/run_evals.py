@@ -81,13 +81,15 @@ def _judge_only() -> int:
         + (" (not graded yet)" if not calibration["graded"] else "")
     )
     agreed = int(summary["golden_agreement"].split("/")[0])
-    calls = summary["usage"]["iterations"] + calibration["items"]
-    cost = summary["usage"]["cost_usd"]
+    golden_cost = summary["usage"]["cost_usd"]
+    calibration_cost = calibration["usage"]["cost_usd"]
+    calls = summary["usage"]["iterations"] + calibration["usage"]["iterations"]
     elapsed = round(time.monotonic() - started, 1)
     verdict = "PASS" if agreed >= AGREEMENT_FLOOR else "FAIL"
     print(
         f"JUDGE {verdict} (golden agreement {summary['golden_agreement']}, {calls} calls, "
-        f"golden cost ${cost:.2f}, {elapsed}s; {out / 'judge_summary.json'})"
+        f"${golden_cost + calibration_cost:.2f} (golden ${golden_cost:.2f}, calibration "
+        f"${calibration_cost:.2f}), {elapsed}s; {out / 'judge_summary.json'})"
     )
     return 0 if verdict == "PASS" else 1
 

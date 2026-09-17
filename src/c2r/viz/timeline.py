@@ -190,10 +190,16 @@ def render(run_dir: Path) -> str:
         f"p90 {metrics[name]['p90_post_wait']:g} min</h2>{gantt(*schedules[name], name)}"
         for name in ("before", "after")
     )
+    event_path = run_dir / "event.json"
+    heading = "Chair-to-Ride: before and after"
+    if event_path.is_file():  # a perturbation run: "before" is the moment the event hit
+        event = json.loads(event_path.read_text(encoding="utf-8"))["event"]
+        what = ", ".join(f"{k} {v}" for k, v in sorted(event["payload"].items()))
+        heading = f"Chair-to-Ride: {event['type']} at {event['t']} ({what}) and the re-plan"
     return (
         '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         f"<title>Chair-to-Ride timeline: {html.escape(run_dir.name)}</title><style>{CSS}</style></head>"
-        f'<body><p class="banner">{html.escape(BANNER)}</p><h1>Chair-to-Ride: before and after</h1>'
+        f'<body><p class="banner">{html.escape(BANNER)}</p><h1>{html.escape(heading)}</h1>'
         f'<div class="panel"><div>{metrics_table(metrics["before"], metrics["after"])}{legend}{panels}</div>'
         f"{queue_panel(queue)}</div></body></html>"
     )

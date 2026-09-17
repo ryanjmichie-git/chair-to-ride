@@ -4,7 +4,7 @@ version: 1
 model: claude-sonnet-5
 changed_by: cp3
 change_reason: initial
-eval_result: null
+eval_result: {judge_pass: 9/10, golden_pass: 7/7, unverified_numbers: 0/20, judged: 2026-09-17}
 ---
 
 # Explainer — system prompt
