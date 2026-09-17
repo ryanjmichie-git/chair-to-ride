@@ -70,7 +70,7 @@ Committed after the user's follow-up (3 more commits, 11 for CP1 in all):
 
 ## What's next
 1. Open `runs/cp1/timeline.html` in a browser and eyeball it (not done: no browser this session).
-2. Tell B that vehicle minutes now count on-task time (before 523, was 3434 as a span) and ask
-   whether the 0.05 weight still stands.
+2. Vehicle minutes now count on-task time (before 523, was 3434 as a span); the 0.05 weight
+   stays (Ryan, 2026-09-17): twenty on-task minutes equal one minute of rider wait.
 3. CP2 starts with `/kickoff cp2`; `generate_candidates(baseline, state, plan, side, k=6)` is
    the tool the mediator calls, and `unit.respond` / `broker.respond` are the parties.
