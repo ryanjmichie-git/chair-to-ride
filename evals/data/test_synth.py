@@ -28,8 +28,8 @@ from c2r.models import (
     Unit,
 )
 from c2r.phi import find_phi
-from c2r.ride_checks import ride_violations
 from c2r.timeutil import to_min, window_min
+from c2r.verify import ride_violations
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data" / "synthetic" / "42"
@@ -338,4 +338,3 @@ def test_compute_metrics_flags_a_from_leg_with_no_pickup(
         ]
     after = compute_metrics(roster, copy, rules)
     assert after.riders_flagged == before.riders_flagged + 1
-

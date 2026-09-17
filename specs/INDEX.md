@@ -4,8 +4,8 @@ Run a checkpoint with `/kickoff cpN`; each spec below is what "done" means for t
 
 | Checkpoint | Status | Spec | Deliverable |
 |---|---|---|---|
-| CP0 | active | specs/cp0-scaffold.md | scaffold + "before" baseline |
-| CP1 | todo | specs/cp1-solver-verifier.md | solver + verifier, before/after timeline |
+| CP0 | done | specs/cp0-scaffold.md | scaffold + "before" baseline |
+| CP1 | active | specs/cp1-solver-verifier.md | solver + verifier, before/after timeline |
 | CP2 | todo | specs/cp2-mediator.md | live mediator loop, ledger + review queue |
 | CP3 | todo | specs/cp3-perturb-explain-judge.md | perturbation, explanations, judge |
 | CP4 | todo | specs/cp4-evals-freeze.md | eval gate green, code freeze except viz |
