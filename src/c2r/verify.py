@@ -165,11 +165,29 @@ def h6_return_window_opens_after_ready(roster: Roster, manifest: Manifest) -> Vi
     return found
 
 
-def h7_window_inside_negotiation_band(manifest: Manifest, rules: dict[str, Any]) -> Violations:
+def requested_times(candidate: Manifest, baseline: Manifest) -> dict[str, str]:
+    """The negotiation anchor: the baseline's request for a standing order, else the candidate's.
+
+    A will-call rider has no request until they are done, so that one may be set later.
+    """
+    anchors = {
+        trip.trip_id: trip.requested_time
+        for trip in baseline.trips
+        if trip.status != TripStatus.will_call
+    }
+    return {
+        trip.trip_id: anchors.get(trip.trip_id, trip.requested_time) for trip in candidate.trips
+    }
+
+
+def h7_window_inside_negotiation_band(
+    candidate: Manifest, baseline: Manifest, rules: dict[str, Any]
+) -> Violations:
     band = rules["broker"]["ada_negotiation_min"]
     width = rules["broker"]["pickup_window_min"]
+    requested = requested_times(candidate, baseline)
     found: Violations = []
-    for trip in manifest.trips:
+    for trip in candidate.trips:
         if trip.status != TripStatus.scheduled:
             continue
         if trip.window is None:
@@ -179,12 +197,15 @@ def h7_window_inside_negotiation_band(manifest: Manifest, rules: dict[str, Any])
         midpoint = (opens + closes) / 2
         if closes - opens != width:
             found.append(("H7", trip.trip_id, f"window is {closes - opens} min wide, not {width}"))
-        if abs(midpoint - to_min(trip.requested_time)) > band:
+        if abs(midpoint - to_min(requested[trip.trip_id])) > band:
             found.append(
                 (
                     "H7",
                     trip.trip_id,
-                    f"midpoint {to_hhmm(int(midpoint))} outside +/-{band} of {trip.requested_time}",
+                    (
+                        f"midpoint {to_hhmm(int(midpoint))} outside +/-{band} of the request "
+                        f"{requested[trip.trip_id]}"
+                    ),
                 )
             )
     return found
@@ -413,7 +434,7 @@ def all_violations(candidate: State, baseline: State) -> Violations:
         *h2_prescriptions_immutable(candidate.roster, baseline.roster),
         *h3_h4_pinned_starts(candidate.roster, baseline.roster),
         *h5_stagger_bins(candidate.unit, candidate.roster),
-        *h7_window_inside_negotiation_band(candidate.manifest, candidate.rules),
+        *h7_window_inside_negotiation_band(candidate.manifest, baseline.manifest, candidate.rules),
         *h11_nobody_stranded(candidate.roster, candidate.manifest),
         *h13_equity_budget(candidate.roster, baseline.roster, candidate.rules),
         *ride_violations(
