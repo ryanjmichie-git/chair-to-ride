@@ -27,7 +27,7 @@ import yaml
 from c2r.banner import BANNER
 from c2r.claims import MAX_MESSAGE_TOKENS, estimate_tokens, numbers_in, numeric_claims
 from c2r.ledger import Ledger, cache_share, usage_summary
-from c2r.llm import AnthropicMediator, FakeMediator, Mediator, Turn
+from c2r.llm import AnthropicMediator, FakeMediator, Mediator, MediatorError, Turn
 from c2r.solver import Result, finish_run, table, write_run
 from c2r.state import ROOT, RULES_PATH, State, load_state
 from c2r.tools import TOOLS, Session, dispatch, new_session
@@ -193,11 +193,44 @@ def _interim(session: Session) -> Result:
 def run(
     data_dir: Path, out_dir: Path, mediator: Mediator, echo=print, rules: dict | None = None
 ) -> Result:
-    started = time.monotonic()
+    """A full day: the on-disk baseline is the session's baseline and its starting state."""
     baseline = load_state(data_dir, rules)
-    stop = baseline.rules["stop"]
     session = new_session(baseline)
     blocks, versions, hashes = build_blocks(baseline, data_dir)
+    start = {
+        "data_dir": str(data_dir),
+        "seed": baseline.travel.seed,
+        "autonomy_level": baseline.rules["autonomy_level"],
+    }
+    opening = "Iteration 1. Baseline metrics and the first candidates follow. Take Turn A."
+    result, _ = run_session(
+        session, blocks, versions, hashes, out_dir, mediator, opening, start, echo
+    )
+    return result
+
+
+def run_session(
+    session: Session,
+    blocks: list[dict],
+    versions: dict[str, int],
+    hashes: dict[str, str],
+    out_dir: Path,
+    mediator: Mediator,
+    opening: str,
+    start: dict[str, Any],
+    echo=print,
+    payload: dict[str, Any] | None = None,
+    margin_s: int = TURN_MARGIN_S,
+    stop_after_apply: bool = False,
+) -> tuple[Result, str]:
+    """The loop on a prepared session: candidates -> model turn -> tools -> ledger, then the
+    closing pass. ``start`` is ledgered with the run start (so its numbers are citable);
+    ``payload`` rides in the opening user message beside the first candidates. With
+    ``stop_after_apply`` the harness ends the run itself once an apply meets the stop rule,
+    instead of spending a turn on the model's own finish (the re-plan's 30 s clock)."""
+    started = time.monotonic()
+    baseline = session.baseline
+    stop = baseline.rules["stop"]
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "ledger.jsonl").write_text("", encoding="utf-8")
     run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid.uuid4().hex[:6]
@@ -213,9 +246,7 @@ def run(
     block_tokens = {k: estimate_tokens(b["text"]) for k, b in zip("abc", blocks, strict=True)}
     book.start(
         {
-            "data_dir": str(data_dir),
-            "seed": baseline.travel.seed,
-            "autonomy_level": baseline.rules["autonomy_level"],
+            **start,
             "block_tokens": block_tokens,
             "metrics_before": session.run.result.metrics.model_dump(mode="json"),
             "j_before": session.j,
@@ -235,8 +266,12 @@ def run(
     session.known |= numbers_in(book.entries[0].payload)  # the baseline metrics are citable
     messages = [
         _user(
-            "Iteration 1. Baseline metrics and the first candidates follow. Take Turn A.",
-            {"metrics_before": session.run.result.metrics.model_dump(mode="json"), **first},
+            opening,
+            {
+                "metrics_before": session.run.result.metrics.model_dump(mode="json"),
+                **(payload or {}),
+                **first,
+            },
         )
     ]
     echo(BANNER)
@@ -250,13 +285,18 @@ def run(
         if iteration >= stop["max_iterations"]:
             halt = f"iteration cap {stop['max_iterations']}"
             break
-        if time.monotonic() - started > stop["max_wall_s"] - TURN_MARGIN_S:
+        if time.monotonic() - started > stop["max_wall_s"] - margin_s:
             halt = f"wall clock near {stop['max_wall_s']} s"
             break
         iteration += 1
         session.iteration = iteration
         _mark(messages)
-        turn: Turn = mediator.turn(blocks, TOOLS, messages)
+        try:
+            turn: Turn = mediator.turn(blocks, TOOLS, messages)
+        except MediatorError as exc:
+            halt = f"model call failed: {exc}"
+            iteration -= 1
+            break
         prose = [turn.text] + [str(v) for c in turn.tool_calls for v in c.input.values()]
         claims = numeric_claims(" ".join(prose))  # K4 covers rationale, summary, drafts too
         unverified = [c for c in claims if c not in session.known]
@@ -287,6 +327,13 @@ def run(
             result = dispatch(session, call.name, call.input)
             book.tool(iteration, call.name, call.input, result)
             echo(_tool_line(call.name, call.input, result))
+            if (
+                stop_after_apply
+                and call.name == "apply_bundle"
+                and result.get("applied")
+                and result["stop"]["should_finish"]
+            ):
+                halt = f"stop rule met: {result['stop']['reason']}"
             results.append(
                 {
                     "type": "tool_result",
@@ -298,6 +345,8 @@ def run(
         if size > MAX_MESSAGE_TOKENS:
             echo(f"   warning: tool results {size} tokens exceed the {MAX_MESSAGE_TOKENS} budget")
         messages.append({"role": "user", "content": results})
+        if halt:
+            break
     if not session.finished:
         forced = dispatch(session, "finish", {"summary": f"Stopped by the harness: {halt}."})
         book.tool(iteration, "finish", {"forced": halt}, forced)
@@ -330,7 +379,7 @@ def run(
     )
     if session.summary:
         echo(f"mediator: {session.summary}")
-    return result
+    return result, run_id
 
 
 def main() -> int:
