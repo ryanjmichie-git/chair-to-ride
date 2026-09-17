@@ -97,18 +97,18 @@ synth:
   # Largest run-over, in minutes.
   runover_max_min: 25
   # Share of sessions that start late.
-  late_start_share: 0.15
+  late_start_share: 0.20
   # Smallest late start, in minutes.
   late_start_min: 10
   # Largest late start, in minutes.
   late_start_max: 35
   # Share of rides that pick up extra stops on the way.
-  extra_stops_share: 0.5
+  extra_stops_share: 1.0
   # Most extra stops added to one ride.
   extra_stops_max: 3
   # Riders left on will-call instead of a standing order.
   will_call_count: 4
   # Minutes the baseline takes to resolve a will-call.
-  will_call_delay_min: 60
+  will_call_delay_min: 70
   # Minutes after scheduled end that a standing order anchors the return.
   standing_order_offset_min: 30

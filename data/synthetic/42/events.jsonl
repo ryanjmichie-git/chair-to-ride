@@ -1,0 +1,5 @@
+{"payload": {"vehicle_id": "V3"}, "t": "13:40", "type": "vehicle_down"}
+{"payload": {"chair_id": "C07", "window": ["11:00", "21:00"]}, "t": "11:00", "type": "chair_down"}
+{"payload": {"delay_min": 35, "patient_id": "P14"}, "t": "10:45", "type": "late_arrival"}
+{"payload": {"patients": [{"add_on_id": "A1", "home_node": 15, "mobility": "wheelchair", "rx_duration_min": 255, "shift_id": "S3"}, {"add_on_id": "A2", "home_node": 4, "mobility": "ambulatory", "rx_duration_min": 210, "shift_id": "S2"}], "vehicle_unavailable": "V5"}, "t": "09:00", "type": "add_on_patient"}
+{"payload": {"factor": 1.3}, "t": "15:00", "type": "travel_slowdown"}
