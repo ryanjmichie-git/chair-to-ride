@@ -28,9 +28,15 @@ live ones off the screen, do not quote these.
    start runs\cp3\timeline.html
    ```
    Tab 1 = the day (before/after), tab 2 = the re-plan (heading names the event).
-5. Terminal B, have these ready to `type` when asked (or open them in the editor):
-   `runs\cp2\metrics.json`, `runs\cp2\review_queue.json`, `runs\cp2\explanations.json`,
-   `runs\cp3\event.json`, `cost_report.md`.
+5. Terminal B, three commands, one per beat (tested 2026-09-17; `explanations.json` is 175 KB,
+   so the second line prints one note instead of the whole file):
+   ```
+   type runs\cp2\review_queue.json
+   (Get-Content runs\cp2\explanations.json -Raw | ConvertFrom-Json)[0].explanation | Format-List audience,subject_id,what_changed,why,contact,reading_grade
+   type cost_report.md
+   ```
+   `cost_report.md` only changes when you run `make cost-report`; do that after the pre-flight
+   runs if you want tonight's dollars in it.
 6. Clear terminal A (`cls`). Say the words "synthetic data" once, on screen and aloud; the
    banner prints it on every run.
 
