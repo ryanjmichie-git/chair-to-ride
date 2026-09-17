@@ -1,76 +1,77 @@
 # Session handoff
 
-Updated 2026-09-17 during CP1 (solver + verifier). Start a fresh session from here.
+Updated 2026-09-17 during CP2 (mediator loop). Start a fresh session from here.
 
 ## Built this session
-Committed first (4 commits, each under 400 changed lines in `src/`):
-- `src/c2r/state.py`: `State` loader, `scheduled_ready`, `actual_ready`.
-- `src/c2r/verify.py`: `ride_checks.py` renamed and extended to H1-H13, `schedule_hash`,
-  `verify(candidate, baseline, version)`; H7 anchors on the baseline request.
-- `src/c2r/routing.py`: `Plan`/`Batch`, `plan_from_manifest`, `committed_vans`, `build_manifest`
-  (byte-for-byte rebuild of the baseline from its own plan).
-- `src/c2r/parties/{__init__,unit,broker}.py`: deterministic parties with reason codes and hints.
-- `evals/invariants/test_verify.py`, `test_routing.py`, `test_parties.py`.
+CP1 closed with three follow-up commits (k2_guard hook, on-task vehicle minutes, the hold
+message wording; details in docs/cp1-decisions.md). Then CP2:
 
-Committed at the end of the session (4 more commits, 8 for CP1 in all):
-- `src/c2r/moves.py`: `apply`, `j_score`, `honest_opens`, `_moves`, window fixes.
-- `src/c2r/review.py`: `legal_options`, `review_queue` (the human-review items).
-- `src/c2r/solver.py`: `generate_candidates`, greedy `solve`, closing window pass, run
-  artefacts, CLI `python -m c2r.solver <data_dir> --out runs/cp1`.
-- `src/c2r/routing.py` (`Infeasible`, any-leg van pool, shallow copies), `src/c2r/verify.py`
-  (`is_will_call`; H7 anchors will-call riders on the roster's actual ready time).
-- `src/c2r/viz/timeline.py`: before/after Gantt as one self-contained HTML file.
-- `evals/invariants/test_invariants.py` I1-I15 on the after-state; new routing/party/verify tests.
-- `Makefile`: `solve`, `timeline`; `demo` runs both. `docs/cp1-decisions.md`, `docs/llms.txt`,
-  CLAUDE.md lessons 1-2.
+- `src/c2r/ledger.py`: `Ledger` writes one line per run start, model turn, tool call and run
+  finish; `read`, `replay` (I18), `usage_summary` (tokens, cache share, dollars).
+- `src/c2r/llm.py`: `AnthropicMediator` (Fable 5.1, `output_config.effort` medium, adaptive
+  thinking, 30 s per call, two retries, usage and cost) and the offline `FakeMediator`.
+- `src/c2r/claims.py`: K4 helpers (`numeric_claims`, `numbers_in`), the 4k-token message budget,
+  `state_delta`.
+- `src/c2r/tools.py`: eight strict tools, `Session`, `dispatch`; `apply_bundle` refuses without a
+  zero-violation verify of that bundle on the current version and both parties' acceptance.
+- `src/c2r/orchestrator.py`: blocks A-C once (cache breakpoints), then candidates -> model turn
+  -> tools -> ledger; force-finish at the iteration cap or the wall clock; run artefacts and the
+  timeline after every apply. `python -m c2r.orchestrator data/synthetic/42 [--out runs/cp2] [--fake]`.
+- `src/c2r/solver.py`: `finish_run` (closing pass shared with the mediator), `chain_bundle`
+  (up to six accepted moves as one bundle), `write_run(extra)`.
+- `prompts/mediator.v1.md`: block A, about 760 tokens, `eval_result: null`.
+- `evals/invariants/test_tools.py`, `test_mediator.py` (offline fake run: I16-I19, DoD),
+  `test_mediator_live.py` (`llm` marker: I16-I20 on a real run).
+- `Makefile`: `mediate`, `mediate-fake`, `test-live`; `demo` now runs `mediate`.
+- `docs/cp2-decisions.md`, `docs/llms.txt`, `specs/INDEX.md` (CP1 done, CP2 active).
 
-Committed after the user's follow-up (3 more commits, 11 for CP1 in all):
-- `.claude/hooks/k2_guard.py` (eighth hook): refuses a `git commit` whose `src/` diff exceeds 400
-  lines; tests in `evals/repo/test_hooks.py` drive it against a throwaway git repo.
-- `src/c2r/metrics.py`: `vehicle_min` counts on-task minutes (rider aboard or loading), not the
-  first-to-last-stop span; `evals/invariants/test_metrics.py`.
-- `src/c2r/review.py`: the BROKER_POLICY hold message no longer blames vehicle minutes alone.
-
-## Decisions made (details and numbers in docs/cp1-decisions.md)
-1. A shift's return pool is every van the baseline already sends for that shift's riders, either
-   leg (all five on seed 42). One van per shift made the target physically unreachable.
-2. A return with no standing window is a will-call whatever its status; its request time becomes
-   the actual ready time when scheduled. Standing orders keep the baseline request, read from the
-   baseline in verify and the broker party.
-3. H6 keeps scheduled ready; the solver plans against actual ready.
-4. Sub-codes H9_SHIFT/H9_ROUTE/BROKER_EARLIEST report as H9 (schema enum).
-5. Windows follow the van: touched returns are re-timed to where the van arrives, inside the
-   ADA band; a closing pass re-times riders whose pickup drifted.
-6. Riders still over 45 min after the loop are held for will-call on the record (`H<n>` bundles,
-   metrics printed before any hold). On seed 42 nobody is held.
-7. The step cap is `stop.max_iterations x max_moves_per_bundle`; the early stop needs every
-   non-stretcher return scheduled.
-8. A queued rider with a legal, accepted candidate gets a `BROKER_POLICY` item naming the bundle
-   and both J values, judged on the final state, not `NO_FEASIBLE_WINDOW`.
-9. Lesson 3 (will-call opens) was dropped again: it duplicated code comments.
-10. Vehicle minutes are on-task minutes (`metrics._busy_minutes`): the span definition charged
-    P31f's evening ride five idle hours and J held the rider. Before is now 523, not 3434; B
-    should re-check the 0.05 weight. The K2 hook fails open outside a git repo and measures the
-    working tree plus untracked files when the same command runs `git add`.
+## Decisions made (details in docs/cp2-decisions.md)
+1. Eight tools: the handoff's `write_ledger` is gone; Python writes every ledger entry.
+2. Iteration = one model turn (API call); `stop.max_iterations` caps turns.
+3. Two-turn protocol per bundle: propose to both + verify in one response, apply in the next.
+4. Candidates = top-k single moves + one chained bundle of up to six accepted moves.
+5. `verify(bundle_id)` verifies the preview; the hash is bound to the schedule version.
+6. K4: numbers in the model's prose not found in any tool result are logged as `unverified`
+   and shown as `30 [unverified]`; the prose is kept verbatim.
+7. `finish_run` merges model-flagged review items ahead of the computed queue.
+8. Offline `FakeMediator` for the gate and as the no-network demo fallback (`--fake`).
+9. Four cache breakpoints: blocks A, B, C and the latest user message.
+10. The strict-tool grammar rejects integer `minimum`/`maximum`; `k` is clamped in code.
+11. Money spent this checkpoint: three `make mediate` runs ($0.62, $0.57, $0.56), one live test
+    run (about $0.60), one model ping. About $2.40 in all, against the $20 line in the plan.
+12. Reviewer pass: two must-fixes fixed (usage summary event name, `-dirty` git sha), four
+    tightenings applied, K4 precision gap recorded for CP3's judge (docs/cp2-decisions.md).
 
 ## Artifacts
-- `runs/cp1/`: schedule_before/after.json, verify_after.json, bundles.json, review_queue.json,
-  metrics.json, timeline.html. Git-ignored; `make demo` regenerates them.
-- Seed 42: mean post-wait 70.21 -> 2.71, p90 131 -> 13, equity gap 32.14 -> 1.27,
-  flagged 4 -> 1 (stretcher only), vehicle minutes 523 -> 566, J 1117.15 -> 137.3, 14 bundles,
-  0 violations, ~13 s.
+- `runs/cp2/`: ledger.jsonl, review_queue.json, bundles.json, schedule_before/after.json,
+  verify_after.json, metrics.json (with `usage`), timeline.html. Git-ignored; `make mediate`
+  regenerates them (live) or `make mediate-fake` (offline, `runs/cp2-fake/`).
+- Last live run (seed 42): mean post-wait 70.21 -> 1.71, p90 131 -> 6, equity gap 32.14 ->
+  0.89, flagged 4 -> 1 (stretcher P30f), J 1117.15 -> 128.6, 3 chained bundles + 1 closing
+  re-time, 7 model turns, 15 tool calls, $0.56, cache-read share 83 %, 56.9 s, 0 violations.
+- Runs of the day: 88.6 s / 9 turns (a flag with a sentence as its subject was refused, then a
+  separate finish turn), 61.2 s / 8 turns (the model asked for a go-ahead), 56.9 s / 7 turns on
+  the prompt as committed.
 
 ## Acceptance status
-- `uv run pytest evals/invariants -q`: 60 passed (17.2 s).
-- `make gate`: 197 passed, GATE PASS (54.0 s); `uv run pytest evals/repo -q`: 109 passed.
-- `make solve`: 0 violations, after beats baseline, target (mean <= 25, p90 <= 45) met.
-- `make timeline`: runs/cp1/timeline.html, two panels, no external assets.
-- Reviews: five reviewer passes (verifier; routing+parties; solver; solver fixes + timeline;
-  vehicle-minute metric), every finding fixed or recorded in docs/cp1-decisions.md. Nothing waived.
+- `uv run pytest evals/invariants -q`: 83 passed, 6 skipped (the live module without a key),
+  51 s. `uv run pytest evals/repo -q`: 109 passed.
+- `uv run --env-file .env pytest evals/invariants/test_mediator_live.py -q`: 6 passed (70 s) on
+  the second prompt; the I16-I20 check functions were then run on the final run's ledger
+  (`runs/cp2/ledger.jsonl`) without another API call: all pass.
+- `make gate`: 220 passed, GATE PASS, 84.4 s. Over the 60 s K3 budget: the suite grew by the tool and
+  mediator tests (about 30 s); CP4 owns the gate time (see what's next).
+- `time make mediate`: 56.9 s wall clock, 7 turns, ledger and review queue non-empty.
+- Reviewer: one pass; must-fixes fixed, the rest recorded in docs/cp2-decisions.md.
 
 ## What's next
-1. Open `runs/cp1/timeline.html` in a browser and eyeball it (not done: no browser this session).
-2. Vehicle minutes now count on-task time (before 523, was 3434 as a span); the 0.05 weight
-   stays (Ryan, 2026-09-17): twenty on-task minutes equal one minute of rider wait.
-3. CP2 starts with `/kickoff cp2`; `generate_candidates(baseline, state, plan, side, k=6)` is
-   the tool the mediator calls, and `unit.respond` / `broker.respond` are the parties.
+1. CP2 is committed (five `cp2:` commits, each under 400 `src/` lines). Run `/kickoff cp3`
+   in a fresh session.
+2. Gate time: 84 s against a 60 s budget. Candidates: session-scoped fixtures shared across the
+   invariant modules, parallelise the `evals/repo` hook tests (they spawn subprocesses). CP4's DoD.
+3. Watch the live wall clock: 57-89 s across three runs. No new turn starts inside 15 s of the
+   90 s cap, so a run can end forced but never late. If a rehearsal run goes over 80 s, switch
+   the default effort to `low` (`--effort low`); the handoff allows it.
+4. CP3 starts with `/kickoff cp3`: `perturb.py` replays an event against the running state
+   (reuse `tools.Session` + `orchestrator.run` with a seeded state), explanations from the
+   ledger entries per subject, the judge.

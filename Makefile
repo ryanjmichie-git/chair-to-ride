@@ -1,4 +1,4 @@
-.PHONY: setup models synth baseline solve timeline test gate demo check-models
+.PHONY: setup models synth baseline solve mediate mediate-fake timeline test test-live gate demo check-models
 
 ENV_FILE := $(wildcard .env)
 UV_RUN := uv run $(if $(ENV_FILE),--env-file $(ENV_FILE),)
@@ -18,18 +18,26 @@ baseline:
 solve:
 	$(UV_RUN) python -m c2r.solver data/synthetic/42 --out runs/cp1
 
+mediate:
+	$(UV_RUN) python -m c2r.orchestrator data/synthetic/42 --out runs/cp2
+
+mediate-fake:
+	$(UV_RUN) python -m c2r.orchestrator data/synthetic/42 --out runs/cp2-fake --fake
+
 timeline:
 	$(UV_RUN) python -m c2r.viz.timeline runs/cp1
 
 test:
 	$(UV_RUN) pytest -q
 
+test-live:
+	$(UV_RUN) pytest evals/invariants -q -p no:cacheprovider
+
 gate:
 	$(UV_RUN) python evals/run_evals.py --gate
 
 demo:
-	$(MAKE) solve
-	$(MAKE) timeline
+	$(MAKE) mediate
 
 check-models:
 	$(UV_RUN) python scripts/check_models.py

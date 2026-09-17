@@ -55,7 +55,7 @@ TOOLS: list[dict[str, Any]] = [
         "moves. Replaces the current candidate list.",
         {
             "side": {"type": "string", "enum": SIDES},
-            "k": {"type": "integer", "minimum": 1, "maximum": 6},
+            "k": {"type": "integer", "description": "1 to 6"},
         },
     ),
     _tool(
@@ -92,9 +92,12 @@ TOOLS: list[dict[str, Any]] = [
     _tool(
         "flag_for_review",
         "Queue a trip, patient or vehicle for a human with a reason code, what was tried, "
-        "a recommended action and a draft message.",
+        "a recommended action and a draft message. May be called together with finish.",
         {
-            "subject": {"type": "string"},
+            "subject": {
+                "type": "string",
+                "description": "One id only: a trip (P30f), a patient (P30) or a vehicle (V3).",
+            },
             "reason_code": {"type": "string", "enum": [r.value for r in ReasonCode]},
             "what_was_tried": {"type": "array", "items": {"type": "string"}},
             "recommended_action": {"type": "string"},
@@ -182,6 +185,7 @@ def _stop(session: Session, best: Candidate | None) -> dict[str, Any]:
         if ok
     ]
     return {
+        "targets": {"post_wait": stop["target_post_wait"], "equity_gap": stop["target_equity_gap"]},
         "targets_met": targets_met,
         "best_improvement_pct": improvement,
         "below_min_improvement": below,
@@ -240,7 +244,7 @@ def _generate(session: Session, args: dict[str, Any]) -> dict[str, Any]:
     side = args.get("side", "both")
     if side not in SIDES:
         return {"error": f"side must be one of {SIDES}"}
-    return _candidates(session, side, int(args.get("k", 6)))
+    return _candidates(session, side, max(1, min(6, int(args.get("k", 6)))))
 
 
 def _refuse(reason: str) -> dict[str, Any]:
@@ -390,6 +394,8 @@ def dispatch(session: Session, name: str, args: dict[str, Any]) -> dict[str, Any
     handler = HANDLERS.get(name)
     if handler is None:
         result: dict[str, Any] = {"error": f"unknown tool {name!r}"}
+    elif session.finished:
+        result = {"error": "the run is finished; nothing after finish is executed"}
     else:
         result = trim(handler(session, dict(args or {})))
     session.known |= numbers_in(result)

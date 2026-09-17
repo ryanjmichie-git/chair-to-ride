@@ -100,10 +100,10 @@ def test_numbers_in_offers_rounded_forms() -> None:
     assert "True" not in known
 
 
-def test_apply_refuses_without_verify_and_both_acceptances(baseline: State) -> None:
-    session = tools.new_session(baseline)
-    generated = tools.dispatch(session, "generate_candidates", {"side": "both", "k": 3})
-    bid = generated["candidates"][0]["bundle_id"]
+def test_apply_refuses_without_verify_and_both_acceptances(scripted: Scripted) -> None:
+    session = scripted.session  # version 1, with a fresh candidate list from the apply
+    session.finished = False  # reopen the scripted session; finish otherwise freezes it
+    bid = scripted.applied["next_candidates"][-1]["bundle_id"]
     bogus = tools.dispatch(session, "apply_bundle", {"bundle_id": bid, "verify_hash": "sha256:0"})
     assert not bogus["applied"] and "call verify first" in bogus["reason"]
     verified = tools.dispatch(session, "verify", {"bundle_id": bid})
@@ -119,6 +119,7 @@ def test_apply_refuses_without_verify_and_both_acceptances(baseline: State) -> N
 
 def test_apply_refuses_a_hash_from_an_earlier_version(scripted: Scripted) -> None:
     session = scripted.session
+    session.finished = False
     stale = scripted.verified["verify_hash"]
     bid = scripted.applied["next_candidates"][0]["bundle_id"]
     propose_verify(session, bid)
@@ -195,7 +196,14 @@ def test_ledger_roundtrip_replays_to_the_after_schedule(
     book.model_turn(1, "J is 1117.15", [], ["1117.15"], [], turn_usage, 0.35, "tool_use")
     book.tool(1, "verify", {"bundle_id": "x"}, scripted.verified)
     book.model_turn(
-        2, "apply", [], [], [], Usage(input=1500, cache_read=25000, cache_write=1500, output=100), 0.02, "tool_use"
+        2,
+        "apply",
+        [],
+        [],
+        [],
+        Usage(input=1500, cache_read=25000, cache_write=1500, output=100),
+        0.02,
+        "tool_use",
     )
     book.tool(2, "apply_bundle", {"bundle_id": "x"}, scripted.applied)
     closing = [a["bundle"] for a in scripted.run.applied[scripted.model_applied :]]
@@ -209,3 +217,9 @@ def test_ledger_roundtrip_replays_to_the_after_schedule(
     assert summary["iterations"] == 2 and summary["bundles_applied"] == 1
     assert summary["cost_usd"] == 0.37
     assert summary["cache_read_share_by_iteration"] == {"1": 0.0, "2": 0.8929}
+
+
+def test_nothing_runs_after_finish(scripted: Scripted) -> None:
+    scripted.session.finished = True
+    result = tools.dispatch(scripted.session, "flag_for_review", FLAG)
+    assert result == {"error": "the run is finished; nothing after finish is executed"}

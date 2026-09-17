@@ -94,7 +94,7 @@ class Ledger:
         return self._write(self._entry(iteration, "tool", name, payload))
 
     def finish(self, iteration: int, payload: dict[str, Any]) -> LedgerEntry:
-        return self._write(self._entry(iteration, "tool", "finish", payload))
+        return self._write(self._entry(iteration, "tool", "run_finish", payload))
 
 
 def read(path: Path) -> list[LedgerEntry]:
@@ -113,7 +113,7 @@ def applied_bundles(entries: list[LedgerEntry]) -> list[Bundle]:
         if e.event == "apply_bundle" and e.payload.get("result", {}).get("applied")
     ]
     closing = next(
-        (e.payload.get("closing_bundles", []) for e in entries if e.event == "finish"), []
+        (e.payload.get("closing_bundles", []) for e in entries if e.event == "run_finish"), []
     )
     return bundles + [Bundle.model_validate(b) for b in closing]
 
@@ -140,7 +140,7 @@ def usage_summary(entries: list[LedgerEntry]) -> dict[str, Any]:
         cache_write=sum(e.usage.cache_write for e in turns),
         output=sum(e.usage.output for e in turns),
     )
-    calls = [e for e in entries if e.actor == "tool" and e.event not in ("run_start", "finish")]
+    calls = [e for e in entries if e.actor == "tool" and e.event not in ("run_start", "run_finish")]
     proposals = {"unit": [0, 0], "broker": [0, 0]}
     for e in calls:
         side = {"propose_to_unit": "unit", "propose_to_broker": "broker"}.get(e.event)
