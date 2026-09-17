@@ -32,6 +32,7 @@ class RecoveryBufferMin(IntEnum):
 class Patient(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     patient_id: constr(pattern=r"^P(0[1-9]|[12]\d|3[0-6])$") = Field(..., title="PatientId")
     display_name: str
@@ -60,6 +61,7 @@ class Provider(StrEnum):
 class Rider(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     rider_id: constr(pattern=r"^R(0[1-9]|1\d|2[0-2])$") = Field(..., title="RiderId")
     patient_id: constr(pattern=r"^P(0[1-9]|[12]\d|3[0-6])$") = Field(..., title="PatientId")
@@ -73,6 +75,7 @@ class Rider(BaseModel):
 class Roster(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     synthetic: Literal[True]
     generator: str

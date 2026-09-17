@@ -19,6 +19,7 @@ class VehicleStatus(StrEnum):
 class Vehicle(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     vehicle_id: constr(pattern=r"^V[1-5]$") = Field(..., title="VehicleId")
     cap_ambulatory: conint(ge=0)
@@ -32,6 +33,7 @@ class Vehicle(BaseModel):
 class Fleet(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     synthetic: Literal[True]
     generator: str

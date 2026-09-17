@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -62,7 +63,11 @@ def main() -> int:
             timeout=90,
             check=False,
         )
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except FileNotFoundError:
+        print(json.dumps({"systemMessage": "eval gate skipped: uv is not on PATH"}))
+        return 0
+    except subprocess.TimeoutExpired:
+        print(json.dumps({"systemMessage": "eval gate skipped: the gate run timed out"}))
         return 0
     output = proc.stdout + proc.stderr
     if proc.returncode == 0:

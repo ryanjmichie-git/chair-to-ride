@@ -18,6 +18,7 @@ class Actor(StrEnum):
 class Usage(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     input: conint(ge=0)
     cache_read: conint(ge=0)
@@ -28,6 +29,7 @@ class Usage(BaseModel):
 class LedgerEntry(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     ts: str
     run_id: str

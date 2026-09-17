@@ -25,6 +25,7 @@ class TripStatus(StrEnum):
 class Trip(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     trip_id: constr(pattern=r"^P(0[1-9]|[12]\d|3[0-6])[tf]$") = Field(..., title="TripId")
     rider_id: constr(pattern=r"^R(0[1-9]|1\d|2[0-2])$") = Field(..., title="RiderId")
@@ -46,6 +47,7 @@ class StopKind(StrEnum):
 class RouteStop(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     trip_id: constr(pattern=r"^P(0[1-9]|[12]\d|3[0-6])[tf]$") = Field(..., title="TripId")
     kind: StopKind = Field(..., title="StopKind")
@@ -57,6 +59,7 @@ class RouteStop(BaseModel):
 class Route(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     vehicle_id: constr(pattern=r"^V[1-5]$") = Field(..., title="VehicleId")
     stops: list[RouteStop]
@@ -65,6 +68,7 @@ class Route(BaseModel):
 class Manifest(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     synthetic: Literal[True]
     generator: str

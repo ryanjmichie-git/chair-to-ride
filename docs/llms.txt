@@ -21,7 +21,7 @@ An agent re-times a dialysis unit's chair schedule against a paratransit manifes
 
 ## src/c2r/
 - [src/c2r/__init__.py](../src/c2r/__init__.py): package version.
-- [src/c2r/models.py](../src/c2r/models.py): Pydantic v2 models generated from `specs/schemas/`.
+- [src/c2r/models/](../src/c2r/models/): Pydantic v2 models generated from `specs/schemas/`.
 - [src/c2r/phi.py](../src/c2r/phi.py): `PATTERNS` and `find_phi()` — the PHI regex guard used by hooks and evals.
 - [src/c2r/synth.py](../src/c2r/synth.py): synthetic data generator (`python -m c2r.synth --seed 42`).
 - [src/c2r/metrics.py](../src/c2r/metrics.py): `compute_metrics()` — the one place wait/equity numbers are computed.

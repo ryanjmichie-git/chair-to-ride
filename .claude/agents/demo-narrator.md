@@ -8,7 +8,7 @@ hooks:
     - matcher: "Edit|Write"
       hooks:
         - type: command
-          command: "python .claude/hooks/path_guard.py --allow \"docs/demo_script.md\""
+          command: "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/path_guard.py\" --allow \"docs/demo_script.md\""
 ---
 
 # demo-narrator

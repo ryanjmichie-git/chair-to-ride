@@ -1,5 +1,10 @@
 # Tonight's runbook
 
+## Prerequisites
+- `uv` on PATH (installs and runs the project venv).
+- GNU make: Git Bash does not ship one, so `winget install GnuWin32.Make` or equivalent.
+- Python >= 3.11 on PATH as `python` (hooks and `scripts/` run under it), and `git`.
+
 ## Before opening Claude Code
 ```
 make setup && make models && make synth && make baseline

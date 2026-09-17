@@ -11,6 +11,7 @@ from . import common_schema
 class NewTimes(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     chair_start: constr(pattern=r"^([01]\d|2[0-3]):[0-5]\d$") | None
     pickup_window: common_schema.Window | None
@@ -19,6 +20,7 @@ class NewTimes(BaseModel):
 class Explanation(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     audience: common_schema.Audience
     subject_id: str

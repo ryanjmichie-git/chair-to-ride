@@ -15,7 +15,18 @@ import pytest
 import yaml
 
 from c2r.metrics import compute_metrics
-from c2r.models import Event, Fleet, Leg, Manifest, Roster, StopKind, Travel, TripStatus, Unit
+from c2r.models import (
+    Event,
+    Fleet,
+    Leg,
+    Manifest,
+    Provider,
+    Roster,
+    StopKind,
+    Travel,
+    TripStatus,
+    Unit,
+)
 from c2r.phi import find_phi
 from c2r.ride_checks import ride_violations
 from c2r.timeutil import to_min, window_min
@@ -213,7 +224,7 @@ def test_ride_side_hard_constraints_hold(
     roster: Roster, manifest: Manifest, fleet: Fleet, travel: Travel, rules: dict[str, Any]
 ) -> None:
     violations = ride_violations(roster, manifest, fleet, travel, rules)
-    assert len(violations) <= 3, violations
+    assert violations == []
 
 
 def test_scheduled_to_legs_arrive_inside_the_chair_window(
@@ -281,3 +292,34 @@ def test_notes_reference_only_facts_in_the_record(roster: Roster) -> None:
         text = next(block.text for block in response.content if block.type == "text")
         consistent += int(json.loads(text)["consistent"])
     assert consistent / len(roster.patients) >= 0.95
+
+
+def test_compute_metrics_flags_a_from_leg_with_no_pickup(
+    roster: Roster, manifest: Manifest, rules: dict[str, Any]
+) -> None:
+    before = compute_metrics(roster, manifest, rules)
+    copy = manifest.model_copy(deep=True)
+    broker = {rider.rider_id for rider in roster.riders if rider.provider == Provider.broker}
+    served = {
+        stop.trip_id
+        for route in copy.routes
+        for stop in route.stops
+        if stop.kind == StopKind.pickup
+    }
+    target = next(
+        trip
+        for trip in copy.trips
+        if trip.leg == Leg.from_
+        and trip.rider_id in broker
+        and trip.status == TripStatus.will_call
+        and trip.trip_id in served
+    )
+    for route in copy.routes:
+        route.stops = [
+            stop
+            for stop in route.stops
+            if not (stop.trip_id == target.trip_id and stop.kind == StopKind.pickup)
+        ]
+    after = compute_metrics(roster, copy, rules)
+    assert after.riders_flagged == before.riders_flagged + 1
+

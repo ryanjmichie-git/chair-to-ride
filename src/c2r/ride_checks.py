@@ -1,7 +1,8 @@
-"""The four ride-side hard constraints a manifest has to satisfy: H6, H9, H10, H12."""
+"""Ride-side hard constraints on a manifest: H6, H8, H9, H10, H12 and BROKER_EARLIEST."""
 
 from __future__ import annotations
 
+from itertools import pairwise
 from typing import Any
 
 from c2r.models import Fleet, Leg, Manifest, Roster, StopKind, Travel, TripStatus
@@ -30,6 +31,14 @@ def _scheduled_ready(roster: Roster) -> dict[str, int]:
     }
 
 
+def _mobility_by_trip(roster: Roster, manifest: Manifest) -> dict[str, str]:
+    patients = {patient.patient_id: patient for patient in roster.patients}
+    riders = {
+        rider.rider_id: patients[rider.patient_id].mobility.value for rider in roster.riders
+    }
+    return {trip.trip_id: riders[trip.rider_id] for trip in manifest.trips}
+
+
 def h6_return_window_opens_after_ready(roster: Roster, manifest: Manifest) -> Violations:
     ready = _scheduled_ready(roster)
     found: Violations = []
@@ -48,6 +57,56 @@ def h6_return_window_opens_after_ready(roster: Roster, manifest: Manifest) -> Vi
     return found
 
 
+def h8_capacity_per_stop(manifest: Manifest, fleet: Fleet) -> Violations:
+    caps = {
+        vehicle.vehicle_id: {
+            "ambulatory": vehicle.cap_ambulatory,
+            "wheelchair": vehicle.cap_wheelchair,
+            "stretcher": vehicle.cap_stretcher,
+        }
+        for vehicle in fleet.vehicles
+    }
+    found: Violations = []
+    for route in manifest.routes:
+        limits = caps[route.vehicle_id]
+        for stop in route.stops:
+            for klass, limit in limits.items():
+                aboard = getattr(stop.load_after, klass)
+                if aboard > limit:
+                    found.append(
+                        (
+                            "H8",
+                            route.vehicle_id,
+                            f"{stop.trip_id} at {stop.eta}: {klass} {aboard} over cap {limit}",
+                        )
+                    )
+    return found
+
+
+def h9_route_is_feasible(
+    roster: Roster, manifest: Manifest, travel: Travel, rules: dict[str, Any]
+) -> Violations:
+    dwell = rules["broker"]["dwell_min"]
+    mobility = _mobility_by_trip(roster, manifest)
+    found: Violations = []
+    for route in manifest.routes:
+        for prev, nxt in pairwise(route.stops):
+            earliest = (
+                to_min(prev.eta)
+                + dwell[mobility[prev.trip_id]]
+                + travel.matrix[prev.node][nxt.node]
+            )
+            if to_min(nxt.eta) < earliest:
+                found.append(
+                    (
+                        "H9",
+                        route.vehicle_id,
+                        f"{nxt.trip_id} at {nxt.eta} is before {to_hhmm(earliest)}",
+                    )
+                )
+    return found
+
+
 def h9_vehicle_inside_shift(manifest: Manifest, fleet: Fleet) -> Violations:
     shifts = {vehicle.vehicle_id: window_min(vehicle.shift) for vehicle in fleet.vehicles}
     found: Violations = []
@@ -58,9 +117,13 @@ def h9_vehicle_inside_shift(manifest: Manifest, fleet: Fleet) -> Violations:
         first = to_min(route.stops[0].eta)
         last = to_min(route.stops[-1].eta)
         if first < opens:
-            found.append(("H9", route.vehicle_id, f"first stop {to_hhmm(first)} before shift"))
+            found.append(
+                ("H9_SHIFT", route.vehicle_id, f"first stop {to_hhmm(first)} before shift")
+            )
         if last > closes:
-            found.append(("H9", route.vehicle_id, f"last stop {to_hhmm(last)} after shift"))
+            found.append(
+                ("H9_SHIFT", route.vehicle_id, f"last stop {to_hhmm(last)} after shift")
+            )
     return found
 
 
@@ -102,12 +165,28 @@ def h12_to_leg_arrives_in_window(manifest: Manifest) -> Violations:
     return found
 
 
+def earliest_pickup(manifest: Manifest, rules: dict[str, Any]) -> Violations:
+    floor = rules["broker"]["earliest_pickup"]
+    limit = to_min(floor)
+    found: Violations = []
+    for route in manifest.routes:
+        for stop in route.stops:
+            if stop.kind == StopKind.pickup and to_min(stop.eta) < limit:
+                found.append(
+                    ("BROKER_EARLIEST", stop.trip_id, f"pickup {stop.eta} before {floor}")
+                )
+    return found
+
+
 def ride_violations(
     roster: Roster, manifest: Manifest, fleet: Fleet, travel: Travel, rules: dict[str, Any]
 ) -> Violations:
     return [
         *h6_return_window_opens_after_ready(roster, manifest),
+        *h8_capacity_per_stop(manifest, fleet),
+        *h9_route_is_feasible(roster, manifest, travel, rules),
         *h9_vehicle_inside_shift(manifest, fleet),
         *h10_ride_within_cap(manifest, travel, rules),
         *h12_to_leg_arrives_in_window(manifest),
+        *earliest_pickup(manifest, rules),
     ]

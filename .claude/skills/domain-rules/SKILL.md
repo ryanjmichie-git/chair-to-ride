@@ -23,7 +23,7 @@ H12 Arrival for the "to" leg lands in `[start − 30, start]`; never after start
 H13 Equity budget: `moves_this_week ≤ 1` per patient.
 
 ## Immovables
-Prescription days; session duration; MD-fixed start times; stretcher assignments; anything the broker policy marks non-negotiable (e.g., no pickups before 06:30 — set in `broker_policy.md`).
+Prescription days; session duration; MD-fixed start times; stretcher assignments; anything the broker policy marks non-negotiable (e.g., no pickups before 05:30 — set in `broker_policy.md`).
 
 ## Soft objective (weights in `rules.yaml`, defaults shown)
 `J = 1.0·Σ post_wait + 0.3·Σ early_wait + 8·(#chair changes) + 20·(#consent-flag moves) + 0.05·(vehicle minutes) + 15·(#review items)` — minimize. Ties broken toward fewer touched patients. The model may argue for a *different* bundle than the lowest-`J` one, but must say why in the ledger.

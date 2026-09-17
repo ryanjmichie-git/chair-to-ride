@@ -8,7 +8,7 @@ Stand up the whole repo skeleton and prove the synthetic "before" schedule is re
 - `.claude/settings.json`, `.claude/hooks/*.py`, `.claude/skills/*/SKILL.md`, `.claude/agents/*.md`
 - `specs/*` (this file's siblings), `specs/schemas/*.schema.json`
 - `config/rules.yaml`, `config/unit_policy.md`, `config/broker_policy.md`
-- `src/c2r/{__init__.py, models.py, phi.py, synth.py, metrics.py, timeutil.py, banner.py}`
+- `src/c2r/{__init__.py, models/, phi.py, synth.py, metrics.py, timeutil.py, banner.py}`
 - `data/names.json`, `data/synthetic/42/{unit,roster,manifest,fleet,travel}.json`, `data/synthetic/42/events.jsonl`
 - `scripts/{spec_check.py, add_lesson.py, check_models.py}`
 - `evals/run_evals.py`, `evals/repo/*`, `evals/data/test_synth.py`, `evals/invariants/__init__.py`

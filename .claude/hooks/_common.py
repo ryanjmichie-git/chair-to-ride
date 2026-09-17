@@ -50,10 +50,19 @@ def frontmatter(text: str) -> dict[str, str]:
     if end is None:
         return {}
     fields: dict[str, str] = {}
-    for line in lines[1:end]:
+    index = 1
+    while index < end:
+        line = lines[index]
+        index += 1
         key, sep, value = line.partition(":")
-        if sep and key.strip():
-            fields[key.strip()] = value.strip().strip("\"'")
+        if not sep or not key.strip() or line[:1].isspace():
+            continue
+        value = value.strip().strip("\"'")
+        if not value and index < end and lines[index][:1].isspace() and lines[index].strip():
+            value = "<block>"
+            while index < end and (lines[index][:1].isspace() or not lines[index].strip()):
+                index += 1
+        fields[key.strip()] = value
     return fields
 
 

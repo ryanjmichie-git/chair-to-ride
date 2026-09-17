@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, confloat, conint
 class Metrics(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     mean_post_wait: float
     p90_post_wait: float

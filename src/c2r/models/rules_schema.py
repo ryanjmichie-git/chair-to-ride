@@ -19,6 +19,7 @@ class AutonomyLevel(IntEnum):
 class ShiftWindows(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     S1: common_schema.Window
     S2: common_schema.Window
@@ -28,6 +29,7 @@ class ShiftWindows(BaseModel):
 class RecoveryBuffer(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     default: conint(ge=0)
     hypotension: conint(ge=0)
@@ -36,6 +38,7 @@ class RecoveryBuffer(BaseModel):
 class DwellMin(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     ambulatory: conint(ge=0)
     assist: conint(ge=0)
@@ -46,6 +49,7 @@ class DwellMin(BaseModel):
 class VanCapacity(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     standard: common_schema.Load
     lift: common_schema.Load
@@ -54,6 +58,7 @@ class VanCapacity(BaseModel):
 class Weights(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     post_wait: float
     early_wait: float
@@ -66,6 +71,7 @@ class Weights(BaseModel):
 class StopRules(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     min_improvement_pct: confloat(ge=0.0)
     max_iterations: conint(ge=1)
@@ -77,6 +83,7 @@ class StopRules(BaseModel):
 class SynthRules(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     runover_share: confloat(ge=0.0, le=1.0)
     runover_max_min: conint(ge=0)
@@ -93,6 +100,7 @@ class SynthRules(BaseModel):
 class UnitRules(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     turnover_min: conint(ge=0)
     stagger_cohort_size: conint(ge=1)
@@ -106,6 +114,7 @@ class UnitRules(BaseModel):
 class BrokerRules(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     ada_negotiation_min: conint(ge=0)
     pickup_window_min: conint(ge=1)
@@ -121,6 +130,7 @@ class BrokerRules(BaseModel):
 class Rules(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     unit: UnitRules
     recovery_buffer_min: RecoveryBuffer

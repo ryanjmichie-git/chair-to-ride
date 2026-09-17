@@ -26,7 +26,7 @@ An agent re-times a dialysis unit's chair schedule against a paratransit manifes
 - Every constraint lives in `verify.py`, never in a prompt.
 - Numbers come from Python; the model chooses, it never computes.
 - Prompts are versioned files; never edit one in place once it carries `eval_result`.
-- Hooks are Python, paths via `pathlib`; `uv run` for everything.
+- Hooks are Python, paths via `pathlib`; `uv run` for project code; hooks and `scripts/` run under system `python`.
 - Load the `domain-rules` skill before touching solver, verify, parties, or `rules.yaml`.
 
 @specs/INDEX.md

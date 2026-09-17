@@ -8,11 +8,11 @@ hooks:
     - matcher: "Edit|Write"
       hooks:
         - type: command
-          command: "python .claude/hooks/path_guard.py --allow \"prompts/**\""
+          command: "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/path_guard.py\" --allow \"prompts/**\""
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "python .claude/hooks/bash_allow.py --allow \"uv run python evals/run_evals.py --judge-only\""
+          command: "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/bash_allow.py\" --allow \"uv run python evals/run_evals.py --judge-only\""
 ---
 
 # prompt-engineer

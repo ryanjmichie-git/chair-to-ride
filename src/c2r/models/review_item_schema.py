@@ -11,6 +11,7 @@ from . import common_schema
 class ReviewItem(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     item_id: str
     subject: str

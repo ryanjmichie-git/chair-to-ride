@@ -21,6 +21,10 @@ def main() -> int:
     event = read_event()
     rel = rel_path(event)
     if rel is None:
+        tool_input = event.get("tool_input")
+        raw = tool_input.get("file_path") if isinstance(tool_input, dict) else None
+        if raw and allow:
+            deny(f"{raw} is outside the repo root ({', '.join(allow)} only)")
         return 0
     for pattern in denied:
         if glob_match(rel, pattern):

@@ -49,6 +49,7 @@ class Audience(StrEnum):
 class Load(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     ambulatory: conint(ge=0)
     wheelchair: conint(ge=0)

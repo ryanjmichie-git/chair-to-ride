@@ -8,7 +8,7 @@ hooks:
     - matcher: "Bash"
       hooks:
         - type: command
-          command: "python .claude/hooks/bash_allow.py --allow \"pytest\" \"uv run pytest\" \"git diff\" \"git log\" \"git status\""
+          command: "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/bash_allow.py\" --allow \"pytest\" \"uv run pytest\" \"git diff\" \"git log\" \"git status\""
 ---
 
 # reviewer

@@ -32,8 +32,8 @@ broker:
   ada_negotiation_min: 60
   # Width of the pickup window the vehicle must arrive inside.
   pickup_window_min: 30
-  # No vehicle picks anyone up before this time.
-  earliest_pickup: "06:30"
+  # No vehicle picks anyone up before this time; it is when the fleet's shift starts.
+  earliest_pickup: "05:30"
   # Minutes a driver waits at the curb before leaving.
   driver_wait_min: 5
   # Longest time any rider may spend on board.

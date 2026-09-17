@@ -24,7 +24,11 @@ def main() -> int:
     if not command.strip():
         return 0
     for segment in (s.strip() for s in SEPARATORS.split(command)):
-        if segment and not any(segment.startswith(p) for p in allow):
+        if not segment:
+            continue
+        if ">" in segment:
+            deny(f"'{segment}' redirects output to a file; this agent may not write that way")
+        if not any(segment.startswith(p) for p in allow):
             deny(f"'{segment}' is outside this agent's allowed commands ({', '.join(allow)})")
     return 0
 

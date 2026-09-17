@@ -13,7 +13,7 @@ We may negotiate a requested time by up to sixty minutes either side. That is th
 whole of our discretion. A trip that cannot be placed inside that band is not
 scheduled; it is queued as a denial and the reason is logged for the record.
 
-No vehicle picks anyone up before 06:30.
+No vehicle picks anyone up before 05:30, when the fleet's shift starts.
 
 A driver waits five minutes at the curb. After that the vehicle continues and the
 rider is put back into the queue rather than left waiting for a vehicle that has gone.

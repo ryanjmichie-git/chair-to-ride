@@ -26,8 +26,19 @@ PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\bgit\s+checkout\s+--\s+\."), "git checkout -- ."),
     (re.compile(r"\bgit\s+branch\s+-D\b"), "git branch -D"),
 ]
+RAW_PATTERNS: list[tuple[re.Pattern[str], str]] = [
+    (
+        re.compile(
+            r"(\b(mkdir|touch|cp|mv|New-Item|Copy-Item|Move-Item)\b.*|>>?\s*[\"']?)"
+            r"[^\s\"';|]*data[/\\]real",
+            re.IGNORECASE,
+        ),
+        "creates data/real",
+    ),
+]
 QUOTED = re.compile(r"\"[^\"]*\"|'[^']*'")
 SEPARATORS = re.compile(r"&&|\|\||;|\|")
+DASH_C = re.compile(r"(?:^|\s)-c\s+(.+)$")
 
 
 def _normalise(path: str) -> str:
@@ -58,6 +69,11 @@ def _segments(command: str) -> list[tuple[str, str]]:
     return [(command[a:b], masked[a:b]) for a, b in spans]
 
 
+def _inner(segment: str) -> str:
+    match = DASH_C.search(segment)
+    return match.group(1) if match else ""
+
+
 def _rm_targets_safe(segment: str, roots: list[str]) -> bool:
     match = re.search(r"\brm\b(.*)$", segment)
     if not match or not roots:
@@ -78,7 +94,10 @@ def main() -> int:
         return 0
     roots = _safe_roots(event)
     for raw, scan in _segments(command):
-        hits = [label for pattern, label in PATTERNS if pattern.search(scan)]
+        inner = _inner(raw)
+        found = [label for pattern, label in PATTERNS if pattern.search(scan) or pattern.search(inner)]
+        found += [label for pattern, label in RAW_PATTERNS if pattern.search(raw)]
+        hits = list(dict.fromkeys(found))
         if not hits:
             continue
         if hits == ["recursive rm"] and _rm_targets_safe(raw, roots):

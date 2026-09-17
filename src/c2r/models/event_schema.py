@@ -20,6 +20,7 @@ class EventType(StrEnum):
 class Event(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     t: constr(pattern=r"^([01]\d|2[0-3]):[0-5]\d$") = Field(..., title="Time")
     type: EventType = Field(..., title="EventType")

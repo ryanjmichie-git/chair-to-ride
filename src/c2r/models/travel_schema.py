@@ -13,6 +13,7 @@ from . import common_schema
 class Node(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     node_id: conint(ge=0, le=39) = Field(..., title="NodeId")
     zone: common_schema.Zone
@@ -23,6 +24,7 @@ class Node(BaseModel):
 class Travel(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     synthetic: Literal[True]
     generator: str

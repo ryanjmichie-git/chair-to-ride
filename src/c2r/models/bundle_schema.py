@@ -13,6 +13,7 @@ from . import common_schema
 class Predicted(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     delta_wait_min: int
     delta_early_min: int
@@ -24,6 +25,7 @@ class Predicted(BaseModel):
 class RequestExtraCapacity(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     type: Literal["request_extra_capacity"]
     vehicle_min: conint(ge=0)
@@ -33,6 +35,7 @@ class RequestExtraCapacity(BaseModel):
 class ShiftChairStart(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     type: Literal["shift_chair_start"]
     patient_id: constr(pattern=r"^P(0[1-9]|[12]\d|3[0-6])$") = Field(..., title="PatientId")
@@ -42,6 +45,7 @@ class ShiftChairStart(BaseModel):
 class SwapChairs(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     type: Literal["swap_chairs"]
     patient_a: constr(pattern=r"^P(0[1-9]|[12]\d|3[0-6])$") = Field(..., title="PatientId")
@@ -51,6 +55,7 @@ class SwapChairs(BaseModel):
 class ShiftPickupWindow(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     type: Literal["shift_pickup_window"]
     trip_id: constr(pattern=r"^P(0[1-9]|[12]\d|3[0-6])[tf]$") = Field(..., title="TripId")
@@ -60,6 +65,7 @@ class ShiftPickupWindow(BaseModel):
 class ReassignVehicle(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     type: Literal["reassign_vehicle"]
     trip_id: constr(pattern=r"^P(0[1-9]|[12]\d|3[0-6])[tf]$") = Field(..., title="TripId")
@@ -69,6 +75,7 @@ class ReassignVehicle(BaseModel):
 class ResequenceRoute(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     type: Literal["resequence_route"]
     vehicle_id: constr(pattern=r"^V[1-5]$") = Field(..., title="VehicleId")
@@ -78,6 +85,7 @@ class ResequenceRoute(BaseModel):
 class PairRiders(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     type: Literal["pair_riders"]
     trip_ids: list[constr(pattern=r"^P(0[1-9]|[12]\d|3[0-6])[tf]$")]
@@ -87,6 +95,7 @@ class PairRiders(BaseModel):
 class HoldForWillCall(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     type: Literal["hold_for_will_call"]
     trip_id: constr(pattern=r"^P(0[1-9]|[12]\d|3[0-6])[tf]$") = Field(..., title="TripId")
@@ -96,6 +105,7 @@ class HoldForWillCall(BaseModel):
 class Bundle(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     bundle_id: str
     side: common_schema.Side

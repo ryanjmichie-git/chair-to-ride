@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, conint
 class JudgeScores(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     accuracy: conint(ge=0, le=2)
     actionable: conint(ge=0, le=2)
@@ -21,6 +22,7 @@ class JudgeScores(BaseModel):
 class JudgeScore(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     explanation_id: str
     scores: JudgeScores

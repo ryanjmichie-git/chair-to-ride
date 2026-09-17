@@ -19,6 +19,7 @@ class StationType(StrEnum):
 class Chair(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     chair_id: constr(pattern=r"^C(0[1-9]|1[0-2])$") = Field(..., title="ChairId")
     station_type: StationType = Field(..., title="StationType")
@@ -28,6 +29,7 @@ class Chair(BaseModel):
 class Shift(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     shift_id: common_schema.ShiftId
     putton_start: constr(pattern=r"^([01]\d|2[0-3]):[0-5]\d$") = Field(..., title="Time")
@@ -37,6 +39,7 @@ class Shift(BaseModel):
 class Unit(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     synthetic: Literal[True]
     generator: str

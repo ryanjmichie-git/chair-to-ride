@@ -6,7 +6,9 @@ from pathlib import Path
 
 import pytest
 
-CLAUDE_MD = Path(__file__).resolve().parents[2] / "CLAUDE.md"
+ROOT = Path(__file__).resolve().parents[2]
+CLAUDE_MD = ROOT / "CLAUDE.md"
+SPEC_INDEX = ROOT / "specs" / "INDEX.md"
 MAX_LINES = 60
 MAX_LESSONS = 15
 
@@ -37,3 +39,14 @@ def test_lessons_heading_is_capped() -> None:
         if line.lstrip().startswith("- "):
             bullets += 1
     assert bullets <= MAX_LESSONS, f"CLAUDE.md holds {bullets} lessons"
+
+
+def test_spec_index_has_exactly_one_active_row() -> None:
+    rows = [
+        line
+        for line in SPEC_INDEX.read_text(encoding="utf-8").splitlines()
+        if line.strip().startswith("|")
+    ]
+    active = [row for row in rows if row.split("|")[2].strip() == "active"]
+    assert len(active) == 1, active
+

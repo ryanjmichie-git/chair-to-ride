@@ -29,6 +29,7 @@ class ViolationCode(StrEnum):
 class Violation(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     code: ViolationCode = Field(..., title="ViolationCode")
     subject_id: str
@@ -38,6 +39,7 @@ class Violation(BaseModel):
 class VerifyResult(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
+        populate_by_name=True,
     )
     schedule_version: conint(ge=0)
     verify_hash: str

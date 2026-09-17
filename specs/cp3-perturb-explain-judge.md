@@ -15,6 +15,8 @@ Eval-gate freeze, `--full` suite, rehearsal recording (CP4/CP5).
 ## Definition of done
 - `perturb.py --event vehicle_down --at 13:40` re-plans in ≤ 30 s wall clock; no V3 rider is stranded.
 - Explanations reference only facts in `ledger_refs`; any invented number scores accuracy = 0.
+- `eval_result` in prompt frontmatter is a scalar or a flow mapping on one line.
+- `JudgeScore` is serialised with `model_dump(by_alias=True)` so the `pass` key keeps its name.
 - B (clinical teammate) hand-grades 10 explanations; judge/human pass-fail agreement ≥ 8/10, else the rubric is edited before it gates anything.
 
 ## Verification command

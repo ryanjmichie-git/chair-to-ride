@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import subprocess
 import sys
@@ -32,7 +33,11 @@ def main() -> int:
             timeout=120,
             check=False,
         )
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except FileNotFoundError:
+        print(json.dumps({"systemMessage": "invariant tests skipped: uv is not on PATH"}))
+        return 0
+    except subprocess.TimeoutExpired:
+        print(json.dumps({"systemMessage": "invariant tests skipped: the run timed out"}))
         return 0
     if proc.returncode != 0:
         tail = "\n".join((proc.stdout + proc.stderr).splitlines()[-40:])

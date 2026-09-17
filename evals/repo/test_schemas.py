@@ -62,8 +62,14 @@ def test_generated_models_are_not_stale(tmp_path: Path) -> None:
     output = tmp_path / "models"
     command = _makefile_models_command().replace("src/c2r/models", output.as_posix())
     subprocess.run(shlex.split(command), cwd=ROOT, check=True)
-    committed = {path.name: path.read_bytes() for path in sorted(MODELS_DIR.glob("*.py"))}
-    regenerated = {path.name: path.read_bytes() for path in sorted(output.glob("*.py"))}
+    committed = {
+        path.name: path.read_bytes().replace(b"\r\n", b"\n")
+        for path in sorted(MODELS_DIR.glob("*.py"))
+    }
+    regenerated = {
+        path.name: path.read_bytes().replace(b"\r\n", b"\n")
+        for path in sorted(output.glob("*.py"))
+    }
     assert regenerated == committed
 
 

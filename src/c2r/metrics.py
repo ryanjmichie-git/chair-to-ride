@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from itertools import pairwise
 from pathlib import Path
 from typing import Any
@@ -63,7 +64,7 @@ def compute_metrics(roster: Roster, manifest: Manifest, rules: dict[str, Any]) -
             if trip.trip_id in dropoffs:
                 early.append(to_min(patient.start_time) - dropoffs[trip.trip_id])
             continue
-        if trip.status == TripStatus.queued:
+        if trip.status == TripStatus.queued or trip.trip_id not in pickups:
             flagged += 1
             continue
         wait = pickups[trip.trip_id] - _ready(patient)
@@ -125,6 +126,7 @@ def _table(metrics: Metrics) -> str:
 
 
 def main() -> int:
+    sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser()
     parser.add_argument("data_dir")
     parser.add_argument("--json", action="store_true")

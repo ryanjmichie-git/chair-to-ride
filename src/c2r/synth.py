@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import dataclass, field
 from itertools import permutations
 from pathlib import Path
@@ -503,6 +504,7 @@ def _place_to(
     matrix: list[list[int]],
     dwell: dict[str, int],
     shift: tuple[int, int],
+    floor: int,
 ) -> bool:
     klass = CLASS_OF[job.mobility]
     empty = Load(ambulatory=0, wheelchair=0, stretcher=0)
@@ -511,7 +513,7 @@ def _place_to(
         arrive = job.chair_start - early
         board = arrive - dwell[job.mobility] - matrix[job.home_node][UNIT_NODE]
         finish = arrive + dwell[job.mobility]
-        if board < shift[0] or finish > shift[1]:
+        if board < floor or finish > shift[1]:
             continue
         for van in sorted(vans, key=lambda v: (len(v.tasks), v.vehicle.vehicle_id)):
             if _capacity(van.vehicle)[klass] < 1:
@@ -749,8 +751,9 @@ def _routes(
         (job for job in jobs if job.trip.leg == Leg.to),
         key=lambda job: (job.chair_start, job.trip.trip_id),
     )
+    floor = max(shift[0], to_min(rules["broker"]["earliest_pickup"]))
     for job in outbound:
-        if not _place_to(vans, job, matrix, dwell, shift):
+        if not _place_to(vans, job, matrix, dwell, shift, floor):
             job.trip.status = TripStatus.queued
     per_shift = rules["synth"]["return_vans_per_shift"]
     for index, shift_id in enumerate(SHIFT_IDS):
@@ -906,6 +909,7 @@ def generate(seed: int, out_dir: Path, use_llm: bool = False) -> None:
 
 
 def main() -> int:
+    sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--out", required=True)

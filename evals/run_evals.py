@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-GATE_DIRS = ("evals/repo", "evals/data")
+GATE_DIRS = ("evals/repo", "evals/data", "evals/invariants")
 
 
 def _count(output: str, word: str) -> int:
@@ -19,7 +19,7 @@ def _count(output: str, word: str) -> int:
 
 
 def _gate() -> int:
-    present = [d for d in GATE_DIRS if (ROOT / d).is_dir()]
+    present = [d for d in GATE_DIRS if any((ROOT / d).glob("test_*.py"))]
     if not present:
         print("GATE FAIL (no gate test directories found)")
         return 1

@@ -8,7 +8,7 @@ hooks:
     - matcher: "Edit|Write"
       hooks:
         - type: command
-          command: "python .claude/hooks/path_guard.py --deny \"prompts/**\" \"viz/**\""
+          command: "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/path_guard.py\" --deny \"prompts/**\" \"viz/**\""
 ---
 
 # solver-dev
