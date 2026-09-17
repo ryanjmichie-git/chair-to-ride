@@ -32,9 +32,12 @@ live ones off the screen, do not quote these.
    so the second line prints one note instead of the whole file):
    ```
    type runs\cp2\review_queue.json
-   (Get-Content runs\cp2\explanations.json -Raw | ConvertFrom-Json)[0].explanation | Format-List audience,subject_id,what_changed,why,contact,reading_grade
+   python scripts\show_note.py runs\cp2
+   python scripts\show_note.py runs\cp3 E16d
    type cost_report.md
    ```
+   These work in cmd and PowerShell alike. The dispatcher note `E16d` is the breakdown story
+   in one paragraph: P16's ride lost its van at 13:40, decide by 15:11 or hold for will-call.
    `cost_report.md` only changes when you run `make cost-report`; do that after the pre-flight
    runs if you want tonight's dollars in it.
 6. Clear terminal A (`cls`). Say the words "synthetic data" once, on screen and aloud; the

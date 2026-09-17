@@ -1,25 +1,26 @@
 # Cost report
 
-Generated 2026-09-17 22:20 UTC from every ledger under `runs/` (28 ledgers). SYNTHETIC DATA. Every number below is summed from `ledger.jsonl`, `explain.jsonl`, `judge.jsonl` and `calibration.jsonl`; nothing is typed in.
+Generated 2026-09-17 23:35 UTC from every ledger under `runs/` (29 ledgers). SYNTHETIC DATA. Every number below is summed from `ledger.jsonl`, `explain.jsonl`, `judge.jsonl` and `calibration.jsonl`; nothing is typed in.
 
 ## Dollars by model
 
 | Model | Calls | Input | Cache read | Cache write | Output | Cache-read share | USD |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| claude-fable-5-1 | 105 | 209,314 | 940,941 | 234,314 | 29,377 | 68% | $4.97 |
-| claude-sonnet-5 | 76 | 303,593 | 0 | 0 | 9,418 | 0% | $0.70 |
-| fake-mediator | 109 | 190,500 | 818,000 | 164,000 | 16,730 | 70% | $0.00 |
-| **all** | 290 | | | | | | **$5.68** |
+| claude-fable-5-1 | 105 | 209,314 | 963,713 | 211,452 | 29,523 | 70% | $4.70 |
+| claude-sonnet-5 | 75 | 291,354 | 0 | 0 | 9,290 | 0% | $0.68 |
+| fake-mediator | 116 | 202,500 | 999,500 | 198,000 | 18,130 | 71% | $0.00 |
+| **all** | 296 | | | | | | **$5.38** |
 
 ## Ledgers
 
 | Run | Role | Model | Effort | Calls | Input | Cache read | Cache write | Output | Cache-read share | USD |
 |---|---|---|---|---:|---:|---:|---:|---:|---:|---:|
-| cp2 | explainer | claude-sonnet-5 | medium | 16 | 67,721 | 0 | 0 | 1,950 | 0% | $0.15 |
-| cp2 | mediator | claude-fable-5-1 | medium | 7 | 16 | 166,164 | 32,973 | 2,200 | 83% | $0.56 |
+| .fake-run-cache/65d8dea61eb3bdb5/run | mediator | fake-mediator | none | 7 | 12,000 | 181,500 | 34,000 | 1,400 | 80% | $0.00 |
+| cp2 | explainer | claude-sonnet-5 | medium | 15 | 56,528 | 0 | 0 | 1,782 | 0% | $0.13 |
+| cp2 | mediator | claude-fable-5-1 | medium | 7 | 16 | 189,021 | 10,205 | 2,368 | 95% | $0.29 |
 | cp2-fake | mediator | fake-mediator | none | 7 | 12,000 | 181,500 | 34,000 | 1,400 | 80% | $0.00 |
-| cp3 | explainer | claude-sonnet-5 | medium | 4 | 15,198 | 0 | 0 | 518 | 0% | $0.04 |
-| cp3 | mediator | claude-fable-5-1 | low | 2 | 6 | 48,101 | 3,066 | 437 | 94% | $0.07 |
+| cp3 | explainer | claude-sonnet-5 | medium | 4 | 14,152 | 0 | 0 | 558 | 0% | $0.03 |
+| cp3 | mediator | claude-fable-5-1 | low | 2 | 6 | 48,016 | 2,972 | 415 | 94% | $0.07 |
 | cp3-fake | mediator | fake-mediator | none | 3 | 6,000 | 54,500 | 28,000 | 600 | 62% | $0.00 |
 | full/42/baseline | explainer | claude-sonnet-5 | medium | 16 | 63,509 | 0 | 0 | 2,029 | 0% | $0.15 |
 | full/42/baseline | judge (batch, half price) | claude-fable-5-1 | low | 16 | 43,211 | 1,860 | 27,900 | 4,001 | 3% | $0.49 |
