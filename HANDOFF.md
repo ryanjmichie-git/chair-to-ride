@@ -24,6 +24,12 @@ Committed at the end of the session (4 more commits, 8 for CP1 in all):
 - `Makefile`: `solve`, `timeline`; `demo` runs both. `docs/cp1-decisions.md`, `docs/llms.txt`,
   CLAUDE.md lessons 1-2.
 
+Committed after the user's follow-up (2 more commits, 10 for CP1 in all):
+- `.claude/hooks/k2_guard.py` (eighth hook): refuses a `git commit` whose `src/` diff exceeds 400
+  lines; tests in `evals/repo/test_hooks.py` drive it against a throwaway git repo.
+- `src/c2r/metrics.py`: `vehicle_min` counts on-task minutes (rider aboard or loading), not the
+  first-to-last-stop span; `evals/invariants/test_metrics.py`.
+
 ## Decisions made (details and numbers in docs/cp1-decisions.md)
 1. A shift's return pool is every van the baseline already sends for that shift's riders, either
    leg (all five on seed 42). One van per shift made the target physically unreachable.
@@ -41,26 +47,29 @@ Committed at the end of the session (4 more commits, 8 for CP1 in all):
 8. A queued rider with a legal, accepted candidate gets a `BROKER_POLICY` item naming the bundle
    and both J values, judged on the final state, not `NO_FEASIBLE_WINDOW`.
 9. Lesson 3 (will-call opens) was dropped again: it duplicated code comments.
+10. Vehicle minutes are on-task minutes (`metrics._busy_minutes`): the span definition charged
+    P31f's evening ride five idle hours and J held the rider. Before is now 523, not 3434; B
+    should re-check the 0.05 weight. The K2 hook fails open outside a git repo and measures the
+    working tree plus untracked files when the same command runs `git add`.
 
 ## Artifacts
 - `runs/cp1/`: schedule_before/after.json, verify_after.json, bundles.json, review_queue.json,
   metrics.json, timeline.html. Git-ignored; `make demo` regenerates them.
-- Seed 42: mean post-wait 70.21 -> 3.38, p90 131 -> 21, equity gap 32.14 -> 6.28,
-  flagged 4 -> 2 (stretcher, P31f), J 1262.7 -> 297.35, 14 bundles, 0 violations, ~13 s.
+- Seed 42: mean post-wait 70.21 -> 2.71, p90 131 -> 13, equity gap 32.14 -> 1.27,
+  flagged 4 -> 1 (stretcher only), vehicle minutes 523 -> 566, J 1117.15 -> 137.3, 14 bundles,
+  0 violations, ~13 s.
 
 ## Acceptance status
-- `uv run pytest evals/invariants -q`: 57 passed (19.8 s).
-- `make gate`: 188 passed, GATE PASS (52.9 s).
+- `uv run pytest evals/invariants -q`: 60 passed (17.2 s).
+- `make gate`: 197 passed, GATE PASS (54.0 s); `uv run pytest evals/repo -q`: 109 passed.
 - `make solve`: 0 violations, after beats baseline, target (mean <= 25, p90 <= 45) met.
 - `make timeline`: runs/cp1/timeline.html, two panels, no external assets.
-- Reviews: four reviewer passes (verifier; routing+parties; solver; solver fixes + timeline),
-  every finding fixed or recorded in docs/cp1-decisions.md. Nothing waived.
+- Reviews: five reviewer passes (verifier; routing+parties; solver; solver fixes + timeline;
+  vehicle-minute metric), every finding fixed or recorded in docs/cp1-decisions.md. Nothing waived.
 
 ## What's next
 1. Open `runs/cp1/timeline.html` in a browser and eyeball it (not done: no browser this session).
-2. Decide whether to add a pre-commit K2 hook (staged `src/` diff over 400 lines blocks the
-   commit); the reviewer recommended it, nothing enforces K2 today.
-3. Decide whether `metrics.vehicle_min` should count on-task minutes rather than a van's span
-   (B's call; it is why P31f stays queued on seed 42).
-4. CP2 starts with `/kickoff cp2`; `generate_candidates(baseline, state, plan, side, k=6)` is
+2. Tell B that vehicle minutes now count on-task time (before 523, was 3434 as a span) and ask
+   whether the 0.05 weight still stands.
+3. CP2 starts with `/kickoff cp2`; `generate_candidates(baseline, state, plan, side, k=6)` is
    the tool the mediator calls, and `unit.respond` / `broker.respond` are the parties.

@@ -68,7 +68,7 @@ weights:
   chair_change: 8
   # Each move touching a patient who did not consent to be moved.
   consent_move: 20
-  # Each vehicle minute added.
+  # Each on-task vehicle minute added (rider aboard or loading; idle and empty travel excluded).
   vehicle_min: 0.05
   # Each item handed to a human instead of solved.
   review_item: 15

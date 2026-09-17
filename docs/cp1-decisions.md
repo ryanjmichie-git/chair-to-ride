@@ -6,29 +6,31 @@ while building the solver and verifier, with where it lives in code.
 ## What the numbers mean (seed 42, `make solve`)
 | Metric | Before | After | Where it comes from |
 |---|---|---|---|
-| mean post-wait (min) | 70.21 | 3.38 | `metrics.compute_metrics`, pickup minus actual ready |
-| p90 post-wait (min) | 131 | 21 | same |
-| equity gap (min) | 32.14 | 6.28 | wheelchair mean minus ambulatory mean |
-| riders flagged | 4 | 2 | queued returns: the stretcher trip, and P31f (see below) |
-| vehicle minutes | 3434 | 3307 | first stop to last stop per van |
+| mean post-wait (min) | 70.21 | 2.71 | `metrics.compute_metrics`, pickup minus actual ready |
+| p90 post-wait (min) | 131 | 13 | same |
+| equity gap (min) | 32.14 | 1.27 | wheelchair mean minus ambulatory mean |
+| riders flagged | 4 | 1 | queued returns: the stretcher trip only |
+| vehicle minutes | 523 | 566 | on-task: minutes a van has a rider aboard or is loading one (`metrics._busy_minutes`), idle time between task blocks excluded |
 | hard-constraint violations | 0 | 0 | `verify.verify`, H1-H13 |
-| J | 1262.7 | 297.35 | `moves.j_score`, weights from `config/rules.yaml` |
+| J | 1117.15 | 137.3 | `moves.j_score`, weights from `config/rules.yaml` |
 
-Fourteen bundles were applied: twelve vehicle reassignments (two with the window re-timed to
-where the van arrives), one pairing of the two S1 wheelchair riders on the lift van V5, and one
-closing window re-timing. No chair shift survived the search on this seed: with five vans in
+Fourteen bundles were applied: nine vehicle reassignments, one pairing of P02f and P10f on V4,
+three window re-timings to where the van arrives, and one closing window re-timing. No chair shift survived the search on this seed: with five vans in
 their openings, the ride side alone reaches the target, and every chair move costs 8 J for less
 than that in wait. Chair-shift bundles are still generated and offered (`moves._moves`), so the
 mediator at CP2 can pick one and say why. Every applied bundle is in `runs/cp1/bundles.json`
 with the J before and after it and a unique id (`S<step>-B<n>`, `W<n>` for closing re-timings,
 `H<n>` for holds).
 
-P31f (S3, ready 20:35) stays queued with a `BROKER_POLICY` item, not `NO_FEASIBLE_WINDOW`: a
-legal, accepted van exists (`S14-B194`), but it scores J 297.05 against 297.35 for the hold,
-under the 2 percent stop rule. The reason is that `metrics.vehicle_min` counts a van's span from
-first stop to last stop, so an evening return on a van idle since 15:35 costs five idle hours.
-That is CP0's metric definition and B's weight; a candidate fix for B is to count on-task
-minutes instead. The queue item says so and names the dispatcher.
+Vehicle minutes changed definition after the first CP1 run. CP0 counted a van's span from first
+stop to last stop (3434 before, 3307 after), so an evening return for P31f (S3, ready 20:35) on a
+van idle since 15:35 cost five idle hours and J preferred holding the rider (297.05 for the ride
+against 297.35 for the hold, inside the 2 percent stop rule). Vehicle minutes now count on-task
+time only: the union per van of [pickup, dropoff + loading dwell] spans, so idle time between
+task blocks and the empty drive to a pickup are not charged (all five vans are on shift either
+way, and `compute_metrics` has no travel matrix to price empty travel with). With that definition P31f gets a
+ride (`S12-B194`, V2) and the queue holds only the stretcher rider. B should re-check the 0.05
+weight against the new scale; the before number is 523, not 3434.
 
 ## Decisions
 | Decision | Choice | Why |

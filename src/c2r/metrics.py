@@ -42,9 +42,23 @@ def _mean(values: list[float]) -> float:
     return round(sum(values) / len(values), 2) if values else 0.0
 
 
+def _busy_minutes(spans: list[tuple[int, int]]) -> int:
+    """Minutes covered by the union of [pickup, dropoff + dwell] spans: a van with a rider aboard or loading."""
+    total = 0
+    end = -1
+    for start, stop in sorted(spans):
+        start = max(start, end)
+        if stop > start:
+            total += stop - start
+            end = stop
+    return total
+
+
 def compute_metrics(roster: Roster, manifest: Manifest, rules: dict[str, Any]) -> Metrics:
+    """Score a day. vehicle_min counts on-task minutes (rider aboard or loading), never idle span."""
     patients = {patient.patient_id: patient for patient in roster.patients}
     riders = {rider.rider_id: rider for rider in roster.riders}
+    trips = {trip.trip_id: trip for trip in manifest.trips}
     pickups: dict[str, int] = {}
     dropoffs: dict[str, int] = {}
     for route in manifest.routes:
@@ -82,11 +96,17 @@ def compute_metrics(roster: Roster, manifest: Manifest, rules: dict[str, Any]) -
         ordered = sorted(chair)
         conflicts += sum(1 for a, b in pairwise(ordered) if b[0] < a[1])
     target = rules["stop"]["target_post_wait"]
-    vehicle_min = sum(
-        to_min(route.stops[-1].eta) - to_min(route.stops[0].eta)
-        for route in manifest.routes
-        if route.stops
-    )
+    dwell = rules["broker"]["dwell_min"]
+    vehicle_min = 0
+    for route in manifest.routes:
+        aboard: list[tuple[int, int]] = []
+        for stop in route.stops:
+            if stop.kind != StopKind.pickup or stop.trip_id not in dropoffs:
+                continue
+            trip = trips[stop.trip_id]
+            mobility = patients[riders[trip.rider_id].patient_id].mobility.value
+            aboard.append((to_min(stop.eta), dropoffs[stop.trip_id] + dwell[mobility]))
+        vehicle_min += _busy_minutes(aboard)
     return Metrics(
         mean_post_wait=_mean(waits),
         p90_post_wait=p90(waits),
