@@ -10,7 +10,7 @@ An agent re-times a dialysis unit's chair schedule against a paratransit manifes
 - [pyproject.toml](../pyproject.toml): package `c2r`, dependencies, ruff/pytest config.
 - [config/](../config/): `rules.yaml` (constants + weights), `unit_policy.md`, `broker_policy.md`.
 - [data/](../data/): `names.json` and `synthetic/<seed>/` — the only data this project ever reads.
-- [docs/](../docs/): this index, `cp0-deviations.md`, `cp1-decisions.md`, `cp2-decisions.md`, `cp3-decisions.md`, and `demo_script.md` / `backup.mp4` once CP5 lands.
+- [docs/](../docs/): this index, `cp0-deviations.md`, `cp1-decisions.md`, `cp2-decisions.md`, `cp3-decisions.md`, `calibration_sheet.md` (the ten notes for the clinical reviewer's Pass/Fail), and `demo_script.md` / `backup.mp4` once CP5 lands.
 - [evals/](../evals/): `invariants/` (I1–I20, `conftest.py` shares one offline mediator run), `scenarios/`, `golden/`, `repo/` (`test_prompts.py`: frontmatter and PHI contract), `data/` (`golden_explanations.json`, 12 hand-verdicted notes; `judge_calibration.json`, 10 notes for the clinical teammate), `run_evals.py` (`--gate`, `--judge-only`).
 - [prompts/](../prompts/): versioned LLM prompts (`synth_notes`, `mediator`, `explainer`, `judge`).
 - [runs/](../runs/): per-run outputs — schedules, ledger, metrics, timeline.

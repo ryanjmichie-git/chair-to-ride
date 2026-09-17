@@ -88,7 +88,8 @@ docs/cp3-decisions.md):
   nine fewer tests; run-to-run noise is about 5 s). Over the Stop hook's 90 s subprocess timeout: a
   timeout skips the gate with a notice instead of blocking, so the hook does not guard a stop
   right now. Raising the timeout in `.claude/hooks/eval_gate.py` to 110 s was refused by the
-  session's permission mode (hook edits are yours); CP4 owns the 60 s target.
+  session's permission mode. Ryan accepted the gap on 2026-09-17 until CP4 brings the gate
+  under 60 s; do not raise it again before then.
 - Not done: B's hand-grading of the 10 calibration notes; agreement is reported by
   `--judge-only` once `human_pass` is filled. The golden test in `test_cp3_live.py` was not run
   live (its function, `judge.judge_golden`, is what `--judge-only` ran: 12/12).
@@ -98,8 +99,10 @@ docs/cp3-decisions.md):
   a failed-call test). The rest waived with reasons in docs/cp3-decisions.md.
 
 ## What's next
-1. Give B `evals/data/judge_calibration.json` (each item has `for_the_grader`); fill
-   `human_pass` and `human_notes`; run `make judge-only`. Under 8/10 agreement, write
+1. B's grading does not block CP4 (the judge gates nothing until then). Send B
+   `docs/calibration_sheet.md` (the ten notes with a Pass/Fail column, written for a
+   non-technical reader); copy the verdicts into `human_pass` / `human_notes` in
+   `evals/data/judge_calibration.json`; run `make judge-only`. Under 8/10 agreement, write
    `prompts/judge.v2.md` (v1 is frozen) and re-run.
 2. `/kickoff cp4`: the other four events in `perturb.EVENTS` (`chair_down`, `late_arrival`,
    `add_on_patient`, `travel_slowdown`) for the `--full` suite (5 scenarios x 3 seeds); the
