@@ -15,9 +15,10 @@ import pytest
 import yaml
 
 from c2r.metrics import compute_metrics
-from c2r.models import Event, Fleet, Manifest, Roster, Travel, Unit
+from c2r.models import Event, Fleet, Leg, Manifest, Roster, StopKind, Travel, TripStatus, Unit
 from c2r.phi import find_phi
-from c2r.timeutil import to_min
+from c2r.ride_checks import ride_violations
+from c2r.timeutil import to_min, window_min
 
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data" / "synthetic" / "42"
@@ -55,6 +56,11 @@ def manifest() -> Manifest:
 @pytest.fixture(scope="module")
 def travel() -> Travel:
     return Travel.model_validate_json((DATA / "travel.json").read_text(encoding="utf-8"))
+
+
+@pytest.fixture(scope="module")
+def fleet() -> Fleet:
+    return Fleet.model_validate_json((DATA / "fleet.json").read_text(encoding="utf-8"))
 
 
 @pytest.fixture(scope="module")
@@ -99,8 +105,17 @@ def test_flag_and_rider_distribution(roster: Roster) -> None:
 
 
 def test_chair_utilisation(unit: Unit, roster: Roster) -> None:
-    slots = len(unit.chairs) * len(unit.shifts)
-    assert 0.85 <= len(roster.patients) / slots <= 1.0
+    available = sum(
+        closes - opens
+        for chair in unit.chairs
+        for opens, closes in (window_min(window) for window in chair.available_windows)
+    )
+    occupied = 0
+    for chair in unit.chairs:
+        sessions = [p for p in roster.patients if p.chair_id == chair.chair_id]
+        occupied += sum(int(p.rx_duration_min) for p in sessions)
+        occupied += unit.turnover_min * (len(sessions) - 1)
+    assert 0.85 <= occupied / available <= 1.0
 
 
 def test_every_shift_has_fixed_and_non_consenting_patients(roster: Roster) -> None:
@@ -185,14 +200,59 @@ def test_regenerating_reproduces_every_file_byte_for_byte(tmp_path: Path) -> Non
         assert (tmp_path / filename).read_bytes() == (DATA / filename).read_bytes()
 
 
-def test_fleet_matches_the_broker_capacity_rules(rules: dict[str, Any]) -> None:
-    fleet = Fleet.model_validate_json((DATA / "fleet.json").read_text(encoding="utf-8"))
+def test_fleet_matches_the_broker_capacity_rules(fleet: Fleet, rules: dict[str, Any]) -> None:
     capacity = rules["broker"]["van_capacity"]
     for vehicle in fleet.vehicles:
         van = capacity["standard" if int(vehicle.vehicle_id[1]) <= 3 else "lift"]
         assert vehicle.cap_ambulatory == van["ambulatory"]
         assert vehicle.cap_wheelchair == van["wheelchair"]
         assert vehicle.status.value == "ok"
+
+
+def test_ride_side_hard_constraints_hold(
+    roster: Roster, manifest: Manifest, fleet: Fleet, travel: Travel, rules: dict[str, Any]
+) -> None:
+    violations = ride_violations(roster, manifest, fleet, travel, rules)
+    assert len(violations) <= 3, violations
+
+
+def test_scheduled_to_legs_arrive_inside_the_chair_window(
+    roster: Roster, manifest: Manifest, rules: dict[str, Any]
+) -> None:
+    patients = {patient.patient_id: patient for patient in roster.patients}
+    riders = {rider.rider_id: rider for rider in roster.riders}
+    dropoffs = {
+        stop.trip_id: to_min(stop.eta)
+        for route in manifest.routes
+        for stop in route.stops
+        if stop.kind == StopKind.dropoff
+    }
+    width = rules["broker"]["pickup_window_min"]
+    scheduled = [
+        trip
+        for trip in manifest.trips
+        if trip.leg == Leg.to and trip.status == TripStatus.scheduled
+    ]
+    assert scheduled
+    for trip in scheduled:
+        start = to_min(patients[riders[trip.rider_id].patient_id].start_time)
+        assert start - width <= dropoffs[trip.trip_id] <= start
+
+
+def test_early_wait_is_positive_and_modest(
+    roster: Roster, manifest: Manifest, rules: dict[str, Any]
+) -> None:
+    metrics = compute_metrics(roster, manifest, rules)
+    assert 0 <= metrics.early_wait_mean <= 30
+
+
+def test_returns_are_really_shared(manifest: Manifest) -> None:
+    aboard = max(
+        stop.load_after.ambulatory + stop.load_after.wheelchair + stop.load_after.stretcher
+        for route in manifest.routes
+        for stop in route.stops
+    )
+    assert aboard >= 2
 
 
 @pytest.mark.llm

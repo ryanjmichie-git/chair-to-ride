@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 from dataclasses import dataclass, field
+from itertools import permutations
 from pathlib import Path
 from typing import Any
 
@@ -65,8 +66,7 @@ CAREGIVER_COUNT = 6
 LANGUAGE_COUNTS = {"en": 17, "es": 3, "zh": 2}
 TO_LEG_LEAD_MIN = 20
 TO_LEG_WINDOW_MIN = 30
-FROM_WINDOW_HALF_MIN = 15
-ARRIVE_EARLY_MIN = 10
+TO_LEG_ARRIVALS = (10, 15, 20, 25, 30, 5)
 MIN_TRAVEL_MIN = 6
 MAX_TRAVEL_MIN = 38
 FIXED_REASONS = [
@@ -119,18 +119,26 @@ class _Job:
     trip: Trip
     mobility: str
     home_node: int
+    shift_id: str
     chair_start: int
     ready: int
     service: int
-    extra: list[int] = field(default_factory=list)
     requeued: bool = False
 
 
 @dataclass
-class _State:
-    time: int
-    node: int
-    stops: list[RouteStop] = field(default_factory=list)
+class _Task:
+    start: int
+    end: int
+    start_node: int
+    end_node: int
+    stops: list[RouteStop]
+
+
+@dataclass
+class _Van:
+    vehicle: Vehicle
+    tasks: list[_Task] = field(default_factory=list)
 
 
 def _rules() -> dict[str, Any]:
@@ -402,11 +410,15 @@ def _riders(rng: np.random.Generator, patients: list[Patient], nodes: list[Node]
 
 
 def _jobs(
-    rng: np.random.Generator, rules: dict[str, Any], patients: list[Patient], riders: list[Rider]
+    rng: np.random.Generator,
+    rules: dict[str, Any],
+    patients: list[Patient],
+    riders: list[Rider],
 ) -> tuple[list[Trip], list[_Job]]:
     synth = rules["synth"]
-    by_id = {p.patient_id: p for p in patients}
-    broker = [r for r in riders if r.provider == Provider.broker]
+    width = rules["broker"]["pickup_window_min"]
+    by_id = {patient.patient_id: patient for patient in patients}
+    broker = [rider for rider in riders if rider.provider == Provider.broker]
     eligible = [r.rider_id for r in broker if by_id[r.patient_id].mobility != Mobility.stretcher]
     will_call = {str(r) for r in rng.choice(eligible, synth["will_call_count"], replace=False)}
     trips: list[Trip] = []
@@ -414,17 +426,12 @@ def _jobs(
     for rider in broker:
         patient = by_id[rider.patient_id]
         start = to_min(patient.start_time)
-        end = start + int(patient.rx_duration_min)
-        ready = (
-            start
-            + patient.late_start_min
-            + int(patient.rx_duration_min)
-            + patient.runover_min
-            + int(patient.recovery_buffer_min)
-        )
+        scheduled_ready = start + int(patient.rx_duration_min) + int(patient.recovery_buffer_min)
+        ready = scheduled_ready + patient.late_start_min + patient.runover_min
         stretcher = patient.mobility == Mobility.stretcher
         called = rider.rider_id in will_call
-        requested = ready if called else end + synth["standing_order_offset_min"]
+        opens = scheduled_ready + synth["standing_order_offset_min"]
+        service = ready + synth["will_call_delay_min"] if called else opens
         legs = [
             Trip(
                 trip_id=f"{patient.patient_id}t",
@@ -444,15 +451,8 @@ def _jobs(
                 leg=Leg.from_,
                 origin_node=UNIT_NODE,
                 dest_node=rider.home_node,
-                requested_time=to_hhmm(requested),
-                window=None
-                if called
-                else Window(
-                    root=[
-                        to_hhmm(requested - FROM_WINDOW_HALF_MIN),
-                        to_hhmm(requested + FROM_WINDOW_HALF_MIN),
-                    ]
-                ),
+                requested_time=to_hhmm(service if called else opens + width // 2),
+                window=None if called else Window(root=[to_hhmm(opens), to_hhmm(opens + width)]),
                 vehicle_id=None,
                 seq=None,
                 status=TripStatus.queued
@@ -464,185 +464,311 @@ def _jobs(
         if stretcher:
             continue
         for trip in legs:
-            service = to_min(trip.requested_time)
-            if trip.leg == Leg.from_ and called:
-                service += synth["will_call_delay_min"]
             jobs.append(
                 _Job(
                     trip=trip,
                     mobility=patient.mobility.value,
                     home_node=rider.home_node,
+                    shift_id=patient.shift_id.value,
                     chair_start=start,
                     ready=ready,
-                    service=service,
+                    service=to_min(trip.requested_time) if trip.leg == Leg.to else service,
                 )
             )
-    returns = [job for job in jobs if job.trip.leg == Leg.from_]
-    count = round(synth["extra_stops_share"] * len(returns))
-    for index in sorted(int(i) for i in rng.choice(len(returns), count, replace=False)):
-        stops = int(rng.integers(2, synth["extra_stops_max"] + 1))
-        returns[index].extra = [int(rng.integers(2, NODE_COUNT)) for _ in range(stops)]
     return trips, jobs
 
 
-def _batch(pending: list[_Job], vehicle: Vehicle, span: int) -> list[_Job]:
-    capacity = {
+def _capacity(vehicle: Vehicle) -> dict[str, int]:
+    return {
         "ambulatory": vehicle.cap_ambulatory,
         "wheelchair": vehicle.cap_wheelchair,
         "stretcher": vehicle.cap_stretcher,
     }
-    load = {"ambulatory": 0, "wheelchair": 0, "stretcher": 0}
-    batch: list[_Job] = []
-    while pending:
-        if batch and (
-            pending[0].trip.leg != batch[0].trip.leg or pending[0].service - batch[0].service > span
-        ):
-            break
-        klass = CLASS_OF[pending[0].mobility]
-        if load[klass] + 1 > capacity[klass]:
-            break
-        load[klass] += 1
-        batch.append(pending.pop(0))
-    return batch
 
 
-def _serve_to(
-    batch: list[_Job], state: _State, matrix: list[list[int]], dwell: dict[str, int]
-) -> None:
-    riders = sorted(batch, key=lambda job: (job.chair_start, job.trip.trip_id))
-    node = state.node
-    service = 0
-    for job in riders:
-        service += matrix[node][job.home_node] + dwell[job.mobility]
-        node = job.home_node
-    service += matrix[node][UNIT_NODE]
-    target = min(job.chair_start for job in riders) - ARRIVE_EARLY_MIN
-    state.time = max(state.time, target - service)
-    load = {"ambulatory": 0, "wheelchair": 0, "stretcher": 0}
-    for job in riders:
-        state.time += matrix[state.node][job.home_node]
-        state.node = job.home_node
-        load[CLASS_OF[job.mobility]] += 1
-        state.stops.append(
-            RouteStop(
-                trip_id=job.trip.trip_id,
-                kind=StopKind.pickup,
-                node=job.home_node,
-                eta=to_hhmm(state.time),
-                load_after=Load(**load),
-            )
-        )
-        state.time += dwell[job.mobility]
-    state.time += matrix[state.node][UNIT_NODE]
-    state.node = UNIT_NODE
-    for job in riders:
-        load[CLASS_OF[job.mobility]] -= 1
-        state.stops.append(
-            RouteStop(
-                trip_id=job.trip.trip_id,
-                kind=StopKind.dropoff,
-                node=UNIT_NODE,
-                eta=to_hhmm(state.time),
-                load_after=Load(**load),
-            )
-        )
-        state.time += dwell[job.mobility]
+def _openings(van: _Van, shift: tuple[int, int]) -> list[tuple[tuple[int, int], tuple[int, int]]]:
+    heads = [(shift[0], van.vehicle.depot_node)] + [(t.end, t.end_node) for t in van.tasks]
+    tails = [(t.start, t.start_node) for t in van.tasks] + [(shift[1], -1)]
+    return list(zip(heads, tails, strict=True))
 
 
-def _serve_from(
-    batch: list[_Job],
-    state: _State,
+def _commit(van: _Van, task: _Task) -> None:
+    van.tasks.append(task)
+    van.tasks.sort(key=lambda item: item.start)
+
+
+def _place_to(
+    vans: list[_Van],
+    job: _Job,
     matrix: list[list[int]],
     dwell: dict[str, int],
-    driver_wait: int,
-) -> list[_Job]:
-    detour = 0
-    node = state.node
-    for job in batch:
-        for target in job.extra:
-            detour += matrix[node][target] + dwell["ambulatory"]
-            node = target
-    state.time = max(state.time + matrix[state.node][UNIT_NODE], batch[0].service) + detour
-    state.node = UNIT_NODE
+    shift: tuple[int, int],
+) -> bool:
+    klass = CLASS_OF[job.mobility]
+    empty = Load(ambulatory=0, wheelchair=0, stretcher=0)
+    aboard = Load(**{**empty.model_dump(), klass: 1})
+    for early in TO_LEG_ARRIVALS:
+        arrive = job.chair_start - early
+        board = arrive - dwell[job.mobility] - matrix[job.home_node][UNIT_NODE]
+        finish = arrive + dwell[job.mobility]
+        if board < shift[0] or finish > shift[1]:
+            continue
+        for van in sorted(vans, key=lambda v: (len(v.tasks), v.vehicle.vehicle_id)):
+            if _capacity(van.vehicle)[klass] < 1:
+                continue
+            for (prev_end, prev_node), (next_start, next_node) in _openings(van, shift):
+                if prev_end + matrix[prev_node][job.home_node] > board:
+                    continue
+                deadhead = 0 if next_node < 0 else matrix[UNIT_NODE][next_node]
+                if finish + deadhead > next_start:
+                    continue
+                _commit(
+                    van,
+                    _Task(
+                        start=board,
+                        end=finish,
+                        start_node=job.home_node,
+                        end_node=UNIT_NODE,
+                        stops=[
+                            RouteStop(
+                                trip_id=job.trip.trip_id,
+                                kind=StopKind.pickup,
+                                node=job.home_node,
+                                eta=to_hhmm(board),
+                                load_after=aboard,
+                            ),
+                            RouteStop(
+                                trip_id=job.trip.trip_id,
+                                kind=StopKind.dropoff,
+                                node=UNIT_NODE,
+                                eta=to_hhmm(arrive),
+                                load_after=empty,
+                            ),
+                        ],
+                    ),
+                )
+                return True
+    return False
+
+
+def _dropoff_order(
+    boarded: list[_Job],
+    picked: dict[str, int],
+    depart: int,
+    matrix: list[list[int]],
+    dwell: dict[str, int],
+    broker: dict[str, Any],
+) -> list[_Job] | None:
+    best: tuple[int, list[_Job]] | None = None
+    for order in permutations(sorted(boarded, key=lambda job: job.trip.trip_id)):
+        node = UNIT_NODE
+        time = depart
+        travelled = 0
+        for job in order:
+            travelled += matrix[node][job.home_node]
+            time += matrix[node][job.home_node]
+            node = job.home_node
+            cap = min(broker["max_ride_min"], broker["max_ride_ratio"] * matrix[UNIT_NODE][node])
+            if time - picked[job.trip.trip_id] > cap:
+                break
+            time += dwell[job.mobility]
+        else:
+            if best is None or travelled < best[0]:
+                best = (travelled, list(order))
+    return None if best is None else best[1]
+
+
+def _serve_return(
+    batch: list[_Job],
+    arrive: int,
+    matrix: list[list[int]],
+    dwell: dict[str, int],
+    rules: dict[str, Any],
+) -> tuple[_Task | None, list[_Job], list[_Job]] | None:
+    broker = rules["broker"]
+    time = arrive
     load = {"ambulatory": 0, "wheelchair": 0, "stretcher": 0}
+    stops: list[RouteStop] = []
     boarded: list[_Job] = []
     left: list[_Job] = []
+    picked: dict[str, int] = {}
     for job in batch:
-        state.time = max(state.time, job.service)
-        if not job.requeued and job.ready > state.time + driver_wait:
+        time = max(time, job.service)
+        if not job.requeued and job.ready > time + broker["driver_wait_min"]:
             left.append(job)
             continue
-        state.time = max(state.time, job.ready)
+        time = max(time, job.ready)
         load[CLASS_OF[job.mobility]] += 1
-        state.stops.append(
+        stops.append(
             RouteStop(
                 trip_id=job.trip.trip_id,
                 kind=StopKind.pickup,
                 node=UNIT_NODE,
-                eta=to_hhmm(state.time),
+                eta=to_hhmm(time),
                 load_after=Load(**load),
             )
         )
+        picked[job.trip.trip_id] = time
         boarded.append(job)
-        state.time += dwell[job.mobility]
-    for job in boarded:
-        state.time += matrix[state.node][job.home_node]
-        state.node = job.home_node
+        time += dwell[job.mobility]
+    if not boarded:
+        return None, [], left
+    order = _dropoff_order(boarded, picked, time, matrix, dwell, broker)
+    if order is None:
+        return None
+    node = UNIT_NODE
+    for job in order:
+        time += matrix[node][job.home_node]
+        node = job.home_node
         load[CLASS_OF[job.mobility]] -= 1
-        state.stops.append(
+        stops.append(
             RouteStop(
                 trip_id=job.trip.trip_id,
                 kind=StopKind.dropoff,
-                node=job.home_node,
-                eta=to_hhmm(state.time),
+                node=node,
+                eta=to_hhmm(time),
                 load_after=Load(**load),
             )
         )
-        state.time += dwell[job.mobility]
-    return left
+        time += dwell[job.mobility]
+    return _Task(arrive, time, UNIT_NODE, node, stops), boarded, left
+
+
+def _try_return(
+    van: _Van,
+    opening: tuple[tuple[int, int], tuple[int, int]],
+    arrive: int,
+    pending: list[_Job],
+    matrix: list[list[int]],
+    dwell: dict[str, int],
+    rules: dict[str, Any],
+    shift: tuple[int, int],
+) -> tuple[_Task | None, list[_Job], list[_Job]] | None:
+    if arrive > shift[1]:
+        return None
+    next_start, next_node = opening[1]
+
+    def fits(task: _Task | None) -> bool:
+        if task is None:
+            return True
+        deadhead = 0 if next_node < 0 else matrix[task.end_node][next_node]
+        return task.end <= shift[1] and task.end + deadhead <= next_start
+
+    head = pending[0]
+    best = _serve_return([head], arrive, matrix, dwell, rules)
+    if best is None or not fits(best[0]):
+        return None
+    capacity = _capacity(van.vehicle)
+    load = {"ambulatory": 0, "wheelchair": 0, "stretcher": 0}
+    load[CLASS_OF[head.mobility]] += 1
+    batch = [head]
+    waiting = [
+        job
+        for job in pending[1:]
+        if job.service <= arrive + rules["synth"]["batch_window_min"]
+    ]
+    while waiting:
+        taken = None
+        for job in sorted(
+            waiting,
+            key=lambda j: (min(matrix[b.home_node][j.home_node] for b in batch), j.trip.trip_id),
+        ):
+            if load[CLASS_OF[job.mobility]] + 1 > capacity[CLASS_OF[job.mobility]]:
+                continue
+            trial = sorted(batch + [job], key=lambda j: (j.service, j.trip.trip_id))
+            served = _serve_return(trial, arrive, matrix, dwell, rules)
+            if served is None or served[0] is None or not fits(served[0]):
+                continue
+            taken = (job, trial, served)
+            break
+        if taken is None:
+            break
+        job, batch, best = taken
+        load[CLASS_OF[job.mobility]] += 1
+        waiting.remove(job)
+    return best
+
+
+def _place_returns(
+    vans: list[_Van],
+    jobs: list[_Job],
+    matrix: list[list[int]],
+    dwell: dict[str, int],
+    rules: dict[str, Any],
+    shift: tuple[int, int],
+) -> list[_Job]:
+    pending = sorted(jobs, key=lambda job: (job.service, job.trip.trip_id))
+    queued: list[_Job] = []
+    while pending:
+        head = pending[0]
+        candidates = sorted(
+            (
+                (
+                    max(opening[0][0] + matrix[opening[0][1]][UNIT_NODE], head.service),
+                    van.vehicle.vehicle_id,
+                    van,
+                    opening,
+                )
+                for van in vans
+                for opening in _openings(van, shift)
+            ),
+            key=lambda item: (item[0], item[1]),
+        )
+        placed = None
+        for arrive, _, van, opening in candidates:
+            served = _try_return(van, opening, arrive, pending, matrix, dwell, rules, shift)
+            if served is not None:
+                placed = (arrive, van, served)
+                break
+        if placed is None:
+            queued.append(head)
+            pending.remove(head)
+            continue
+        arrive, van, (task, boarded, left) = placed
+        if task is None:
+            resume = arrive + rules["broker"]["driver_wait_min"]
+        else:
+            resume = task.end
+            _commit(van, task)
+        for job in boarded:
+            pending.remove(job)
+        for job in left:
+            job.requeued = True
+            job.service = max(job.ready, resume)
+        pending.sort(key=lambda job: (job.service, job.trip.trip_id))
+    return queued
 
 
 def _routes(
     rules: dict[str, Any], vehicles: list[Vehicle], jobs: list[_Job], matrix: list[list[int]]
 ) -> list[Route]:
     dwell = rules["broker"]["dwell_min"]
-    driver_wait = rules["broker"]["driver_wait_min"]
-    span = rules["broker"]["max_ride_min"]
-    assigned: dict[str, list[_Job]] = {vehicle.vehicle_id: [] for vehicle in vehicles}
-    caps = {
-        vehicle.vehicle_id: {
-            "ambulatory": vehicle.cap_ambulatory,
-            "wheelchair": vehicle.cap_wheelchair,
-            "stretcher": vehicle.cap_stretcher,
-        }
-        for vehicle in vehicles
-    }
-    for job in sorted(jobs, key=lambda job: (job.service, job.trip.trip_id)):
-        eligible = [v for v in vehicles if caps[v.vehicle_id][CLASS_OF[job.mobility]] > 0]
-        pick = min(eligible, key=lambda v: (len(assigned[v.vehicle_id]), v.vehicle_id))
-        assigned[pick.vehicle_id].append(job)
+    shift = window_min(vehicles[0].shift)
+    vans = [_Van(vehicle=vehicle) for vehicle in vehicles]
+    outbound = sorted(
+        (job for job in jobs if job.trip.leg == Leg.to),
+        key=lambda job: (job.chair_start, job.trip.trip_id),
+    )
+    for job in outbound:
+        if not _place_to(vans, job, matrix, dwell, shift):
+            job.trip.status = TripStatus.queued
+    per_shift = rules["synth"]["return_vans_per_shift"]
+    for index, shift_id in enumerate(SHIFT_IDS):
+        returns = [job for job in jobs if job.trip.leg == Leg.from_ and job.shift_id == shift_id]
+        chosen = [vans[(index * per_shift + offset) % len(vans)] for offset in range(per_shift)]
+        for job in _place_returns(chosen, returns, matrix, dwell, rules, shift):
+            job.trip.status = TripStatus.queued
+    by_trip = {job.trip.trip_id: job.trip for job in jobs}
     routes: list[Route] = []
-    for vehicle in vehicles:
-        state = _State(time=window_min(vehicle.shift)[0], node=vehicle.depot_node)
-        pending = list(assigned[vehicle.vehicle_id])
-        while pending:
-            batch = _batch(pending, vehicle, span)
-            if batch[0].trip.leg == Leg.to:
-                _serve_to(batch, state, matrix, dwell)
-                continue
-            left = _serve_from(batch, state, matrix, dwell, driver_wait)
-            for job in left:
-                job.requeued = True
-                job.service = max(job.ready, state.time)
-            pending = sorted(pending + left, key=lambda job: (job.service, job.trip.trip_id))
-        if not state.stops:
+    for van in vans:
+        stops = [stop for task in van.tasks for stop in task.stops]
+        if not stops:
             continue
-        for index, stop in enumerate(state.stops):
+        for index, stop in enumerate(stops):
             if stop.kind == StopKind.pickup:
-                trip = next(job.trip for job in jobs if job.trip.trip_id == stop.trip_id)
-                trip.vehicle_id = vehicle.vehicle_id
-                trip.seq = index
-        routes.append(Route(vehicle_id=vehicle.vehicle_id, stops=state.stops))
+                by_trip[stop.trip_id].vehicle_id = van.vehicle.vehicle_id
+                by_trip[stop.trip_id].seq = index
+        routes.append(Route(vehicle_id=van.vehicle.vehicle_id, stops=stops))
     return routes
 
 

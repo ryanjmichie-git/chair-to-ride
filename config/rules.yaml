@@ -93,7 +93,7 @@ max_moves_per_patient_per_week: 1
 # Knobs for the synthetic day generator only; they do not affect scheduling.
 synth:
   # Share of sessions that run over.
-  runover_share: 0.30
+  runover_share: 0.40
   # Largest run-over, in minutes.
   runover_max_min: 25
   # Share of sessions that start late.
@@ -102,13 +102,13 @@ synth:
   late_start_min: 10
   # Largest late start, in minutes.
   late_start_max: 35
-  # Share of rides that pick up extra stops on the way.
-  extra_stops_share: 1.0
-  # Most extra stops added to one ride.
-  extra_stops_max: 3
+  # Vans the broker gives dialysis returns in one shift; the rest are on other work.
+  return_vans_per_shift: 1
+  # Minutes either side of a van's arrival whose riders it loads together.
+  batch_window_min: 20
   # Riders left on will-call instead of a standing order.
-  will_call_count: 4
+  will_call_count: 8
   # Minutes the baseline takes to resolve a will-call.
-  will_call_delay_min: 70
-  # Minutes after scheduled end that a standing order anchors the return.
-  standing_order_offset_min: 30
+  will_call_delay_min: 130
+  # Minutes after the scheduled ready time that the standing-order window opens.
+  standing_order_offset_min: 0

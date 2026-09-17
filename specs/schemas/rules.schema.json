@@ -139,7 +139,7 @@
       "additionalProperties": false,
       "required": [
         "runover_share", "runover_max_min", "late_start_share", "late_start_min",
-        "late_start_max", "extra_stops_share", "extra_stops_max", "will_call_count",
+        "late_start_max", "return_vans_per_shift", "batch_window_min", "will_call_count",
         "will_call_delay_min", "standing_order_offset_min"
       ],
       "properties": {
@@ -148,8 +148,8 @@
         "late_start_share": {"type": "number", "minimum": 0, "maximum": 1},
         "late_start_min": {"type": "integer", "minimum": 0},
         "late_start_max": {"type": "integer", "minimum": 0},
-        "extra_stops_share": {"type": "number", "minimum": 0, "maximum": 1},
-        "extra_stops_max": {"type": "integer", "minimum": 0},
+        "return_vans_per_shift": {"type": "integer", "minimum": 1, "maximum": 5},
+        "batch_window_min": {"type": "integer", "minimum": 0},
         "will_call_count": {"type": "integer", "minimum": 0},
         "will_call_delay_min": {"type": "integer", "minimum": 0},
         "standing_order_offset_min": {"type": "integer", "minimum": 0}
