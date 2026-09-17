@@ -55,14 +55,17 @@ def test_after_state_verifies_clean_and_beats_the_baseline(baseline: State, run:
 
 
 def test_solver_is_deterministic(baseline: State, run: Result) -> None:
+    """A second, independent solve of the same day picks the same first bundle from the same
+    starting score; byte-for-byte determinism of a whole run is I18 (ledger replay) in
+    test_mediator and test_perturb."""
     short = baseline.with_(
         rules={**baseline.rules, "stop": {**baseline.rules["stop"], "max_iterations": 1}}
     )
-    first, second = solve(short), solve(short)
-    assert first.result.verify_hash == second.result.verify_hash
-    assert [b["bundle"] for b in first.applied] == [b["bundle"] for b in second.applied]
+    first = solve(short)
     assert first.applied
     assert first.applied[0]["bundle"] == run.applied[0]["bundle"]
+    assert first.j_before == run.j_before
+    assert first.applied[0]["j_after"] == run.applied[0]["j_after"]
 
 
 def test_i1_chairs_never_overlap_and_keep_turnover(after: State, run: Result) -> None:

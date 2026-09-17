@@ -27,16 +27,20 @@ class MediatorError(RuntimeError):
     """The API call failed after every retry; the loop force-finishes instead of crashing."""
 
 
-def cost_usd(model: str, usage: Usage) -> float:
+BATCH_DISCOUNT = 0.5  # the Message Batches API bills every token type at half the listed price
+
+
+def cost_usd(model: str, usage: Usage, batch: bool = False) -> float:
     price = PRICES.get(model)
     if price is None:
         return 0.0
-    return (
+    dollars = (
         usage.input * price["input"]
         + usage.output * price["output"]
         + usage.cache_read * price["cache_read"]
         + usage.cache_write * price["cache_write"]
     ) / 1_000_000
+    return dollars * BATCH_DISCOUNT if batch else dollars
 
 
 @dataclass
@@ -113,12 +117,7 @@ class AnthropicMediator:
                     raise MediatorError(f"{type(exc).__name__}: {exc}") from exc
                 attempt += 1
                 time.sleep(2.0 * attempt)
-        usage = Usage(
-            input=response.usage.input_tokens,
-            cache_read=response.usage.cache_read_input_tokens or 0,
-            cache_write=response.usage.cache_creation_input_tokens or 0,
-            output=response.usage.output_tokens,
-        )
+        usage = _usage(response)
         content = [block.model_dump(mode="json", exclude_none=True) for block in response.content]
         text = "\n".join(block.text for block in response.content if block.type == "text")
         calls = [
@@ -145,6 +144,31 @@ class Writer(Protocol):
     effort: str
 
     def complete(self, system: str, user: str, schema: dict[str, Any]) -> Completion: ...
+
+
+def _usage(response: Any) -> Usage:
+    return Usage(
+        input=response.usage.input_tokens,
+        cache_read=response.usage.cache_read_input_tokens or 0,
+        cache_write=response.usage.cache_creation_input_tokens or 0,
+        output=response.usage.output_tokens,
+    )
+
+
+def _completion(model: str, response: Any, batch: bool = False) -> Completion:
+    """A structured-output response as a Completion; bad JSON on end_turn is ``invalid_json``."""
+    usage = _usage(response)
+    text = "\n".join(block.text for block in response.content if block.type == "text")
+    stop = response.stop_reason or ""
+    data: dict[str, Any] | None = None
+    if stop == "end_turn":
+        try:
+            data = json.loads(text)
+        except ValueError:
+            data = None
+        if not isinstance(data, dict):
+            data, stop = None, "invalid_json"
+    return Completion(data, text, usage, cost_usd(model, usage, batch), stop)
 
 
 class AnthropicWriter:
@@ -194,27 +218,90 @@ class AnthropicWriter:
                 attempt += 1
                 time.sleep(2.0 * attempt)
                 continue
-            usage = Usage(
-                input=response.usage.input_tokens,
-                cache_read=response.usage.cache_read_input_tokens or 0,
-                cache_write=response.usage.cache_creation_input_tokens or 0,
-                output=response.usage.output_tokens,
-            )
-            text = "\n".join(block.text for block in response.content if block.type == "text")
-            stop = response.stop_reason or ""
-            data: dict[str, Any] | None = None
-            if stop == "end_turn":
-                try:
-                    data = json.loads(text)
-                except ValueError:
-                    data = None
-                if not isinstance(data, dict):
-                    data = None
-                    if attempt < self.retries:  # the grammar should prevent this; ask once more
-                        attempt += 1
-                        continue
-                    stop = "invalid_json"
-            return Completion(data, text, usage, cost_usd(self.model_id, usage), stop)
+            done = _completion(self.model_id, response)
+            if done.stop_reason == "invalid_json" and attempt < self.retries:
+                attempt += 1  # the grammar should prevent this; ask once more
+                continue
+            return done
+
+
+@dataclass
+class BatchItem:
+    custom_id: str
+    system: str
+    user: str
+    schema: dict[str, Any]
+
+
+class AnthropicBatchWriter:
+    """Many structured-output calls as one Message Batch at half price.
+
+    The system prompt is one cache block with a 1-hour TTL (a batch can take longer than the
+    5-minute default). ``submit`` returns the batch id, ``status`` its processing state, and
+    ``collect`` the completions keyed by custom_id, never by position. An errored, expired or
+    canceled request comes back with ``data=None`` and that word as its stop reason.
+    """
+
+    batch = True
+
+    def __init__(
+        self,
+        model: str = "claude-fable-5-1",
+        effort: str = "low",
+        max_tokens: int = 1200,
+        cache_ttl: str = "1h",
+    ) -> None:
+        import anthropic
+
+        self.client = anthropic.Anthropic(timeout=60.0, max_retries=2)
+        self.model_id = model
+        self.effort = effort
+        self.max_tokens = max_tokens
+        self.cache_ttl = cache_ttl
+
+    def _params(self, item: BatchItem) -> dict[str, Any]:
+        return {
+            "model": self.model_id,
+            "max_tokens": self.max_tokens,
+            "system": [
+                {
+                    "type": "text",
+                    "text": item.system,
+                    "cache_control": {"type": "ephemeral", "ttl": self.cache_ttl},
+                }
+            ],
+            "messages": [{"role": "user", "content": item.user}],
+            "output_config": {
+                "effort": self.effort,
+                "format": {"type": "json_schema", "schema": item.schema},
+            },
+        }
+
+    def submit(self, items: list[BatchItem]) -> str:
+        created = self.client.messages.batches.create(
+            requests=[{"custom_id": item.custom_id, "params": self._params(item)} for item in items]
+        )
+        return created.id
+
+    def status(self, batch_id: str) -> dict[str, Any]:
+        batch = self.client.messages.batches.retrieve(batch_id)
+        return {
+            "processing_status": batch.processing_status,
+            "counts": batch.request_counts.model_dump(),
+        }
+
+    def collect(self, batch_id: str) -> dict[str, Completion]:
+        zero = Usage(input=0, cache_read=0, cache_write=0, output=0)
+        found: dict[str, Completion] = {}
+        for result in self.client.messages.batches.results(batch_id):
+            kind = result.result.type
+            if kind == "succeeded":
+                found[result.custom_id] = _completion(self.model_id, result.result.message, True)
+            else:
+                error = getattr(result.result, "error", None)
+                text = f"{kind}: {getattr(error, 'type', '')} {getattr(error, 'message', '')}"
+                found[result.custom_id] = Completion(None, text.strip(), zero, 0.0, kind)
+        return found
 
 
 def fake_explanation(card: dict[str, Any]) -> dict[str, str]:
@@ -298,6 +385,33 @@ class FakeJudge:
         }
         usage = Usage(input=2000, cache_read=0, cache_write=0, output=150)
         return Completion(data, json.dumps(data), usage, 0.0, "end_turn")
+
+
+class FakeBatchWriter:
+    """The offline batch: ``submit`` keeps the items, ``collect`` answers with the fake judge."""
+
+    model_id = FAKE_MODEL
+    effort = "none"
+    batch = True
+
+    def __init__(self) -> None:
+        self.batches: dict[str, list[BatchItem]] = {}
+
+    def submit(self, items: list[BatchItem]) -> str:
+        batch_id = f"fake-batch-{len(self.batches) + 1}"
+        self.batches[batch_id] = list(items)
+        return batch_id
+
+    def status(self, batch_id: str) -> dict[str, Any]:
+        count = len(self.batches.get(batch_id, []))
+        return {"processing_status": "ended", "counts": {"succeeded": count, "processing": 0}}
+
+    def collect(self, batch_id: str) -> dict[str, Completion]:
+        judge = FakeJudge()
+        return {
+            item.custom_id: judge.complete(item.system, item.user, item.schema)
+            for item in self.batches.get(batch_id, [])
+        }
 
 
 def _payload(block: dict[str, Any]) -> Any:

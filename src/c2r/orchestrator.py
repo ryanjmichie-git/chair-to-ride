@@ -87,8 +87,14 @@ def compact(path: Path) -> str:
     return json.dumps(json.loads(path.read_text(encoding="utf-8")), separators=(",", ":"))
 
 
-def build_blocks(state: State, data_dir: Path) -> tuple[list[dict], dict[str, int], dict[str, str]]:
-    """Blocks A (prompt), B (policies + rules) and C (today's data), each a cache breakpoint."""
+def build_blocks(
+    state: State, data_dir: Path, cache_ttl: str | None = None
+) -> tuple[list[dict], dict[str, int], dict[str, str]]:
+    """Blocks A (prompt), B (policies + rules) and C (today's data), each a cache breakpoint.
+
+    ``cache_ttl`` ("1h") lengthens the three blocks' cache life for eval suites; the text and
+    the hashes are the same either way, so the blocks stay byte-identical across runs.
+    """
     fields, body = frontmatter(PROMPT.read_text(encoding="utf-8"))
     rules = {k: v for k, v in state.rules.items() if k != "synth"}
     block_a = body.strip()
@@ -108,8 +114,9 @@ def build_blocks(state: State, data_dir: Path) -> tuple[list[dict], dict[str, in
             "## travel summary (minutes from the unit at node 0)\n" + travel_summary(state),
         ]
     )
+    control = {**EPHEMERAL, "ttl": cache_ttl} if cache_ttl else EPHEMERAL
     blocks = [
-        {"type": "text", "text": text, "cache_control": EPHEMERAL}
+        {"type": "text", "text": text, "cache_control": dict(control)}
         for text in (block_a, block_b, block_c)
     ]
     hashes = {
@@ -191,12 +198,17 @@ def _interim(session: Session) -> Result:
 
 
 def run(
-    data_dir: Path, out_dir: Path, mediator: Mediator, echo=print, rules: dict | None = None
+    data_dir: Path,
+    out_dir: Path,
+    mediator: Mediator,
+    echo=print,
+    rules: dict | None = None,
+    cache_ttl: str | None = None,
 ) -> Result:
     """A full day: the on-disk baseline is the session's baseline and its starting state."""
     baseline = load_state(data_dir, rules)
     session = new_session(baseline)
-    blocks, versions, hashes = build_blocks(baseline, data_dir)
+    blocks, versions, hashes = build_blocks(baseline, data_dir, cache_ttl)
     start = {
         "data_dir": str(data_dir),
         "seed": baseline.travel.seed,

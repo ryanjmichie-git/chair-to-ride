@@ -223,3 +223,16 @@ def test_a_failed_model_call_halts_the_loop_and_the_closing_pass_still_runs(
     entries = ledger.read(out / "ledger.jsonl")
     assert "model call failed" in entries[-1].payload["reason"]
     assert "connection refused" in entries[-1].payload["reason"]
+
+
+def test_a_cache_ttl_changes_only_the_cache_control(tmp_path: Path) -> None:
+    from c2r.orchestrator import build_blocks
+    from c2r.state import load_state
+
+    state = load_state(DATA)
+    blocks, versions, hashes = build_blocks(state, DATA)
+    hour, versions_h, hashes_h = build_blocks(state, DATA, "1h")
+    assert [b["text"] for b in blocks] == [b["text"] for b in hour]
+    assert hashes == hashes_h and versions == versions_h
+    assert all(b["cache_control"] == {"type": "ephemeral"} for b in blocks)
+    assert all(b["cache_control"] == {"type": "ephemeral", "ttl": "1h"} for b in hour)

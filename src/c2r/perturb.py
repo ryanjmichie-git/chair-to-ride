@@ -141,13 +141,14 @@ def run(
     mediator: Mediator,
     echo=print,
     rules: dict[str, Any] | None = None,
+    cache_ttl: str | None = None,
 ) -> Result:
     original = load_state(data_dir, rules)
     replan_rules = copy.deepcopy(original.rules)
     replan_rules["stop"].update(REPLAN_STOP)
     state, _, affected = event_state(original, run_dir, event, replan_rules)
     session = new_session(state)
-    blocks, versions, hashes = build_blocks(original, data_dir)  # byte-identical to the day run
+    blocks, versions, hashes = build_blocks(original, data_dir, cache_ttl)  # same bytes as the day
     source_ledger = run_dir / "ledger.jsonl"
     source_run_id = read_ledger(source_ledger)[0].run_id if source_ledger.is_file() else None
     hashes["source.schedule_after.json"] = sha(

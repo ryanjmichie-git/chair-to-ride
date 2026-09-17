@@ -144,3 +144,106 @@ def test_a_note_that_does_not_name_the_contact_caps_complete(records: list[dict]
     record["explanation"]["why"] = "The vans were moved around. Call the number on file."
     score = judge.override(record, _raw(record["explanation_id"]))
     assert score.scores.complete <= 1 and record["facts"]["contact"] in score.rationale
+
+
+# --- the batch path -------------------------------------------------------------------------------
+
+
+def test_batch_prices_are_half_of_sync() -> None:
+    from c2r.llm import Usage, cost_usd
+
+    usage = Usage(input=1000, cache_read=4000, cache_write=0, output=300)
+    assert (
+        cost_usd("claude-fable-5-1", usage, batch=True) == cost_usd("claude-fable-5-1", usage) / 2
+    )
+    assert cost_usd(FAKE_MODEL, usage, batch=True) == 0.0
+
+
+def test_a_completion_with_bad_json_is_invalid_json() -> None:
+    from types import SimpleNamespace
+
+    from c2r.llm import _completion
+
+    response = SimpleNamespace(
+        usage=SimpleNamespace(
+            input_tokens=10,
+            cache_read_input_tokens=0,
+            cache_creation_input_tokens=0,
+            output_tokens=2,
+        ),
+        content=[SimpleNamespace(type="text", text="not json")],
+        stop_reason="end_turn",
+    )
+    done = _completion("claude-fable-5-1", response, batch=True)
+    assert done.data is None and done.stop_reason == "invalid_json"
+    assert done.cost_usd == cost_of(done.usage) / 2
+
+
+def cost_of(usage) -> float:
+    from c2r.llm import cost_usd
+
+    return cost_usd("claude-fable-5-1", usage)
+
+
+@pytest.fixture(scope="module")
+def two_runs(records: list[dict], fake_run, tmp_path_factory: pytest.TempPathFactory) -> list:
+    del records  # explanations.json exists once the explainer has run
+    import shutil
+
+    root = tmp_path_factory.mktemp("batch")
+    dirs = [root / "a", root / "b"]
+    for target in dirs:
+        shutil.copytree(fake_run.out, target)
+    return dirs
+
+
+def test_judge_batch_writes_every_run_from_one_batch(two_runs: list, tmp_path) -> None:
+    from c2r.llm import FakeBatchWriter
+
+    writer = FakeBatchWriter()
+    state_path = tmp_path / "judge_batch.json"
+    outcome = judge.judge_batch(two_runs, writer, state_path, echo=lambda *_: None, poll_s=0)
+    assert outcome["collected"] is True and outcome["batch_id"] == "fake-batch-1"
+    items = writer.batches["fake-batch-1"]
+    assert {i.custom_id.split(":")[0] for i in items} == {"0", "1"}
+    assert outcome["items"] == len(items) == outcome["results"]
+    for run_dir in two_runs:
+        scores = json.loads((run_dir / "judge_scores.json").read_text(encoding="utf-8"))
+        summary = json.loads((run_dir / "judge_summary.json").read_text(encoding="utf-8"))
+        metrics = json.loads((run_dir / "metrics.json").read_text(encoding="utf-8"))
+        assert len(scores) == len(items) // 2 and all("pass" in s for s in scores)
+        assert summary["batch_id"] == "fake-batch-1"
+        assert metrics["usage_judge"]["batch_id"] == "fake-batch-1"
+        assert metrics["usage_judge"]["model_id"] == FAKE_MODEL
+        entries = ledger.read(run_dir / "judge.jsonl")
+        assert len(entries) == len(scores)
+    saved = json.loads(state_path.read_text(encoding="utf-8"))
+    assert saved["collected"] is True and saved["runs"] == [str(p) for p in two_runs]
+
+
+def test_judge_collect_finishes_a_batch_from_the_saved_state(two_runs: list, tmp_path) -> None:
+    from c2r.llm import BatchItem, FakeBatchWriter
+
+    writer = FakeBatchWriter()
+    records = json.loads((two_runs[0] / "explanations.json").read_text(encoding="utf-8"))
+    system, _ = judge._prompt()
+    items = [
+        BatchItem(f"0:{r['explanation_id']}", system, judge._user(r), judge.SCHEMA) for r in records
+    ]
+    batch_id = writer.submit(items[:-1])  # one verdict never comes back
+    state_path = tmp_path / "state.json"
+    state_path.write_text(
+        json.dumps({"batch_id": batch_id, "runs": [str(two_runs[0])], "collected": False}),
+        encoding="utf-8",
+    )
+    outcome = judge.judge_collect(state_path, writer, echo=lambda *_: None)
+    scores = outcome["summaries"][str(two_runs[0])]
+    assert scores["count"] == len(records)
+    missing = records[-1]["explanation_id"]
+    assert missing in scores["needs_human_edit"]
+    written = json.loads((two_runs[0] / "judge_scores.json").read_text(encoding="utf-8"))
+    assert any(
+        "missing from the batch" in s["rationale"]
+        for s in written
+        if s["explanation_id"] == missing
+    )

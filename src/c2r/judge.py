@@ -17,12 +17,13 @@ import argparse
 import json
 import os
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
 from c2r.explain import check_numbers, contact_named, load_run, missing_times
 from c2r.ledger import Ledger, usage_summary
-from c2r.llm import AnthropicWriter, FakeJudge, Writer
+from c2r.llm import AnthropicWriter, BatchItem, Completion, FakeJudge, Writer
 from c2r.models import JudgeScore, JudgeScores
 from c2r.orchestrator import frontmatter, git_sha, sha
 from c2r.state import ROOT
@@ -106,29 +107,46 @@ def unscored(record: dict[str, Any], reason: str) -> JudgeScore:
     )
 
 
+def _user(record: dict[str, Any]) -> str:
+    return json.dumps(
+        {
+            "explanation_id": record["explanation_id"],
+            "explanation": record["explanation"],
+            "facts": record["facts"],
+        },
+        sort_keys=True,
+    )
+
+
+def _verdict(
+    record: dict[str, Any],
+    done: Completion | None,
+    number: int,
+    book: Ledger | None,
+    echo,
+) -> JudgeScore:
+    if done is None:
+        verdict = unscored(record, "missing from the batch results")
+    elif done.data:
+        verdict = override(record, done.data)
+    else:
+        verdict = unscored(record, done.stop_reason)
+    if book is not None and done is not None:
+        text = json.dumps(verdict.model_dump(by_alias=True), sort_keys=True)
+        book.model_turn(number, text, [], [], [], done.usage, done.cost_usd, done.stop_reason)
+    flags = " ".join(f"{d[:3]}{getattr(verdict.scores, d)}" for d in DIMENSIONS)
+    echo(f"   {verdict.explanation_id} {'pass' if verdict.pass_ else 'FAIL'} {flags}")
+    return verdict
+
+
 def judge_records(
     records: list[dict[str, Any]], judge: Writer, echo=print, book: Ledger | None = None
 ) -> list[JudgeScore]:
     system, _ = _prompt()
-    verdicts: list[JudgeScore] = []
-    for number, record in enumerate(records, 1):
-        user = json.dumps(
-            {
-                "explanation_id": record["explanation_id"],
-                "explanation": record["explanation"],
-                "facts": record["facts"],
-            },
-            sort_keys=True,
-        )
-        done = judge.complete(system, user, SCHEMA)
-        verdict = override(record, done.data) if done.data else unscored(record, done.stop_reason)
-        if book is not None:
-            text = json.dumps(verdict.model_dump(by_alias=True), sort_keys=True)
-            book.model_turn(number, text, [], [], [], done.usage, done.cost_usd, done.stop_reason)
-        verdicts.append(verdict)
-        flags = " ".join(f"{d[:3]}{getattr(verdict.scores, d)}" for d in DIMENSIONS)
-        echo(f"   {verdict.explanation_id} {'pass' if verdict.pass_ else 'FAIL'} {flags}")
-    return verdicts
+    return [
+        _verdict(record, judge.complete(system, _user(record), SCHEMA), number, book, echo)
+        for number, record in enumerate(records, 1)
+    ]
 
 
 def summarize(
@@ -188,14 +206,21 @@ def _book(
     )
 
 
-def judge_run(run_dir: Path, judge: Writer, echo=print) -> list[JudgeScore]:
-    """Score a run's explanations; write judge_scores.json, judge_summary.json, judge.jsonl."""
+def _open_run(run_dir: Path, judge: Writer) -> tuple[list[dict[str, Any]], Ledger]:
     raw = (run_dir / "explanations.json").read_text(encoding="utf-8")
-    records = json.loads(raw)
     book = _book(run_dir, load_run(run_dir).run_id, judge, {"explanations.json": sha(raw)})
-    verdicts = judge_records(records, judge, echo, book)
+    return json.loads(raw), book
+
+
+def _close_run(
+    run_dir: Path, verdicts: list[JudgeScore], book: Ledger, echo, extra: dict[str, Any] | None
+) -> dict[str, Any]:
+    """Write judge_scores.json and judge_summary.json; put the usage into metrics.json."""
     summary = summarize(verdicts)
     usage = usage_summary(book.entries)
+    if extra:
+        usage.update(extra)
+        summary.update(extra)
     summary["usage"] = usage
     _write(run_dir, verdicts, summary)
     metrics_path = run_dir / "metrics.json"
@@ -209,7 +234,83 @@ def judge_run(run_dir: Path, judge: Writer, echo=print) -> list[JudgeScore]:
         f"judged {summary['count']}: pass rate {summary['pass_rate']:.0%}, needs human edit "
         f"{summary['needs_human_edit']}, cost ${usage['cost_usd']:.2f}; {run_dir / 'judge_summary.json'}"
     )
+    return summary
+
+
+def judge_run(run_dir: Path, judge: Writer, echo=print) -> list[JudgeScore]:
+    """Score a run's explanations; write judge_scores.json, judge_summary.json, judge.jsonl."""
+    records, book = _open_run(run_dir, judge)
+    verdicts = judge_records(records, judge, echo, book)
+    _close_run(run_dir, verdicts, book, echo, None)
     return verdicts
+
+
+# --- many runs in one Message Batch --------------------------------------------------------------
+
+
+def _custom_id(index: int, record: dict[str, Any]) -> str:
+    return f"{index}:{record['explanation_id']}"
+
+
+def judge_batch(
+    run_dirs: list[Path],
+    writer,
+    state_path: Path,
+    echo=print,
+    poll_s: float = 30.0,
+    max_wait_s: float = 7200.0,
+) -> dict[str, Any]:
+    """Every run's explanations in one batch (half price, 1-h cached prompt); verdicts land in
+    each run the way ``judge_run`` writes them.
+
+    The batch id is written to ``state_path`` first, so a process that dies or gives up waiting
+    (``max_wait_s``) leaves enough for ``judge_collect`` to finish later. Never a gate's business.
+    """
+    system, _ = _prompt()
+    items: list[BatchItem] = []
+    for index, run_dir in enumerate(run_dirs):
+        records = json.loads((run_dir / "explanations.json").read_text(encoding="utf-8"))
+        items += [BatchItem(_custom_id(index, r), system, _user(r), SCHEMA) for r in records]
+    batch_id = writer.submit(items)
+    state = {
+        "batch_id": batch_id,
+        "runs": [str(p) for p in run_dirs],
+        "items": len(items),
+        "submitted": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        "collected": False,
+    }
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8", newline="\n")
+    echo(f"judge batch {batch_id}: {len(items)} verdicts requested across {len(run_dirs)} runs")
+    started = time.monotonic()
+    while True:
+        status = writer.status(batch_id)
+        if status["processing_status"] == "ended":
+            break
+        if time.monotonic() - started > max_wait_s:
+            echo(f"judge batch {batch_id} still {status['processing_status']}; collect later")
+            return {**state, "status": status["processing_status"]}
+        time.sleep(poll_s)
+    return judge_collect(state_path, writer, echo)
+
+
+def judge_collect(state_path: Path, writer, echo=print) -> dict[str, Any]:
+    """Fetch a submitted batch's results and write every run's verdicts, ledger and usage."""
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    batch_id = state["batch_id"]
+    results = writer.collect(batch_id)
+    summaries: dict[str, Any] = {}
+    for index, name in enumerate(state["runs"]):
+        run_dir = Path(name)
+        records, book = _open_run(run_dir, writer)
+        verdicts = [
+            _verdict(record, results.get(_custom_id(index, record)), number, book, echo)
+            for number, record in enumerate(records, 1)
+        ]
+        summaries[name] = _close_run(run_dir, verdicts, book, echo, {"batch_id": batch_id})
+    state.update({"collected": True, "status": "ended", "results": len(results)})
+    state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8", newline="\n")
+    return {**state, "summaries": summaries}
 
 
 # --- the golden set and the calibration file ---------------------------------------------------
