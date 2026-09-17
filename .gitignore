@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.hypothesis/
+.env
+*.egg-info/
+dist/
+runs/*
+!runs/.gitkeep
+!runs/frozen/
+data/real/
+.superpowers/

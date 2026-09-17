@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://c2r.local/schemas/explanation.schema.json",
+  "title": "Explanation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "audience", "subject_id", "what_changed", "why", "new_times", "ledger_refs",
+    "contact", "reading_grade"
+  ],
+  "properties": {
+    "audience": {"$ref": "common.schema.json#/$defs/Audience"},
+    "subject_id": {"type": "string"},
+    "what_changed": {"type": "string"},
+    "why": {"type": "string"},
+    "new_times": {"$ref": "#/$defs/NewTimes"},
+    "ledger_refs": {"type": "array", "items": {"type": "string"}},
+    "contact": {"type": "string"},
+    "reading_grade": {"type": "number"}
+  },
+  "$defs": {
+    "NewTimes": {
+      "title": "NewTimes",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chair_start", "pickup_window"],
+      "properties": {
+        "chair_start": {
+          "anyOf": [{"$ref": "common.schema.json#/$defs/Time"}, {"type": "null"}]
+        },
+        "pickup_window": {
+          "anyOf": [{"$ref": "common.schema.json#/$defs/Window"}, {"type": "null"}]
+        }
+      }
+    }
+  }
+}

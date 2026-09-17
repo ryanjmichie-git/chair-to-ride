@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://c2r.local/schemas/travel.schema.json",
+  "title": "Travel",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["synthetic", "generator", "seed", "nodes", "matrix"],
+  "properties": {
+    "synthetic": {"type": "boolean", "const": true},
+    "generator": {"type": "string"},
+    "seed": {"type": "integer"},
+    "nodes": {"type": "array", "items": {"$ref": "#/$defs/Node"}},
+    "matrix": {
+      "type": "array",
+      "items": {"type": "array", "items": {"type": "integer", "minimum": 0}}
+    }
+  },
+  "$defs": {
+    "Node": {
+      "title": "Node",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "zone", "x", "y"],
+      "properties": {
+        "node_id": {"$ref": "common.schema.json#/$defs/NodeId"},
+        "zone": {"$ref": "common.schema.json#/$defs/Zone"},
+        "x": {"type": "number"},
+        "y": {"type": "number"}
+      }
+    }
+  }
+}

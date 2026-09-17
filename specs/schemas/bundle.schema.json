@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://c2r.local/schemas/bundle.schema.json",
+  "title": "Bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["bundle_id", "side", "moves", "predicted", "touches", "notes_relevant"],
+  "properties": {
+    "bundle_id": {"type": "string"},
+    "side": {"$ref": "common.schema.json#/$defs/Side"},
+    "moves": {"type": "array", "items": {"$ref": "#/$defs/Move"}},
+    "predicted": {"$ref": "#/$defs/Predicted"},
+    "touches": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/PatientId"}},
+    "notes_relevant": {"type": "array", "items": {"type": "string"}}
+  },
+  "$defs": {
+    "Predicted": {
+      "title": "Predicted",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "delta_wait_min", "delta_early_min", "chair_changes", "consent_moves", "vehicle_min"
+      ],
+      "properties": {
+        "delta_wait_min": {"type": "integer"},
+        "delta_early_min": {"type": "integer"},
+        "chair_changes": {"type": "integer", "minimum": 0},
+        "consent_moves": {"type": "integer", "minimum": 0},
+        "vehicle_min": {"type": "integer"}
+      }
+    },
+    "Move": {
+      "title": "Move",
+      "oneOf": [
+        {"$ref": "#/$defs/ShiftChairStart"},
+        {"$ref": "#/$defs/SwapChairs"},
+        {"$ref": "#/$defs/ShiftPickupWindow"},
+        {"$ref": "#/$defs/ReassignVehicle"},
+        {"$ref": "#/$defs/ResequenceRoute"},
+        {"$ref": "#/$defs/PairRiders"},
+        {"$ref": "#/$defs/RequestExtraCapacity"},
+        {"$ref": "#/$defs/HoldForWillCall"}
+      ]
+    },
+    "ShiftChairStart": {
+      "title": "ShiftChairStart",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "patient_id", "delta_min"],
+      "properties": {
+        "type": {"const": "shift_chair_start"},
+        "patient_id": {"$ref": "common.schema.json#/$defs/PatientId"},
+        "delta_min": {"type": "integer"}
+      }
+    },
+    "SwapChairs": {
+      "title": "SwapChairs",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "patient_a", "patient_b"],
+      "properties": {
+        "type": {"const": "swap_chairs"},
+        "patient_a": {"$ref": "common.schema.json#/$defs/PatientId"},
+        "patient_b": {"$ref": "common.schema.json#/$defs/PatientId"}
+      }
+    },
+    "ShiftPickupWindow": {
+      "title": "ShiftPickupWindow",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "trip_id", "delta_min"],
+      "properties": {
+        "type": {"const": "shift_pickup_window"},
+        "trip_id": {"$ref": "common.schema.json#/$defs/TripId"},
+        "delta_min": {"type": "integer"}
+      }
+    },
+    "ReassignVehicle": {
+      "title": "ReassignVehicle",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "trip_id", "vehicle_id"],
+      "properties": {
+        "type": {"const": "reassign_vehicle"},
+        "trip_id": {"$ref": "common.schema.json#/$defs/TripId"},
+        "vehicle_id": {"$ref": "common.schema.json#/$defs/VehicleId"}
+      }
+    },
+    "ResequenceRoute": {
+      "title": "ResequenceRoute",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "vehicle_id", "trip_ids"],
+      "properties": {
+        "type": {"const": "resequence_route"},
+        "vehicle_id": {"$ref": "common.schema.json#/$defs/VehicleId"},
+        "trip_ids": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/TripId"}}
+      }
+    },
+    "PairRiders": {
+      "title": "PairRiders",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "trip_ids", "vehicle_id"],
+      "properties": {
+        "type": {"const": "pair_riders"},
+        "trip_ids": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/TripId"}},
+        "vehicle_id": {"$ref": "common.schema.json#/$defs/VehicleId"}
+      }
+    },
+    "RequestExtraCapacity": {
+      "title": "RequestExtraCapacity",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "vehicle_min", "reason"],
+      "properties": {
+        "type": {"const": "request_extra_capacity"},
+        "vehicle_min": {"type": "integer", "minimum": 0},
+        "reason": {"type": "string"}
+      }
+    },
+    "HoldForWillCall": {
+      "title": "HoldForWillCall",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "trip_id", "reason"],
+      "properties": {
+        "type": {"const": "hold_for_will_call"},
+        "trip_id": {"$ref": "common.schema.json#/$defs/TripId"},
+        "reason": {"type": "string"}
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://c2r.local/schemas/verify_result.schema.json",
+  "title": "VerifyResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schedule_version", "verify_hash", "violations", "metrics"],
+  "properties": {
+    "schedule_version": {"type": "integer", "minimum": 0},
+    "verify_hash": {"type": "string"},
+    "violations": {"type": "array", "items": {"$ref": "#/$defs/Violation"}},
+    "metrics": {"$ref": "metrics.schema.json"}
+  },
+  "$defs": {
+    "Violation": {
+      "title": "Violation",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "subject_id", "detail"],
+      "properties": {
+        "code": {
+          "title": "ViolationCode",
+          "type": "string",
+          "enum": ["H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8", "H9", "H10", "H11", "H12", "H13"]
+        },
+        "subject_id": {"type": "string"},
+        "detail": {"type": "string"}
+      }
+    }
+  }
+}

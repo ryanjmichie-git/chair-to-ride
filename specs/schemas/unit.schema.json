@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://c2r.local/schemas/unit.schema.json",
+  "title": "Unit",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "synthetic", "generator", "seed", "unit_id", "name", "chairs", "shifts",
+    "stagger_cohort_size", "stagger_step_min", "turnover_min", "close_time", "policy_text"
+  ],
+  "properties": {
+    "synthetic": {"type": "boolean", "const": true},
+    "generator": {"type": "string"},
+    "seed": {"type": "integer"},
+    "unit_id": {"type": "string"},
+    "name": {"type": "string"},
+    "chairs": {"type": "array", "items": {"$ref": "#/$defs/Chair"}},
+    "shifts": {"type": "array", "items": {"$ref": "#/$defs/Shift"}},
+    "stagger_cohort_size": {"type": "integer", "minimum": 1},
+    "stagger_step_min": {"type": "integer", "minimum": 1},
+    "turnover_min": {"type": "integer", "minimum": 0},
+    "close_time": {"$ref": "common.schema.json#/$defs/Time"},
+    "policy_text": {"type": "string"}
+  },
+  "$defs": {
+    "Chair": {
+      "title": "Chair",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chair_id", "station_type", "available_windows"],
+      "properties": {
+        "chair_id": {"$ref": "common.schema.json#/$defs/ChairId"},
+        "station_type": {"title": "StationType", "type": "string",
+                         "enum": ["standard", "isolation"]},
+        "available_windows": {
+          "type": "array",
+          "items": {"$ref": "common.schema.json#/$defs/Window"}
+        }
+      }
+    },
+    "Shift": {
+      "title": "Shift",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shift_id", "putton_start", "putton_end"],
+      "properties": {
+        "shift_id": {"$ref": "common.schema.json#/$defs/ShiftId"},
+        "putton_start": {"$ref": "common.schema.json#/$defs/Time"},
+        "putton_end": {"$ref": "common.schema.json#/$defs/Time"}
+      }
+    }
+  }
+}

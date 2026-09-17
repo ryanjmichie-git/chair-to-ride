@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://c2r.local/schemas/fleet.schema.json",
+  "title": "Fleet",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["synthetic", "generator", "seed", "vehicles"],
+  "properties": {
+    "synthetic": {"type": "boolean", "const": true},
+    "generator": {"type": "string"},
+    "seed": {"type": "integer"},
+    "vehicles": {"type": "array", "items": {"$ref": "#/$defs/Vehicle"}}
+  },
+  "$defs": {
+    "Vehicle": {
+      "title": "Vehicle",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "vehicle_id", "cap_ambulatory", "cap_wheelchair", "cap_stretcher",
+        "shift", "depot_node", "status"
+      ],
+      "properties": {
+        "vehicle_id": {"$ref": "common.schema.json#/$defs/VehicleId"},
+        "cap_ambulatory": {"type": "integer", "minimum": 0},
+        "cap_wheelchair": {"type": "integer", "minimum": 0},
+        "cap_stretcher": {"type": "integer", "minimum": 0},
+        "shift": {"$ref": "common.schema.json#/$defs/Window"},
+        "depot_node": {"$ref": "common.schema.json#/$defs/NodeId"},
+        "status": {"title": "VehicleStatus", "type": "string", "enum": ["ok", "down"]}
+      }
+    }
+  }
+}

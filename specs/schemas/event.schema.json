@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://c2r.local/schemas/event.schema.json",
+  "title": "Event",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["t", "type", "payload"],
+  "properties": {
+    "t": {"$ref": "common.schema.json#/$defs/Time"},
+    "type": {
+      "title": "EventType",
+      "type": "string",
+      "enum": ["vehicle_down", "chair_down", "late_arrival", "add_on_patient", "travel_slowdown"]
+    },
+    "payload": {"type": "object", "additionalProperties": true}
+  }
+}

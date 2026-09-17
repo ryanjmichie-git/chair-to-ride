@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://c2r.local/schemas/common.schema.json",
+  "title": "Common",
+  "$defs": {
+    "Time": {
+      "title": "Time",
+      "type": "string",
+      "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+    },
+    "Window": {
+      "title": "Window",
+      "type": "array",
+      "items": {"$ref": "#/$defs/Time"},
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "Mobility": {
+      "title": "Mobility",
+      "type": "string",
+      "enum": ["ambulatory", "assist", "wheelchair", "stretcher"]
+    },
+    "Side": {
+      "title": "Side",
+      "type": "string",
+      "enum": ["unit", "broker", "both"]
+    },
+    "ReasonCode": {
+      "title": "ReasonCode",
+      "type": "string",
+      "enum": ["NO_FEASIBLE_WINDOW", "STRETCHER", "CONSENT_BLOCK", "BROKER_POLICY", "CLINICAL_NOTE"]
+    },
+    "Audience": {
+      "title": "Audience",
+      "type": "string",
+      "enum": ["rider", "nurse", "dispatcher"]
+    },
+    "Load": {
+      "title": "Load",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ambulatory", "wheelchair", "stretcher"],
+      "properties": {
+        "ambulatory": {"type": "integer", "minimum": 0},
+        "wheelchair": {"type": "integer", "minimum": 0},
+        "stretcher": {"type": "integer", "minimum": 0}
+      }
+    },
+    "PatientId": {
+      "title": "PatientId",
+      "type": "string",
+      "pattern": "^P(0[1-9]|[12]\\d|3[0-6])$"
+    },
+    "RiderId": {
+      "title": "RiderId",
+      "type": "string",
+      "pattern": "^R(0[1-9]|1\\d|2[0-2])$"
+    },
+    "ChairId": {
+      "title": "ChairId",
+      "type": "string",
+      "pattern": "^C(0[1-9]|1[0-2])$"
+    },
+    "VehicleId": {
+      "title": "VehicleId",
+      "type": "string",
+      "pattern": "^V[1-5]$"
+    },
+    "TripId": {
+      "title": "TripId",
+      "type": "string",
+      "pattern": "^P(0[1-9]|[12]\\d|3[0-6])[tf]$"
+    },
+    "NodeId": {
+      "title": "NodeId",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 39
+    },
+    "Zone": {
+      "title": "Zone",
+      "type": "string",
+      "enum": ["A", "B", "C", "D"]
+    },
+    "ShiftId": {
+      "title": "ShiftId",
+      "type": "string",
+      "enum": ["S1", "S2", "S3"]
+    }
+  }
+}

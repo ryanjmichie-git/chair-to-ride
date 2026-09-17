@@ -1,0 +1,114 @@
+# Dialysis unit floor rules. Edit a number, rerun `make baseline`.
+unit:
+  # Minutes to clean and set up a chair between two patients.
+  turnover_min: 30
+  # How many patients staff can put on within one stagger step.
+  stagger_cohort_size: 4
+  # Length of a put-on bin, in minutes.
+  stagger_step_min: 15
+  # Most chair-start changes the unit will accept in one shift, per day.
+  max_chair_changes_per_shift: 4
+  # Largest chair-start change, in minutes, the unit will accept for one patient.
+  max_chair_shift_min: 30
+  # Last time the unit is staffed; nothing runs past this.
+  close_time: "21:00"
+  # Put-on window for each shift: [first put-on, last put-on].
+  shifts:
+    # First shift.
+    S1: ["06:00", "06:45"]
+    # Second shift.
+    S2: ["10:45", "11:30"]
+    # Third shift.
+    S3: ["15:30", "16:15"]
+# Minutes after the session ends before the patient can leave the floor.
+recovery_buffer_min:
+  # Standard recovery: site hemostasis, post vitals, weigh-out.
+  default: 20
+  # Longer recovery when the nurse note flags hypotension.
+  hypotension: 35
+# Paratransit broker rules. These come from the broker contract, not the unit.
+broker:
+  # Minutes either side of the requested time the broker may legally negotiate.
+  ada_negotiation_min: 60
+  # Width of the pickup window the vehicle must arrive inside.
+  pickup_window_min: 30
+  # No vehicle picks anyone up before this time.
+  earliest_pickup: "06:30"
+  # Minutes a driver waits at the curb before leaving.
+  driver_wait_min: 5
+  # Longest time any rider may spend on board.
+  max_ride_min: 60
+  # Ride time may not exceed this multiple of the direct trip.
+  max_ride_ratio: 2.0
+  # Hours the vehicles are on the road: [first out, last in].
+  vehicle_shift: ["05:30", "21:30"]
+  # Minutes to load or unload one rider, by mobility class.
+  dwell_min:
+    # Walks on unaided.
+    ambulatory: 3
+    # Needs a hand or an arm.
+    assist: 4
+    # Uses the lift.
+    wheelchair: 6
+    # Needs a stretcher and two crew.
+    stretcher: 10
+  # Seats and securements each van type carries at once.
+  van_capacity:
+    # Standard van: no lift beyond one securement.
+    standard: {ambulatory: 4, wheelchair: 1, stretcher: 0}
+    # Lift van: two securements, fewer seats.
+    lift: {ambulatory: 3, wheelchair: 2, stretcher: 0}
+# Cost weights the solver minimises. Raise one to make that harm count for more.
+weights:
+  # Each minute a patient waits after they are ready to go home.
+  post_wait: 1.0
+  # Each minute a patient arrives before their chair is ready.
+  early_wait: 0.3
+  # Each change to a patient's chair start time.
+  chair_change: 8
+  # Each move touching a patient who did not consent to be moved.
+  consent_move: 20
+  # Each vehicle minute added.
+  vehicle_min: 0.05
+  # Each item handed to a human instead of solved.
+  review_item: 15
+# When the negotiation stops.
+stop:
+  # Stop if the best bundle improves the score by less than this percent.
+  min_improvement_pct: 2
+  # Hard cap on negotiation rounds.
+  max_iterations: 12
+  # Hard cap on wall-clock seconds.
+  max_wall_s: 90
+  # Stop early once every post-session wait is at or under this many minutes.
+  target_post_wait: 30
+  # Stop early once the gap between best and worst served rider is this small.
+  target_equity_gap: 10
+# How much the agent may apply on its own: 0 propose, 1 bounded, 2 trusted.
+autonomy_level: 1
+# Most moves the agent may put in one proposal.
+max_moves_per_bundle: 6
+# Most times one patient may be moved in a week.
+max_moves_per_patient_per_week: 1
+# Knobs for the synthetic day generator only; they do not affect scheduling.
+synth:
+  # Share of sessions that run over.
+  runover_share: 0.30
+  # Largest run-over, in minutes.
+  runover_max_min: 25
+  # Share of sessions that start late.
+  late_start_share: 0.15
+  # Smallest late start, in minutes.
+  late_start_min: 10
+  # Largest late start, in minutes.
+  late_start_max: 35
+  # Share of rides that pick up extra stops on the way.
+  extra_stops_share: 0.5
+  # Most extra stops added to one ride.
+  extra_stops_max: 3
+  # Riders left on will-call instead of a standing order.
+  will_call_count: 4
+  # Minutes the baseline takes to resolve a will-call.
+  will_call_delay_min: 60
+  # Minutes after scheduled end that a standing order anchors the return.
+  standing_order_offset_min: 30

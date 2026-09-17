@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://c2r.local/schemas/review_item.schema.json",
+  "title": "ReviewItem",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "item_id", "subject", "reason_code", "what_was_tried", "recommended_action",
+    "draft_message", "owner", "urgency"
+  ],
+  "properties": {
+    "item_id": {"type": "string"},
+    "subject": {"type": "string"},
+    "reason_code": {"$ref": "common.schema.json#/$defs/ReasonCode"},
+    "what_was_tried": {"type": "array", "items": {"type": "string"}},
+    "recommended_action": {"type": "string"},
+    "draft_message": {"type": "string"},
+    "owner": {"type": "string"},
+    "urgency": {"type": "string"}
+  }
+}

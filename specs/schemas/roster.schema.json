@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://c2r.local/schemas/roster.schema.json",
+  "title": "Roster",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["synthetic", "generator", "seed", "patients", "riders"],
+  "properties": {
+    "synthetic": {"type": "boolean", "const": true},
+    "generator": {"type": "string"},
+    "seed": {"type": "integer"},
+    "patients": {"type": "array", "items": {"$ref": "#/$defs/Patient"}},
+    "riders": {"type": "array", "items": {"$ref": "#/$defs/Rider"}}
+  },
+  "$defs": {
+    "Patient": {
+      "title": "Patient",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "patient_id", "display_name", "rx_days", "rx_duration_min", "shift_id", "chair_id",
+        "start_time", "clinically_fixed", "fixed_reason", "consent_to_move", "mobility",
+        "recovery_buffer_min", "nurse_note", "moves_this_week", "rider_id",
+        "late_start_min", "runover_min"
+      ],
+      "properties": {
+        "patient_id": {"$ref": "common.schema.json#/$defs/PatientId"},
+        "display_name": {"type": "string"},
+        "rx_days": {"title": "RxDays", "type": "string", "enum": ["MWF", "TTS"]},
+        "rx_duration_min": {"title": "RxDurationMin", "type": "integer",
+                            "enum": [210, 225, 240, 255, 270]},
+        "shift_id": {"$ref": "common.schema.json#/$defs/ShiftId"},
+        "chair_id": {"$ref": "common.schema.json#/$defs/ChairId"},
+        "start_time": {"$ref": "common.schema.json#/$defs/Time"},
+        "clinically_fixed": {"type": "boolean"},
+        "fixed_reason": {"type": ["string", "null"]},
+        "consent_to_move": {"type": "boolean"},
+        "mobility": {"$ref": "common.schema.json#/$defs/Mobility"},
+        "recovery_buffer_min": {"title": "RecoveryBufferMin", "type": "integer",
+                                "enum": [20, 35]},
+        "nurse_note": {"type": "string"},
+        "moves_this_week": {"type": "integer", "minimum": 0},
+        "rider_id": {
+          "anyOf": [{"$ref": "common.schema.json#/$defs/RiderId"}, {"type": "null"}]
+        },
+        "late_start_min": {"type": "integer", "minimum": 0},
+        "runover_min": {"type": "integer", "minimum": 0}
+      }
+    },
+    "Rider": {
+      "title": "Rider",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rider_id", "patient_id", "home_node", "language", "caregiver_window",
+        "rider_note", "provider"
+      ],
+      "properties": {
+        "rider_id": {"$ref": "common.schema.json#/$defs/RiderId"},
+        "patient_id": {"$ref": "common.schema.json#/$defs/PatientId"},
+        "home_node": {"$ref": "common.schema.json#/$defs/NodeId"},
+        "language": {"type": "string"},
+        "caregiver_window": {
+          "anyOf": [{"$ref": "common.schema.json#/$defs/Window"}, {"type": "null"}]
+        },
+        "rider_note": {"type": "string"},
+        "provider": {"title": "Provider", "type": "string", "enum": ["broker", "family"]}
+      }
+    }
+  }
+}

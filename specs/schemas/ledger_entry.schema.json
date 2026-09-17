@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://c2r.local/schemas/ledger_entry.schema.json",
+  "title": "LedgerEntry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ts", "run_id", "git_sha", "iteration", "actor", "event", "payload", "model_id",
+    "effort", "prompt_versions", "usage", "cost_usd", "input_hashes"
+  ],
+  "properties": {
+    "ts": {"type": "string"},
+    "run_id": {"type": "string"},
+    "git_sha": {"type": "string"},
+    "iteration": {"type": "integer", "minimum": 0},
+    "actor": {"title": "Actor", "type": "string", "enum": ["model", "tool", "human"]},
+    "event": {"type": "string"},
+    "payload": {"type": "object", "additionalProperties": true},
+    "model_id": {"type": "string"},
+    "effort": {"type": "string"},
+    "prompt_versions": {"type": "object", "additionalProperties": {"type": "integer"}},
+    "usage": {"$ref": "#/$defs/Usage"},
+    "cost_usd": {"type": "number", "minimum": 0},
+    "input_hashes": {"type": "object", "additionalProperties": {"type": "string"}}
+  },
+  "$defs": {
+    "Usage": {
+      "title": "Usage",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input", "cache_read", "cache_write", "output"],
+      "properties": {
+        "input": {"type": "integer", "minimum": 0},
+        "cache_read": {"type": "integer", "minimum": 0},
+        "cache_write": {"type": "integer", "minimum": 0},
+        "output": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

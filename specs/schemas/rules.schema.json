@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://c2r.local/schemas/rules.schema.json",
+  "title": "Rules",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "unit", "recovery_buffer_min", "broker", "weights", "stop", "autonomy_level",
+    "max_moves_per_bundle", "max_moves_per_patient_per_week", "synth"
+  ],
+  "properties": {
+    "unit": {"$ref": "#/$defs/UnitRules"},
+    "recovery_buffer_min": {"$ref": "#/$defs/RecoveryBuffer"},
+    "broker": {"$ref": "#/$defs/BrokerRules"},
+    "weights": {"$ref": "#/$defs/Weights"},
+    "stop": {"$ref": "#/$defs/StopRules"},
+    "autonomy_level": {"type": "integer", "enum": [0, 1, 2]},
+    "max_moves_per_bundle": {"type": "integer", "minimum": 1},
+    "max_moves_per_patient_per_week": {"type": "integer", "minimum": 0},
+    "synth": {"$ref": "#/$defs/SynthRules"}
+  },
+  "$defs": {
+    "UnitRules": {
+      "title": "UnitRules",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "turnover_min", "stagger_cohort_size", "stagger_step_min",
+        "max_chair_changes_per_shift", "max_chair_shift_min", "close_time", "shifts"
+      ],
+      "properties": {
+        "turnover_min": {"type": "integer", "minimum": 0},
+        "stagger_cohort_size": {"type": "integer", "minimum": 1},
+        "stagger_step_min": {"type": "integer", "minimum": 1},
+        "max_chair_changes_per_shift": {"type": "integer", "minimum": 0},
+        "max_chair_shift_min": {"type": "integer", "minimum": 0},
+        "close_time": {"$ref": "common.schema.json#/$defs/Time"},
+        "shifts": {"$ref": "#/$defs/ShiftWindows"}
+      }
+    },
+    "ShiftWindows": {
+      "title": "ShiftWindows",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["S1", "S2", "S3"],
+      "properties": {
+        "S1": {"$ref": "common.schema.json#/$defs/Window"},
+        "S2": {"$ref": "common.schema.json#/$defs/Window"},
+        "S3": {"$ref": "common.schema.json#/$defs/Window"}
+      }
+    },
+    "RecoveryBuffer": {
+      "title": "RecoveryBuffer",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default", "hypotension"],
+      "properties": {
+        "default": {"type": "integer", "minimum": 0},
+        "hypotension": {"type": "integer", "minimum": 0}
+      }
+    },
+    "BrokerRules": {
+      "title": "BrokerRules",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ada_negotiation_min", "pickup_window_min", "earliest_pickup", "driver_wait_min",
+        "max_ride_min", "max_ride_ratio", "vehicle_shift", "dwell_min", "van_capacity"
+      ],
+      "properties": {
+        "ada_negotiation_min": {"type": "integer", "minimum": 0},
+        "pickup_window_min": {"type": "integer", "minimum": 1},
+        "earliest_pickup": {"$ref": "common.schema.json#/$defs/Time"},
+        "driver_wait_min": {"type": "integer", "minimum": 0},
+        "max_ride_min": {"type": "integer", "minimum": 1},
+        "max_ride_ratio": {"type": "number", "minimum": 1},
+        "vehicle_shift": {"$ref": "common.schema.json#/$defs/Window"},
+        "dwell_min": {"$ref": "#/$defs/DwellMin"},
+        "van_capacity": {"$ref": "#/$defs/VanCapacity"}
+      }
+    },
+    "DwellMin": {
+      "title": "DwellMin",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ambulatory", "assist", "wheelchair", "stretcher"],
+      "properties": {
+        "ambulatory": {"type": "integer", "minimum": 0},
+        "assist": {"type": "integer", "minimum": 0},
+        "wheelchair": {"type": "integer", "minimum": 0},
+        "stretcher": {"type": "integer", "minimum": 0}
+      }
+    },
+    "VanCapacity": {
+      "title": "VanCapacity",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["standard", "lift"],
+      "properties": {
+        "standard": {"$ref": "common.schema.json#/$defs/Load"},
+        "lift": {"$ref": "common.schema.json#/$defs/Load"}
+      }
+    },
+    "Weights": {
+      "title": "Weights",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "post_wait", "early_wait", "chair_change", "consent_move", "vehicle_min", "review_item"
+      ],
+      "properties": {
+        "post_wait": {"type": "number"},
+        "early_wait": {"type": "number"},
+        "chair_change": {"type": "number"},
+        "consent_move": {"type": "number"},
+        "vehicle_min": {"type": "number"},
+        "review_item": {"type": "number"}
+      }
+    },
+    "StopRules": {
+      "title": "StopRules",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "min_improvement_pct", "max_iterations", "max_wall_s", "target_post_wait",
+        "target_equity_gap"
+      ],
+      "properties": {
+        "min_improvement_pct": {"type": "number", "minimum": 0},
+        "max_iterations": {"type": "integer", "minimum": 1},
+        "max_wall_s": {"type": "number", "minimum": 1},
+        "target_post_wait": {"type": "number", "minimum": 0},
+        "target_equity_gap": {"type": "number", "minimum": 0}
+      }
+    },
+    "SynthRules": {
+      "title": "SynthRules",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runover_share", "runover_max_min", "late_start_share", "late_start_min",
+        "late_start_max", "extra_stops_share", "extra_stops_max", "will_call_count",
+        "will_call_delay_min", "standing_order_offset_min"
+      ],
+      "properties": {
+        "runover_share": {"type": "number", "minimum": 0, "maximum": 1},
+        "runover_max_min": {"type": "integer", "minimum": 0},
+        "late_start_share": {"type": "number", "minimum": 0, "maximum": 1},
+        "late_start_min": {"type": "integer", "minimum": 0},
+        "late_start_max": {"type": "integer", "minimum": 0},
+        "extra_stops_share": {"type": "number", "minimum": 0, "maximum": 1},
+        "extra_stops_max": {"type": "integer", "minimum": 0},
+        "will_call_count": {"type": "integer", "minimum": 0},
+        "will_call_delay_min": {"type": "integer", "minimum": 0},
+        "standing_order_offset_min": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

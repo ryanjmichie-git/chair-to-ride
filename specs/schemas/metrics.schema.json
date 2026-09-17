@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://c2r.local/schemas/metrics.schema.json",
+  "title": "Metrics",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "mean_post_wait", "p90_post_wait", "wait_min_total", "early_wait_mean",
+    "within_30_share", "conflicts", "equity_gap", "vehicle_min", "riders_flagged"
+  ],
+  "properties": {
+    "mean_post_wait": {"type": "number"},
+    "p90_post_wait": {"type": "number"},
+    "wait_min_total": {"type": "number"},
+    "early_wait_mean": {"type": "number"},
+    "within_30_share": {"type": "number", "minimum": 0, "maximum": 1},
+    "conflicts": {"type": "integer", "minimum": 0},
+    "equity_gap": {"type": "number"},
+    "vehicle_min": {"type": "number"},
+    "riders_flagged": {"type": "integer", "minimum": 0}
+  }
+}

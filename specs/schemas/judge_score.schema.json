@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://c2r.local/schemas/judge_score.schema.json",
+  "title": "JudgeScore",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["explanation_id", "scores", "rationale", "pass"],
+  "properties": {
+    "explanation_id": {"type": "string"},
+    "scores": {"$ref": "#/$defs/JudgeScores"},
+    "rationale": {"type": "string"},
+    "pass": {"type": "boolean"}
+  },
+  "$defs": {
+    "JudgeScores": {
+      "title": "JudgeScores",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["accuracy", "actionable", "plain", "tone", "complete", "safe"],
+      "properties": {
+        "accuracy": {"type": "integer", "minimum": 0, "maximum": 2},
+        "actionable": {"type": "integer", "minimum": 0, "maximum": 2},
+        "plain": {"type": "integer", "minimum": 0, "maximum": 2},
+        "tone": {"type": "integer", "minimum": 0, "maximum": 2},
+        "complete": {"type": "integer", "minimum": 0, "maximum": 2},
+        "safe": {"type": "integer", "minimum": 0, "maximum": 2}
+      }
+    }
+  }
+}

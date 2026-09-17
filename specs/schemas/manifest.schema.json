@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://c2r.local/schemas/manifest.schema.json",
+  "title": "Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["synthetic", "generator", "seed", "broker_policy_text", "trips", "routes"],
+  "properties": {
+    "synthetic": {"type": "boolean", "const": true},
+    "generator": {"type": "string"},
+    "seed": {"type": "integer"},
+    "broker_policy_text": {"type": "string"},
+    "trips": {"type": "array", "items": {"$ref": "#/$defs/Trip"}},
+    "routes": {"type": "array", "items": {"$ref": "#/$defs/Route"}}
+  },
+  "$defs": {
+    "Trip": {
+      "title": "Trip",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trip_id", "rider_id", "leg", "origin_node", "dest_node", "requested_time",
+        "window", "vehicle_id", "seq", "status"
+      ],
+      "properties": {
+        "trip_id": {"$ref": "common.schema.json#/$defs/TripId"},
+        "rider_id": {"$ref": "common.schema.json#/$defs/RiderId"},
+        "leg": {"title": "Leg", "type": "string", "enum": ["to", "from"]},
+        "origin_node": {"$ref": "common.schema.json#/$defs/NodeId"},
+        "dest_node": {"$ref": "common.schema.json#/$defs/NodeId"},
+        "requested_time": {"$ref": "common.schema.json#/$defs/Time"},
+        "window": {
+          "anyOf": [{"$ref": "common.schema.json#/$defs/Window"}, {"type": "null"}]
+        },
+        "vehicle_id": {
+          "anyOf": [{"$ref": "common.schema.json#/$defs/VehicleId"}, {"type": "null"}]
+        },
+        "seq": {"type": ["integer", "null"], "minimum": 0},
+        "status": {"title": "TripStatus", "type": "string",
+                   "enum": ["scheduled", "will_call", "queued"]}
+      }
+    },
+    "Route": {
+      "title": "Route",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vehicle_id", "stops"],
+      "properties": {
+        "vehicle_id": {"$ref": "common.schema.json#/$defs/VehicleId"},
+        "stops": {"type": "array", "items": {"$ref": "#/$defs/RouteStop"}}
+      }
+    },
+    "RouteStop": {
+      "title": "RouteStop",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["trip_id", "kind", "node", "eta", "load_after"],
+      "properties": {
+        "trip_id": {"$ref": "common.schema.json#/$defs/TripId"},
+        "kind": {"title": "StopKind", "type": "string", "enum": ["pickup", "dropoff"]},
+        "node": {"$ref": "common.schema.json#/$defs/NodeId"},
+        "eta": {"$ref": "common.schema.json#/$defs/Time"},
+        "load_after": {"$ref": "common.schema.json#/$defs/Load"}
+      }
+    }
+  }
+}
