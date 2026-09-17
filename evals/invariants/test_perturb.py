@@ -119,3 +119,15 @@ def test_the_harness_closes_the_replan_once_the_stop_rule_is_met(replan) -> None
     entries = ledger.read(out / "ledger.jsonl")
     assert entries[-1].payload["reason"].startswith("stop rule met")
     assert max(e.iteration for e in entries if e.actor == "model") == 2
+
+
+def test_event_state_reproduces_the_source_runs_past(fake_run) -> None:
+    """Everything the source run had done before `now` is in the event state unchanged."""
+    event = perturb.load_event(DATA, "vehicle_down", T_DOWN)
+    state, _, affected = perturb.event_state(load_state(DATA), fake_run.out, event)
+    source = json.loads((fake_run.out / "schedule_after.json").read_text(encoding="utf-8"))
+    now = to_min(T_DOWN)
+    assert state.now == now and affected
+    assert _stops(state.manifest.model_dump(mode="json"), now) == _stops(source["manifest"], now)
+    starts = {p.patient_id: p.start_time for p in state.roster.patients}
+    assert starts == {p["patient_id"]: p["start_time"] for p in source["roster"]["patients"]}

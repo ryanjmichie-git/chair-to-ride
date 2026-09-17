@@ -22,7 +22,24 @@ CONTACT = {
     "nurse": "the broker dispatcher",
     "dispatcher": "the charge nurse",
 }
-PROPOSALS = ("candidates", "next_candidates")  # proposals are not facts about the schedule
+NOT_FACTS = (  # stripped from every resolved ref (I16): proposals are not facts about the
+    "candidates",  # schedule, and bookkeeping (tokens, dollars, iteration and version
+    "next_candidates",  # counters, clock stamps, grid nodes, stop sequence numbers) must
+    "usage",  # not make an invented small number look sourced
+    "cost_usd",
+    "iteration",
+    "schedule_version",
+    "elapsed_s",
+    "ts",
+    "git_sha",
+    "run_id",
+    "model_id",
+    "effort",
+    "input_hashes",
+    "prompt_versions",
+    "node",
+    "seq",
+)
 
 
 @dataclass
@@ -72,7 +89,7 @@ def _row(schedule: dict[str, Any], ident: str) -> dict[str, Any]:
     for trip in schedule["manifest"]["trips"]:
         if trip["trip_id"] == ident:
             stops = [
-                {"vehicle": r["vehicle_id"], "kind": s["kind"], "eta": s["eta"], "node": s["node"]}
+                {"vehicle": r["vehicle_id"], "kind": s["kind"], "eta": s["eta"]}
                 for r in schedule["manifest"]["routes"]
                 for s in r["stops"]
                 if s["trip_id"] == ident
@@ -84,11 +101,11 @@ def _row(schedule: dict[str, Any], ident: str) -> dict[str, Any]:
     raise KeyError(ident)
 
 
-def _without_proposals(value: Any) -> Any:
+def _facts_only(value: Any) -> Any:
     if isinstance(value, dict):
-        return {k: _without_proposals(v) for k, v in value.items() if k not in PROPOSALS}
+        return {k: _facts_only(v) for k, v in value.items() if k not in NOT_FACTS}
     if isinstance(value, list):
-        return [_without_proposals(v) for v in value]
+        return [_facts_only(v) for v in value]
     return value
 
 
@@ -101,12 +118,7 @@ def resolve_refs(run_dir: Path, refs: list[str]) -> dict[str, Any]:
 def resolve(files: RunFiles, ref: str) -> Any:
     kind, _, ident = ref.partition("-")
     if kind == "L" and ident.isdigit() and 1 <= int(ident) <= len(files.lines):
-        entry = json.loads(files.lines[int(ident) - 1])
-        return {
-            k: (_without_proposals(v) if k == "payload" else v)
-            for k, v in entry.items()
-            if k not in ("input_hashes", "prompt_versions")
-        }
+        return _facts_only(json.loads(files.lines[int(ident) - 1]))
     if kind == "S":
         return _row(files.after, ident)
     if kind == "B":

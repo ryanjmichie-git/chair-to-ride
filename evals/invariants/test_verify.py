@@ -180,9 +180,7 @@ def test_h9_down_vehicle_keeps_the_stops_it_made_before_t_down(baseline: State, 
 def test_now_freezes_chairs_already_started(baseline: State, day: State) -> None:
     """At `now`, a patient already on the chair cannot be moved; one who starts later can."""
     now = day.with_(now=to_min("13:40"))
-    movable = [
-        p for p in now.roster.patients if p.consent_to_move and not p.clinically_fixed
-    ]
+    movable = [p for p in now.roster.patients if p.consent_to_move and not p.clinically_fixed]
     started = next(p for p in movable if to_min(p.start_time) < to_min("13:40"))
     started.start_time = to_hhmm(to_min(started.start_time) + 15)
     assert "H3" in codes(now, baseline)
@@ -301,3 +299,40 @@ def test_h7_binds_a_will_call_rider_to_their_ready_time(baseline: State, day: St
         v.code.value == "H7" and v.subject_id == trip.trip_id
         for v in verify(day, baseline).violations
     )
+
+
+def test_h9_down_vehicle_takes_no_stop_at_t_down(baseline: State, day: State) -> None:
+    """A stop at exactly t_down is not served: the van is down from that minute."""
+    vehicle = next(v for v in day.fleet.vehicles if v.vehicle_id == "V3")
+    route = next(r for r in day.manifest.routes if r.vehicle_id == "V3")
+    stop = next(s for s in route.stops if to_min(s.eta) > to_min(vehicle.shift.root[0]) + 60)
+    vehicle.status = VehicleStatus.down
+    vehicle.shift = Window(root=[vehicle.shift.root[0], stop.eta])
+    found = [v for v in verify(day, baseline).violations if v.code.value == "H9"]
+    assert any(f"{stop.trip_id} {stop.kind.value} at {stop.eta}" in v.detail for v in found), found
+
+
+def test_now_does_not_pin_a_queued_trip_to_its_stale_window(baseline: State, day: State) -> None:
+    """A trip the event queued keeps the morning plan's window on its row. That window is not
+    a booking, so scheduling the trip after `now` is legal; only a scheduled trip is frozen."""
+    pickups = {
+        s.trip_id: to_min(s.eta)
+        for r in baseline.manifest.routes
+        for s in r.stops
+        if s.kind == StopKind.pickup
+    }
+    trip = next(
+        t
+        for t in day.manifest.trips
+        if t.leg == Leg.from_
+        and t.status == TripStatus.scheduled
+        and t.window is not None
+        and pickups.get(t.trip_id, 0) > to_min(t.window.root[0]) + 1
+    )
+    now = to_min(trip.window.root[0]) + 1  # the window is open, the van has not come
+    trip.status, trip.vehicle_id = TripStatus.queued, None
+    for route in day.manifest.routes:
+        route.stops = [s for s in route.stops if s.trip_id != trip.trip_id]
+    candidate = baseline.with_(now=now)  # the morning plan again: the trip back on its van
+    found = [v for v in verify(candidate, day).violations if v.subject_id == trip.trip_id]
+    assert not found, found

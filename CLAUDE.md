@@ -34,3 +34,4 @@ An agent re-times a dialysis unit's chair schedule against a paratransit manifes
 # Lessons
 - verify() derives every bound (start, ready, chair band, load) from the roster and the stop sequence, never from a window or load_after field the solver wrote into the manifest.
 - Negotiable anchors (requested_time) are compared against the baseline, never the candidate, in verify and in the parties; the builder only sets a request for will-call riders.
+- A down vehicle keeps every stop before t_down; verify flags stops at or after it (H9). CP1's blanket 'down means no stops' rejected every CP3 re-plan candidate.

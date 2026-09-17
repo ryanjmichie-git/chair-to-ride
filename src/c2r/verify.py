@@ -347,7 +347,7 @@ def h9_vehicle_inside_shift(manifest: Manifest, fleet: Fleet) -> Violations:
             )
         if route.vehicle_id in down:
             for stop in route.stops:
-                if to_min(stop.eta) > closes:
+                if to_min(stop.eta) >= closes:  # down from that minute: not served
                     found.append(
                         (
                             "H9_SHIFT",
@@ -364,7 +364,8 @@ def h9_vehicle_inside_shift(manifest: Manifest, fleet: Fleet) -> Violations:
 
 
 def h9_past_is_frozen(candidate: Manifest, baseline: Manifest, now: int) -> Violations:
-    """At ``now``, every stop already made and every window already open stays as it was."""
+    """At ``now``, every stop already made and every open window of a scheduled trip stays
+    as it was. A queued trip's window is the old plan's, not a booking, so it is not pinned."""
     when = to_hhmm(now)
 
     def served(manifest: Manifest) -> dict[tuple[str, str, str], tuple[str, int]]:
@@ -385,7 +386,11 @@ def h9_past_is_frozen(candidate: Manifest, baseline: Manifest, now: int) -> Viol
             found.append(("H9_PAST", vehicle, f"{trip_id} {kind} at {eta} is before {when}"))
     trips = {trip.trip_id: trip for trip in candidate.trips}
     for trip in baseline.trips:
-        if trip.window is None or window_min(trip.window)[0] >= now:
+        if (
+            trip.window is None
+            or trip.status != TripStatus.scheduled
+            or window_min(trip.window)[0] >= now
+        ):
             continue
         now_trip = trips.get(trip.trip_id)
         if now_trip is None or (now_trip.vehicle_id, now_trip.window, now_trip.status) != (

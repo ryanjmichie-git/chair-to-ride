@@ -63,10 +63,45 @@ own `finish` turn is not spent. Second run: 13.3 s, two turns.
 | The prompts are frozen | `prompts/explainer.v1.md` carries `eval_result: {judge_pass: 9/10, golden_pass: 7/7, unverified_numbers: 0/20, judged: 2026-09-17}`; `prompts/judge.v1.md` carries `{golden_agreement: 12/12, calibration_pass: 9/10, judged: 2026-09-17}`. `prompt_freeze` refuses edits; the next change is a `v2` file. | The numbers above were measured on these exact files. |
 | Calibration is a human step | `evals/data/judge_calibration.json` ships with `human_pass: null` and `for_the_grader` summaries; `--judge-only` prints "0/10 graded" until B fills it; the judge gates nothing until CP4. | The spec's 8/10 agreement is between the judge and a person; there is no person in this session. |
 | Money spent this checkpoint | Perturb: $0.36 (first run, medium effort defaults) + $0.07. Explain: $0.03 (cp3 test run) + $0.04 + $0.15. Judge: $0.78 golden + the 10 calibration calls (not ledgered; about $0.65 at the golden per-call average) + one model ping. The live test module adds one perturb, four notes and their verdicts when run. About $2.20 in all before the live test, against the $4 line in the plan. | Recorded per the "spending money" rule. |
-| Gate time | `make gate`: 262 passed, 94.5 s, GATE PASS (the same set took 108 s with other work running beside it). Two CP2 tests that do not need the chained bundle (`test_autonomy_zero_never_applies`, `test_the_harness_forces_finish_at_the_iteration_cap`) now run with `max_moves_per_bundle: 1`, saving about 9 s; the shared fake mediator run is already one per session. | The Stop hook's subprocess timeout is 90 s, and a timeout skips the gate with a notice instead of blocking, so at 94.5 s the hook no longer guards a stop. Raising that timeout to 110 s (inside the 120 s hook budget in `settings.json`) was attempted and refused by the session's permission mode, so it is the user's call. The remaining time is the CP1 solver (a full solve and two short ones, 21 s), the shared fake run (15 s), the tools protocol round (9 s) and 36 hook tests that each spawn a process; CP4 owns the 60 s target. |
+| Gate time | `make gate`: 262 passed, 94.5 s, GATE PASS before the review fixes; 271 passed, 102.1 s after them (the same set took 108 s with other work running beside it; run-to-run noise is about 5 s). Two CP2 tests that do not need the chained bundle (`test_autonomy_zero_never_applies`, `test_the_harness_forces_finish_at_the_iteration_cap`) now run with `max_moves_per_bundle: 1`, saving about 9 s; the shared fake mediator run is already one per session. | The Stop hook's subprocess timeout is 90 s, and a timeout skips the gate with a notice instead of blocking, so at 94.5 s the hook no longer guards a stop. Raising that timeout to 110 s (inside the 120 s hook budget in `settings.json`) was attempted and refused by the session's permission mode, so it is the user's call. The remaining time is the CP1 solver (a full solve and two short ones, 21 s), the shared fake run (15 s), the tools protocol round (9 s) and 36 hook tests that each spawn a process; CP4 owns the 60 s target. |
 
 ## Reviewer findings
-(filled after the CP3 review)
+One reviewer pass on the six commits. Fixed the same day, tests first, all offline:
+- A trip the event had queued kept the morning plan's window on its row, and `h9_past_is_frozen`
+  pinned it once that window had opened, so the rider most affected by a breakdown could never be
+  re-homed at any `--at` after the window opened (not hit at 13:40 on seed 42, where all three
+  windows open later). Only a scheduled trip's open window is frozen now (`verify.py`).
+- A stop at exactly `t_down` on a down van passed verify (`>` against the shift end) while
+  `perturb.py` removed it; verify flags `>=` now, so the rule lives in one place.
+- Resolved refs carried bookkeeping (token counts, dollars, iteration and version counters, clock
+  stamps, grid nodes, stop sequence numbers), so an invented small number such as "20 minutes"
+  could match one and pass I16. `facts.NOT_FACTS` strips them from every resolved ref; a test
+  injects the run's own token count and expects it caught.
+- The model's `contact` string was kept over the card's; Python knows who to call, so
+  `explain.build` uses the card's. The two-times rule (`explain.missing_times`) and "names the
+  contact" (`explain.contact_named`) are recorded per note in `explanations.json["checks"]` and
+  applied in `judge.override`: missing times => actionable 0; contact not named => complete <= 1.
+  Checked offline against the golden set, the calibration file and the 20 live notes: no verdict
+  changes (the three golden tone / complete / safe failures lose one more point).
+- The failed-call path (`MediatorError` halts the loop and the closing pass still runs) and
+  `event_state` reproducing the source run's past have offline tests.
+- The calibration judge calls were not ledgered (fixed in 3fc06b0, before the review).
+
+Waived, with the reason:
+- The `--judge-only` output quoted in HANDOFF.md predates the calibration-booking change (M1).
+  The prompt body and the verdict logic did not change; the prompt hash in
+  `runs/golden-judge/judge.jsonl` matches HEAD. Re-running costs about $1.45 and would take the
+  checkpoint over its $4 line; the offline test covers the booking path. `make judge-only`
+  refreshes the artefacts whenever the user wants the spend.
+- Model-authored text inside a ref (an apply `rationale`, the finish `summary`, a model-flagged
+  review item's text) still counts as sourced for I16. K4 checks those numbers when the mediator
+  writes them, and on the two live runs none reached a note; a second layer belongs with CP4's
+  judge hardening.
+- A rider aboard the down van at `t_down` (pickup before, dropoff after) is removed whole by
+  `perturb._vehicle_down`, as if never picked up; none on seed 42 at 13:40. CP4's event work.
+- The six-commit aggregate is about 1,360 changed `src/` lines; the repo's K2 rule is per commit
+  (largest 355) and `k2_guard` enforces it that way.
+- A vehicle subject in the review queue would get an empty dispatcher note (id `E3d`); not hit.
 
 ## Not done at CP3
 - The other four events; `--replay` of a frozen ledger for a no-network demo (`--fake` remains

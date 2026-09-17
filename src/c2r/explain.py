@@ -79,6 +79,11 @@ def missing_times(record: dict[str, Any]) -> list[str]:
     return [t for t in wanted if t and t not in text]
 
 
+def contact_named(record: dict[str, Any]) -> bool:
+    """Rule 5: the note names the card's contact (who to call) in its ``why``."""
+    return record["facts"]["contact"].lower() in record["explanation"]["why"].lower()
+
+
 def reading_grade(text: str) -> float:
     return round(float(textstat.flesch_kincaid_grade(text)), 1)
 
@@ -105,7 +110,7 @@ def build(card: dict[str, Any], output: dict[str, Any]) -> Explanation:
             pickup_window=Window(root=list(window)) if window else None,
         ),
         ledger_refs=list(card["refs"]),
-        contact=str(output.get("contact") or card["contact"]),
+        contact=str(card["contact"]),  # Python knows who to call; the model only phrases
         reading_grade=reading_grade(f"{what} {why}"),
     )
 
@@ -147,6 +152,11 @@ def explain_run(run_dir: Path, writer: Writer, echo=print) -> list[dict[str, Any
         text = json.dumps(record["explanation"], sort_keys=True)
         claims = numeric_claims(_prose(record))
         unverified = check_numbers(record)
+        record["checks"] = {  # what Python can prove about the note; the judge applies them
+            "unverified_numbers": unverified,
+            "missing_times": missing_times(record),
+            "contact_named": contact_named(record),
+        }
         book.model_turn(
             number, text, [], claims, unverified, done.usage, done.cost_usd, done.stop_reason
         )

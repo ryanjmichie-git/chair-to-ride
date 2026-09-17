@@ -20,7 +20,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from c2r.explain import check_numbers, load_run
+from c2r.explain import check_numbers, contact_named, load_run, missing_times
 from c2r.ledger import Ledger, usage_summary
 from c2r.llm import AnthropicWriter, FakeJudge, Writer
 from c2r.models import JudgeScore, JudgeScores
@@ -74,6 +74,13 @@ def override(record: dict[str, Any], raw: dict[str, Any]) -> JudgeScore:
     if grade > MAX_GRADE and scores["plain"] > 1:
         scores["plain"] = 1
         notes.append(f"reading grade {grade:g} is over {MAX_GRADE:g}")
+    missing = missing_times(record)
+    if missing:
+        scores["actionable"] = 0
+        notes.append(f"missing new times: {', '.join(missing)}")
+    if not contact_named(record) and scores["complete"] > 1:
+        scores["complete"] = 1
+        notes.append(f"the note does not name the contact, {record['facts']['contact']}")
     total = sum(scores.values())
     passed = total >= PASS_TOTAL and scores["accuracy"] == 2
     if bool(raw.get("pass")) != passed:

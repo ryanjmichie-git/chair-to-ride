@@ -13,7 +13,7 @@ import pytest
 
 from c2r import ledger, orchestrator
 from c2r.claims import numbers_in
-from c2r.llm import FakeMediator
+from c2r.llm import FakeMediator, MediatorError
 from c2r.models import LedgerEntry
 from c2r.phi import find_phi
 from c2r.solver import Result
@@ -198,3 +198,28 @@ def test_the_harness_forces_finish_at_the_iteration_cap(tmp_path: Path) -> None:
     assert max(e.iteration for e in entries if e.actor == "model") == 1
     assert not result.result.violations
     check_i18_ledger_replays_byte_for_byte(load_state(DATA), entries, out)
+
+
+class RaisingMediator:
+    """The API is down: every turn fails after its retries."""
+
+    model_id = "fake-mediator"
+    effort = "none"
+
+    def turn(self, system: list[dict], tools: list[dict], messages: list[dict]):
+        raise MediatorError("connection refused")
+
+
+def test_a_failed_model_call_halts_the_loop_and_the_closing_pass_still_runs(
+    tmp_path: Path,
+) -> None:
+    rules = copy.deepcopy(load_rules())
+    rules["max_moves_per_bundle"] = 1
+    out = tmp_path / "down"
+    result = orchestrator.run(DATA, out, RaisingMediator(), echo=lambda *_: None, rules=rules)
+    assert not result.result.violations
+    for name in OUTPUTS:
+        assert (out / name).is_file(), name
+    entries = ledger.read(out / "ledger.jsonl")
+    assert "model call failed" in entries[-1].payload["reason"]
+    assert "connection refused" in entries[-1].payload["reason"]

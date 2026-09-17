@@ -130,3 +130,17 @@ def test_judge_calibration_books_its_calls_in_their_own_ledger(tmp_path) -> None
     assert len(entries) == 10 and {e.run_id for e in entries} == {"calibration"}
     assert status["usage"]["iterations"] == 10  # the fake model has no price, so no cost check
     assert status["usage"]["tokens"]["input"] == 10 * entries[0].usage.input
+
+
+def test_a_rider_note_without_its_new_times_scores_actionable_zero(records: list[dict]) -> None:
+    record = copy.deepcopy(next(r for r in records if r["explanation"]["audience"] == "rider"))
+    record["explanation"]["what_changed"] = "Your day changed a little."
+    score = judge.override(record, _raw(record["explanation_id"]))
+    assert score.scores.actionable == 0 and "missing" in score.rationale
+
+
+def test_a_note_that_does_not_name_the_contact_caps_complete(records: list[dict]) -> None:
+    record = copy.deepcopy(records[0])
+    record["explanation"]["why"] = "The vans were moved around. Call the number on file."
+    score = judge.override(record, _raw(record["explanation_id"]))
+    assert score.scores.complete <= 1 and record["facts"]["contact"] in score.rationale

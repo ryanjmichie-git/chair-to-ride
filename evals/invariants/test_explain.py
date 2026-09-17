@@ -107,3 +107,42 @@ def test_explain_ledger_records_every_call(records: list[dict], fake_run) -> Non
     assert all(e.payload["unverified"] == [] for e in turns)
     written = json.loads((fake_run.out / "explanations.json").read_text(encoding="utf-8"))
     assert [r["explanation_id"] for r in written] == [r["explanation_id"] for r in records]
+
+
+def test_refs_carry_facts_not_bookkeeping(records: list[dict], fake_run) -> None:
+    """Token counts, costs, iteration numbers, node ids and stop sequence numbers are not
+    facts a note may cite; they must not make an invented small number look sourced."""
+    bookkeeping = {
+        "usage",
+        "cost_usd",
+        "iteration",
+        "schedule_version",
+        "elapsed_s",
+        "ts",
+        "git_sha",
+    }
+    for record in records:
+        for ref, data in record["facts"]["refs"].items():
+            if ref.startswith("L-"):
+                assert bookkeeping.isdisjoint(data), (ref, sorted(bookkeeping & set(data)))
+            else:
+                for stop in data.get("stops", []):
+                    assert "node" not in stop and "seq" not in stop, (ref, stop)
+    entries = ledger.read(fake_run.out / "ledger.jsonl")
+    tokens = str(next(e for e in entries if e.actor == "model").usage.input)
+    tampered = json.loads(json.dumps(records[0]))
+    tampered["explanation"]["why"] += f" Allow {tokens} minutes."
+    assert tokens in explain.check_numbers(tampered)
+
+
+def test_contact_comes_from_the_card_not_the_model(records: list[dict]) -> None:
+    card = records[0]["facts"]
+    output = {"what_changed": "Nothing.", "why": "Call dispatch.", "contact": "dispatch"}
+    assert explain.build(card, output).contact == card["contact"]
+
+
+def test_every_record_carries_its_checks(records: list[dict]) -> None:
+    for record in records:
+        checks = record["checks"]
+        assert checks["unverified_numbers"] == [] and checks["missing_times"] == []
+        assert checks["contact_named"] is True, record["explanation_id"]

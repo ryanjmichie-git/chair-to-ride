@@ -6,7 +6,7 @@ An agent re-times a dialysis unit's chair schedule against a paratransit manifes
 - [CHAIR-TO-RIDE-HANDOFF.md](../CHAIR-TO-RIDE-HANDOFF.md): the full product and technical spec this repo is built from.
 - [CLAUDE.md](../CLAUDE.md): commands, rules of engagement, and lessons for a Claude Code session.
 - [KICKOFF.md](../KICKOFF.md): tonight's build runbook — roles, session table, emergency cut.
-- [Makefile](../Makefile): `setup`, `models`, `synth`, `baseline`, `solve`, `mediate` (live Fable 5.1 loop into `runs/cp2`), `mediate-fake` (offline), `perturb` (V3 down at 13:40 against `runs/cp2`, into `runs/cp3`), `perturb-fake`, `explain` (Sonnet 5 notes for both runs), `judge` (Fable 5.1 low on both runs), `judge-only` (the golden set), `timeline`, `test`, `test-live`, `gate`, `demo` (mediate then perturb), `check-models` targets.
+- [Makefile](../Makefile): `setup`, `models`, `synth`, `baseline`, `solve`, `mediate` (live Fable 5.1 loop into `runs/cp2`), `mediate-fake` (offline), `perturb` (V3 down at 13:40 against `runs/cp2`, into `runs/cp3`), `perturb-fake`, `explain` (Sonnet 5 notes for both runs), `judge` (Fable 5.1 low on both runs), `judge-only` (the golden set and the calibration file), `timeline`, `test`, `test-live`, `gate`, `demo` (mediate then perturb), `check-models` targets.
 - [pyproject.toml](../pyproject.toml): package `c2r`, dependencies, ruff/pytest config.
 - [config/](../config/): `rules.yaml` (constants + weights), `unit_policy.md`, `broker_policy.md`.
 - [data/](../data/): `names.json` and `synthetic/<seed>/` — the only data this project ever reads.
@@ -38,9 +38,9 @@ An agent re-times a dialysis unit's chair schedule against a paratransit manifes
 - [src/c2r/tools.py](../src/c2r/tools.py): the eight strict tools, `Session`, `dispatch` — `apply_bundle` refuses without a clean verify on the current version and both parties' acceptance.
 - [src/c2r/orchestrator.py](../src/c2r/orchestrator.py): the mediator loop — cache blocks A-C, `run_session` (turns, tool dispatch, ledger, run artefacts, force-finish on the clock, a failed call or the stop rule), `run` for a full day (`python -m c2r.orchestrator <data_dir> [--out runs/cp2] [--fake]`).
 - [src/c2r/perturb.py](../src/c2r/perturb.py): replay an `events.jsonl` entry against a finished run and re-plan under a 30 s clock (`python -m c2r.perturb --event vehicle_down --at 13:40 [--run runs/cp2] [--out runs/cp3] [--fake]`); `event_state` is pure, `EVENTS` is the handler registry (only `vehicle_down` at CP3).
-- [src/c2r/facts.py](../src/c2r/facts.py): facts cards per subject and audience from a run's files; refs `L-n`, `S-id`, `B-id`, `R-item`.
-- [src/c2r/explain.py](../src/c2r/explain.py): Sonnet 5 phrases a card, Python fills times, refs and reading grade, checks numbers per ref (I16) (`python -m c2r.explain runs/cp2 [--fake]`).
-- [src/c2r/judge.py](../src/c2r/judge.py): Fable 5.1 (low) scores six dimensions 0-2; Python zeroes accuracy on an unsourced number, caps plain over grade 8, recomputes pass (`python -m c2r.judge runs/cp2 [--fake]`, `--golden`).
+- [src/c2r/facts.py](../src/c2r/facts.py): facts cards per subject and audience from a run's files; refs `L-n`, `S-id`, `B-id`, `R-item`, resolved without proposals or bookkeeping (`NOT_FACTS`).
+- [src/c2r/explain.py](../src/c2r/explain.py): Sonnet 5 phrases a card, Python fills times, refs and reading grade, checks numbers per ref (I16), the two new times and the contact per note (`python -m c2r.explain runs/cp2 [--fake]`).
+- [src/c2r/judge.py](../src/c2r/judge.py): Fable 5.1 (low) scores six dimensions 0-2; Python zeroes accuracy on an unsourced number and actionable on a missing time, caps plain over grade 8 and complete when the contact is not named, recomputes pass (`python -m c2r.judge runs/cp2 [--fake]`, `--golden`).
 - [src/c2r/parties/](../src/c2r/parties/): `unit.respond` and `broker.respond` — deterministic accept/reject with reason codes and hints.
 - [src/c2r/viz/timeline.py](../src/c2r/viz/timeline.py): before/after Gantt as one self-contained HTML file (`python -m c2r.viz.timeline runs/<name>`).
 
