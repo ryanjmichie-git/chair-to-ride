@@ -1,0 +1,3829 @@
+[
+  {
+    "calibration_id": "C01",
+    "for_the_grader": {
+      "audience": "rider",
+      "chair_start_after": "06:00",
+      "chair_start_before": "06:00",
+      "contact": "the unit front desk",
+      "event": null,
+      "review_item": null,
+      "ride_window_after": [
+        "09:58",
+        "10:28"
+      ],
+      "ride_window_before": null,
+      "van_after": "V2",
+      "what_changed": "Your chair time is still 06:00. Your ride home is now booked between 09:58 and 10:28, on van V2, from the unit door.",
+      "why": "We moved several riders off the wait list and onto set vans, which gave you a booked ride home instead of a will-call wait. If the van is late, call the unit front desk."
+    },
+    "human_notes": "",
+    "human_pass": null,
+    "record": {
+      "explanation": {
+        "audience": "rider",
+        "contact": "the unit front desk",
+        "ledger_refs": [
+          "L-8",
+          "S-P04",
+          "S-P04f",
+          "B-P04",
+          "B-P04f"
+        ],
+        "new_times": {
+          "chair_start": "06:00",
+          "pickup_window": [
+            "09:58",
+            "10:28"
+          ]
+        },
+        "reading_grade": 3.4,
+        "subject_id": "P04",
+        "what_changed": "Your chair time is still 06:00. Your ride home is now booked between 09:58 and 10:28, on van V2, from the unit door.",
+        "why": "We moved several riders off the wait list and onto set vans, which gave you a booked ride home instead of a will-call wait. If the van is late, call the unit front desk."
+      },
+      "explanation_id": "E04r",
+      "facts": {
+        "after": {
+          "chair_start": "06:00",
+          "pickup_eta": "09:58",
+          "pickup_window": [
+            "09:58",
+            "10:28"
+          ],
+          "status": "scheduled",
+          "vehicle": "V2"
+        },
+        "audience": "rider",
+        "before": {
+          "chair_start": "06:00",
+          "pickup_eta": "12:26",
+          "pickup_window": null,
+          "status": "will_call",
+          "vehicle": "V1"
+        },
+        "caregiver_window": null,
+        "changes": [
+          {
+            "bundle_id": "I00-C001",
+            "moves": [
+              "P04f to van V2"
+            ],
+            "rationale": "Lowest J; all vehicle reassignments on the broker side, no chair moves or consent changes, and it clears the will-call waits for six riders.",
+            "ref": "L-8"
+          }
+        ],
+        "contact": "the unit front desk",
+        "event": null,
+        "language": "en",
+        "mobility": "assist",
+        "name": "Soulshin Lyamgon",
+        "ready_time": "09:58",
+        "refs": {
+          "B-P04": {
+            "chair_id": "C04",
+            "clinically_fixed": false,
+            "consent_to_move": false,
+            "display_name": "Soulshin Lyamgon",
+            "fixed_reason": null,
+            "late_start_min": 0,
+            "mobility": "assist",
+            "moves_this_week": 0,
+            "nurse_note": "S1 start 06:00, chair C04, 210 min. Needs a hand to transfer. Has not consented to schedule changes.",
+            "patient_id": "P04",
+            "recovery_buffer_min": 20,
+            "rider_id": "R04",
+            "runover_min": 8,
+            "rx_days": "MWF",
+            "rx_duration_min": 210,
+            "shift_id": "S1",
+            "start_time": "06:00"
+          },
+          "B-P04f": {
+            "dest_node": 13,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "12:08",
+            "rider_id": "R04",
+            "seq": 14,
+            "status": "will_call",
+            "stops": [
+              {
+                "eta": "12:26",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V1"
+              },
+              {
+                "eta": "12:40",
+                "kind": "dropoff",
+                "node": 13,
+                "vehicle": "V1"
+              }
+            ],
+            "trip_id": "P04f",
+            "vehicle_id": "V1",
+            "window": null
+          },
+          "L-8": {
+            "actor": "tool",
+            "cost_usd": 0.0,
+            "effort": "medium",
+            "event": "apply_bundle",
+            "git_sha": "d862bec0a7a5409542d5a5c39d7a1a0bf049785b-dirty",
+            "iteration": 2,
+            "model_id": "claude-fable-5-1",
+            "payload": {
+              "input": {
+                "bundle_id": "I00-C001",
+                "rationale": "Lowest J; all vehicle reassignments on the broker side, no chair moves or consent changes, and it clears the will-call waits for six riders.",
+                "verify_hash": "sha256:dc62b17f3b31fa2263b88f1ed42d28ea31307be7e09a03513911d2ebca8c9d38"
+              },
+              "result": {
+                "applied": true,
+                "bundle": {
+                  "bundle_id": "I00-C001",
+                  "moves": [
+                    {
+                      "trip_id": "P04f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V2"
+                    },
+                    {
+                      "trip_id": "P02f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V4"
+                    },
+                    {
+                      "trip_ids": [
+                        "P10f",
+                        "P02f"
+                      ],
+                      "type": "pair_riders",
+                      "vehicle_id": "V4"
+                    },
+                    {
+                      "trip_id": "P08f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V5"
+                    },
+                    {
+                      "trip_id": "P15f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V3"
+                    },
+                    {
+                      "trip_id": "P16f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V3"
+                    }
+                  ],
+                  "notes_relevant": [],
+                  "predicted": {
+                    "chair_changes": 0,
+                    "consent_moves": 0,
+                    "delta_early_min": 0,
+                    "delta_wait_min": -741,
+                    "vehicle_min": 1
+                  },
+                  "side": "broker",
+                  "touches": [
+                    "P02",
+                    "P04",
+                    "P08",
+                    "P10",
+                    "P15",
+                    "P16"
+                  ]
+                },
+                "delta": {
+                  "chair_starts": {},
+                  "trips": {
+                    "P02f": {
+                      "pickup": [
+                        "13:13",
+                        "11:02"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V4"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "11:02",
+                          "11:32"
+                        ]
+                      ]
+                    },
+                    "P04f": {
+                      "pickup": [
+                        "12:26",
+                        "09:58"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V2"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "09:58",
+                          "10:28"
+                        ]
+                      ]
+                    },
+                    "P08f": {
+                      "pickup": [
+                        "12:55",
+                        "10:45"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V5"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "10:45",
+                          "11:15"
+                        ]
+                      ]
+                    },
+                    "P10f": {
+                      "pickup": [
+                        "13:17",
+                        "11:07"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V4"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "11:07",
+                          "11:37"
+                        ]
+                      ]
+                    },
+                    "P15f": {
+                      "pickup": [
+                        "17:45",
+                        "15:35"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V2",
+                        "V3"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "15:35",
+                          "16:05"
+                        ]
+                      ]
+                    },
+                    "P16f": {
+                      "pickup": [
+                        "16:23",
+                        "15:11"
+                      ],
+                      "vehicle": [
+                        "V2",
+                        "V3"
+                      ]
+                    }
+                  }
+                },
+                "j": 376.2,
+                "metrics": {
+                  "conflicts": 0,
+                  "early_wait_mean": 9.41,
+                  "equity_gap": 42.29,
+                  "mean_post_wait": 17.29,
+                  "p90_post_wait": 63.0,
+                  "riders_flagged": 4,
+                  "vehicle_min": 524.0,
+                  "wait_min_total": 242.0,
+                  "within_30_share": 0.7143
+                },
+                "schedule_version": 1,
+                "stop": {
+                  "below_min_improvement": false,
+                  "best_improvement_pct": 59.78,
+                  "elapsed_s": 19.5,
+                  "reason": "",
+                  "should_finish": false,
+                  "targets": {
+                    "equity_gap": 10,
+                    "post_wait": 30
+                  },
+                  "targets_met": false
+                },
+                "verify_hash": "sha256:dc62b17f3b31fa2263b88f1ed42d28ea31307be7e09a03513911d2ebca8c9d38"
+              }
+            },
+            "run_id": "20260917T181530Z-ba850d",
+            "ts": "2026-09-17T18:15:49+00:00",
+            "usage": {
+              "cache_read": 0,
+              "cache_write": 0,
+              "input": 0,
+              "output": 0
+            }
+          },
+          "S-P04": {
+            "chair_id": "C04",
+            "clinically_fixed": false,
+            "consent_to_move": false,
+            "display_name": "Soulshin Lyamgon",
+            "fixed_reason": null,
+            "late_start_min": 0,
+            "mobility": "assist",
+            "moves_this_week": 0,
+            "nurse_note": "S1 start 06:00, chair C04, 210 min. Needs a hand to transfer. Has not consented to schedule changes.",
+            "patient_id": "P04",
+            "recovery_buffer_min": 20,
+            "rider_id": "R04",
+            "runover_min": 8,
+            "rx_days": "MWF",
+            "rx_duration_min": 210,
+            "shift_id": "S1",
+            "start_time": "06:00"
+          },
+          "S-P04f": {
+            "dest_node": 13,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "09:58",
+            "rider_id": "R04",
+            "seq": 4,
+            "status": "scheduled",
+            "stops": [
+              {
+                "eta": "09:58",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V2"
+              },
+              {
+                "eta": "10:12",
+                "kind": "dropoff",
+                "node": 13,
+                "vehicle": "V2"
+              }
+            ],
+            "trip_id": "P04f",
+            "vehicle_id": "V2",
+            "window": [
+              "09:58",
+              "10:28"
+            ]
+          }
+        },
+        "review_item": null,
+        "subject_id": "P04"
+      }
+    },
+    "source": {
+      "explanation_id": "E04r",
+      "run": "runs/cp2",
+      "written": "2026-09-17"
+    }
+  },
+  {
+    "calibration_id": "C02",
+    "for_the_grader": {
+      "audience": "rider",
+      "chair_start_after": "06:15",
+      "chair_start_before": "06:15",
+      "contact": "the unit front desk",
+      "event": null,
+      "review_item": null,
+      "ride_window_after": [
+        "10:35",
+        "11:05"
+      ],
+      "ride_window_before": [
+        "10:35",
+        "11:05"
+      ],
+      "van_after": "V4",
+      "what_changed": "Your chair time is still 06:15. Your ride home window is 10:35 to 11:05, on van V4, from the unit door.",
+      "why": "We moved wheelchair riders like you onto lift vans to shorten wait times. If the van is late, call the unit front desk."
+    },
+    "human_notes": "",
+    "human_pass": null,
+    "record": {
+      "explanation": {
+        "audience": "rider",
+        "contact": "the unit front desk",
+        "ledger_refs": [
+          "L-14",
+          "S-P06",
+          "S-P06f",
+          "B-P06",
+          "B-P06f"
+        ],
+        "new_times": {
+          "chair_start": "06:15",
+          "pickup_window": [
+            "10:35",
+            "11:05"
+          ]
+        },
+        "reading_grade": 2.4,
+        "subject_id": "P06",
+        "what_changed": "Your chair time is still 06:15. Your ride home window is 10:35 to 11:05, on van V4, from the unit door.",
+        "why": "We moved wheelchair riders like you onto lift vans to shorten wait times. If the van is late, call the unit front desk."
+      },
+      "explanation_id": "E06r",
+      "facts": {
+        "after": {
+          "chair_start": "06:15",
+          "pickup_eta": "10:39",
+          "pickup_window": [
+            "10:35",
+            "11:05"
+          ],
+          "status": "scheduled",
+          "vehicle": "V4"
+        },
+        "audience": "rider",
+        "before": {
+          "chair_start": "06:15",
+          "pickup_eta": "11:32",
+          "pickup_window": [
+            "10:35",
+            "11:05"
+          ],
+          "status": "scheduled",
+          "vehicle": "V1"
+        },
+        "caregiver_window": null,
+        "changes": [
+          {
+            "bundle_id": "I02-C001",
+            "moves": [
+              "P06f to van V4"
+            ],
+            "rationale": "Lowest J; broker-side only, moves wheelchair riders P03, P06, P17 onto lift vans and closes the wheelchair/ambulatory equity gap, no chair moves.",
+            "ref": "L-14"
+          }
+        ],
+        "contact": "the unit front desk",
+        "event": null,
+        "language": "zh",
+        "mobility": "wheelchair",
+        "name": "Lyasvyan Biareor",
+        "ready_time": "10:39",
+        "refs": {
+          "B-P06": {
+            "chair_id": "C06",
+            "clinically_fixed": false,
+            "consent_to_move": true,
+            "display_name": "Lyasvyan Biareor",
+            "fixed_reason": null,
+            "late_start_min": 0,
+            "mobility": "wheelchair",
+            "moves_this_week": 0,
+            "nurse_note": "S1 start 06:15, chair C06, 240 min. Wheelchair.",
+            "patient_id": "P06",
+            "recovery_buffer_min": 20,
+            "rider_id": "R05",
+            "runover_min": 4,
+            "rx_days": "MWF",
+            "rx_duration_min": 240,
+            "shift_id": "S1",
+            "start_time": "06:15"
+          },
+          "B-P06f": {
+            "dest_node": 17,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "10:50",
+            "rider_id": "R05",
+            "seq": 10,
+            "status": "scheduled",
+            "stops": [
+              {
+                "eta": "11:32",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V1"
+              },
+              {
+                "eta": "11:47",
+                "kind": "dropoff",
+                "node": 17,
+                "vehicle": "V1"
+              }
+            ],
+            "trip_id": "P06f",
+            "vehicle_id": "V1",
+            "window": [
+              "10:35",
+              "11:05"
+            ]
+          },
+          "L-14": {
+            "actor": "tool",
+            "cost_usd": 0.0,
+            "effort": "medium",
+            "event": "apply_bundle",
+            "git_sha": "d862bec0a7a5409542d5a5c39d7a1a0bf049785b-dirty",
+            "iteration": 4,
+            "model_id": "claude-fable-5-1",
+            "payload": {
+              "input": {
+                "bundle_id": "I02-C001",
+                "rationale": "Lowest J; broker-side only, moves wheelchair riders P03, P06, P17 onto lift vans and closes the wheelchair/ambulatory equity gap, no chair moves.",
+                "verify_hash": "sha256:78b5f3ebccdb6e0470a5baf439c21395530ab03676840d8bf429a9801fce07ed"
+              },
+              "result": {
+                "applied": true,
+                "bundle": {
+                  "bundle_id": "I02-C001",
+                  "moves": [
+                    {
+                      "trip_id": "P17f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V5"
+                    },
+                    {
+                      "trip_id": "P03f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V5"
+                    },
+                    {
+                      "trip_id": "P06f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V4"
+                    },
+                    {
+                      "delta_min": 35,
+                      "trip_id": "P22f",
+                      "type": "shift_pickup_window"
+                    },
+                    {
+                      "delta_min": -130,
+                      "trip_id": "P27f",
+                      "type": "shift_pickup_window"
+                    },
+                    {
+                      "trip_id": "P31f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V2"
+                    }
+                  ],
+                  "notes_relevant": [],
+                  "predicted": {
+                    "chair_changes": 0,
+                    "consent_moves": 0,
+                    "delta_early_min": 0,
+                    "delta_wait_min": -196,
+                    "vehicle_min": 22
+                  },
+                  "side": "broker",
+                  "touches": [
+                    "P03",
+                    "P06",
+                    "P17",
+                    "P22",
+                    "P27",
+                    "P31"
+                  ]
+                },
+                "delta": {
+                  "chair_starts": {},
+                  "trips": {
+                    "P02f": {
+                      "pickup": [
+                        "11:02",
+                        "11:09"
+                      ]
+                    },
+                    "P03f": {
+                      "pickup": [
+                        "12:02",
+                        "11:03"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V5"
+                      ]
+                    },
+                    "P06f": {
+                      "pickup": [
+                        "11:32",
+                        "10:39"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V4"
+                      ]
+                    },
+                    "P10f": {
+                      "pickup": [
+                        "11:07",
+                        "11:12"
+                      ]
+                    },
+                    "P17f": {
+                      "pickup": [
+                        "15:53",
+                        "14:50"
+                      ],
+                      "vehicle": [
+                        "V2",
+                        "V5"
+                      ]
+                    },
+                    "P22f": {
+                      "pickup": [
+                        "16:43",
+                        "16:10"
+                      ],
+                      "window": [
+                        [
+                          "15:35",
+                          "16:05"
+                        ],
+                        [
+                          "16:10",
+                          "16:40"
+                        ]
+                      ]
+                    },
+                    "P27f": {
+                      "pickup": [
+                        null,
+                        "20:52"
+                      ],
+                      "status": [
+                        "queued",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        null,
+                        "V1"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "20:52",
+                          "21:22"
+                        ]
+                      ]
+                    },
+                    "P31f": {
+                      "pickup": [
+                        null,
+                        "20:35"
+                      ],
+                      "status": [
+                        "queued",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        null,
+                        "V2"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "20:35",
+                          "21:05"
+                        ]
+                      ]
+                    }
+                  }
+                },
+                "j": 151.3,
+                "metrics": {
+                  "conflicts": 0,
+                  "early_wait_mean": 9.41,
+                  "equity_gap": 1.92,
+                  "mean_post_wait": 2.88,
+                  "p90_post_wait": 13.0,
+                  "riders_flagged": 2,
+                  "vehicle_min": 546.0,
+                  "wait_min_total": 46.0,
+                  "within_30_share": 1.0
+                },
+                "schedule_version": 2,
+                "stop": {
+                  "below_min_improvement": false,
+                  "best_improvement_pct": 15.0,
+                  "elapsed_s": 32.4,
+                  "reason": "",
+                  "should_finish": false,
+                  "targets": {
+                    "equity_gap": 10,
+                    "post_wait": 30
+                  },
+                  "targets_met": false
+                },
+                "verify_hash": "sha256:78b5f3ebccdb6e0470a5baf439c21395530ab03676840d8bf429a9801fce07ed"
+              }
+            },
+            "run_id": "20260917T181530Z-ba850d",
+            "ts": "2026-09-17T18:16:02+00:00",
+            "usage": {
+              "cache_read": 0,
+              "cache_write": 0,
+              "input": 0,
+              "output": 0
+            }
+          },
+          "S-P06": {
+            "chair_id": "C06",
+            "clinically_fixed": false,
+            "consent_to_move": true,
+            "display_name": "Lyasvyan Biareor",
+            "fixed_reason": null,
+            "late_start_min": 0,
+            "mobility": "wheelchair",
+            "moves_this_week": 0,
+            "nurse_note": "S1 start 06:15, chair C06, 240 min. Wheelchair.",
+            "patient_id": "P06",
+            "recovery_buffer_min": 20,
+            "rider_id": "R05",
+            "runover_min": 4,
+            "rx_days": "MWF",
+            "rx_duration_min": 240,
+            "shift_id": "S1",
+            "start_time": "06:15"
+          },
+          "S-P06f": {
+            "dest_node": 17,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "10:50",
+            "rider_id": "R05",
+            "seq": 4,
+            "status": "scheduled",
+            "stops": [
+              {
+                "eta": "10:39",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V4"
+              },
+              {
+                "eta": "10:54",
+                "kind": "dropoff",
+                "node": 17,
+                "vehicle": "V4"
+              }
+            ],
+            "trip_id": "P06f",
+            "vehicle_id": "V4",
+            "window": [
+              "10:35",
+              "11:05"
+            ]
+          }
+        },
+        "review_item": null,
+        "subject_id": "P06"
+      }
+    },
+    "source": {
+      "explanation_id": "E06r",
+      "run": "runs/cp2",
+      "written": "2026-09-17"
+    }
+  },
+  {
+    "calibration_id": "C03",
+    "for_the_grader": {
+      "audience": "rider",
+      "chair_start_after": "06:15",
+      "chair_start_before": "06:15",
+      "contact": "the unit front desk",
+      "event": null,
+      "review_item": null,
+      "ride_window_after": [
+        "10:45",
+        "11:15"
+      ],
+      "ride_window_before": null,
+      "van_after": "V5",
+      "what_changed": "Your chair time is still 06:15. Your ride home now has a set window, between 10:45 and 11:15, on van V5, from the unit door.",
+      "why": "Your ride was moved off will-call so you don't have to wait without a set time anymore. If the van is late, call the unit front desk."
+    },
+    "human_notes": "",
+    "human_pass": null,
+    "record": {
+      "explanation": {
+        "audience": "rider",
+        "contact": "the unit front desk",
+        "ledger_refs": [
+          "L-8",
+          "S-P08",
+          "S-P08f",
+          "B-P08",
+          "B-P08f"
+        ],
+        "new_times": {
+          "chair_start": "06:15",
+          "pickup_window": [
+            "10:45",
+            "11:15"
+          ]
+        },
+        "reading_grade": 3.1,
+        "subject_id": "P08",
+        "what_changed": "Your chair time is still 06:15. Your ride home now has a set window, between 10:45 and 11:15, on van V5, from the unit door.",
+        "why": "Your ride was moved off will-call so you don't have to wait without a set time anymore. If the van is late, call the unit front desk."
+      },
+      "explanation_id": "E08r",
+      "facts": {
+        "after": {
+          "chair_start": "06:15",
+          "pickup_eta": "10:45",
+          "pickup_window": [
+            "10:45",
+            "11:15"
+          ],
+          "status": "scheduled",
+          "vehicle": "V5"
+        },
+        "audience": "rider",
+        "before": {
+          "chair_start": "06:15",
+          "pickup_eta": "12:55",
+          "pickup_window": null,
+          "status": "will_call",
+          "vehicle": "V1"
+        },
+        "caregiver_window": [
+          "15:00",
+          "20:00"
+        ],
+        "changes": [
+          {
+            "bundle_id": "I00-C001",
+            "moves": [
+              "P08f to van V5"
+            ],
+            "rationale": "Lowest J; all vehicle reassignments on the broker side, no chair moves or consent changes, and it clears the will-call waits for six riders.",
+            "ref": "L-8"
+          }
+        ],
+        "contact": "the unit front desk",
+        "event": null,
+        "language": "en",
+        "mobility": "ambulatory",
+        "name": "Famtral Shondrith",
+        "ready_time": "10:45",
+        "refs": {
+          "B-P08": {
+            "chair_id": "C08",
+            "clinically_fixed": false,
+            "consent_to_move": true,
+            "display_name": "Famtral Shondrith",
+            "fixed_reason": null,
+            "late_start_min": 10,
+            "mobility": "ambulatory",
+            "moves_this_week": 0,
+            "nurse_note": "S1 start 06:15, chair C08, 240 min. Walks on unaided.",
+            "patient_id": "P08",
+            "recovery_buffer_min": 20,
+            "rider_id": "R07",
+            "runover_min": 0,
+            "rx_days": "MWF",
+            "rx_duration_min": 240,
+            "shift_id": "S1",
+            "start_time": "06:15"
+          },
+          "B-P08f": {
+            "dest_node": 14,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "12:55",
+            "rider_id": "R07",
+            "seq": 16,
+            "status": "will_call",
+            "stops": [
+              {
+                "eta": "12:55",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V1"
+              },
+              {
+                "eta": "13:04",
+                "kind": "dropoff",
+                "node": 14,
+                "vehicle": "V1"
+              }
+            ],
+            "trip_id": "P08f",
+            "vehicle_id": "V1",
+            "window": null
+          },
+          "L-8": {
+            "actor": "tool",
+            "cost_usd": 0.0,
+            "effort": "medium",
+            "event": "apply_bundle",
+            "git_sha": "d862bec0a7a5409542d5a5c39d7a1a0bf049785b-dirty",
+            "iteration": 2,
+            "model_id": "claude-fable-5-1",
+            "payload": {
+              "input": {
+                "bundle_id": "I00-C001",
+                "rationale": "Lowest J; all vehicle reassignments on the broker side, no chair moves or consent changes, and it clears the will-call waits for six riders.",
+                "verify_hash": "sha256:dc62b17f3b31fa2263b88f1ed42d28ea31307be7e09a03513911d2ebca8c9d38"
+              },
+              "result": {
+                "applied": true,
+                "bundle": {
+                  "bundle_id": "I00-C001",
+                  "moves": [
+                    {
+                      "trip_id": "P04f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V2"
+                    },
+                    {
+                      "trip_id": "P02f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V4"
+                    },
+                    {
+                      "trip_ids": [
+                        "P10f",
+                        "P02f"
+                      ],
+                      "type": "pair_riders",
+                      "vehicle_id": "V4"
+                    },
+                    {
+                      "trip_id": "P08f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V5"
+                    },
+                    {
+                      "trip_id": "P15f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V3"
+                    },
+                    {
+                      "trip_id": "P16f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V3"
+                    }
+                  ],
+                  "notes_relevant": [],
+                  "predicted": {
+                    "chair_changes": 0,
+                    "consent_moves": 0,
+                    "delta_early_min": 0,
+                    "delta_wait_min": -741,
+                    "vehicle_min": 1
+                  },
+                  "side": "broker",
+                  "touches": [
+                    "P02",
+                    "P04",
+                    "P08",
+                    "P10",
+                    "P15",
+                    "P16"
+                  ]
+                },
+                "delta": {
+                  "chair_starts": {},
+                  "trips": {
+                    "P02f": {
+                      "pickup": [
+                        "13:13",
+                        "11:02"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V4"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "11:02",
+                          "11:32"
+                        ]
+                      ]
+                    },
+                    "P04f": {
+                      "pickup": [
+                        "12:26",
+                        "09:58"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V2"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "09:58",
+                          "10:28"
+                        ]
+                      ]
+                    },
+                    "P08f": {
+                      "pickup": [
+                        "12:55",
+                        "10:45"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V5"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "10:45",
+                          "11:15"
+                        ]
+                      ]
+                    },
+                    "P10f": {
+                      "pickup": [
+                        "13:17",
+                        "11:07"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V4"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "11:07",
+                          "11:37"
+                        ]
+                      ]
+                    },
+                    "P15f": {
+                      "pickup": [
+                        "17:45",
+                        "15:35"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V2",
+                        "V3"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "15:35",
+                          "16:05"
+                        ]
+                      ]
+                    },
+                    "P16f": {
+                      "pickup": [
+                        "16:23",
+                        "15:11"
+                      ],
+                      "vehicle": [
+                        "V2",
+                        "V3"
+                      ]
+                    }
+                  }
+                },
+                "j": 376.2,
+                "metrics": {
+                  "conflicts": 0,
+                  "early_wait_mean": 9.41,
+                  "equity_gap": 42.29,
+                  "mean_post_wait": 17.29,
+                  "p90_post_wait": 63.0,
+                  "riders_flagged": 4,
+                  "vehicle_min": 524.0,
+                  "wait_min_total": 242.0,
+                  "within_30_share": 0.7143
+                },
+                "schedule_version": 1,
+                "stop": {
+                  "below_min_improvement": false,
+                  "best_improvement_pct": 59.78,
+                  "elapsed_s": 19.5,
+                  "reason": "",
+                  "should_finish": false,
+                  "targets": {
+                    "equity_gap": 10,
+                    "post_wait": 30
+                  },
+                  "targets_met": false
+                },
+                "verify_hash": "sha256:dc62b17f3b31fa2263b88f1ed42d28ea31307be7e09a03513911d2ebca8c9d38"
+              }
+            },
+            "run_id": "20260917T181530Z-ba850d",
+            "ts": "2026-09-17T18:15:49+00:00",
+            "usage": {
+              "cache_read": 0,
+              "cache_write": 0,
+              "input": 0,
+              "output": 0
+            }
+          },
+          "S-P08": {
+            "chair_id": "C08",
+            "clinically_fixed": false,
+            "consent_to_move": true,
+            "display_name": "Famtral Shondrith",
+            "fixed_reason": null,
+            "late_start_min": 10,
+            "mobility": "ambulatory",
+            "moves_this_week": 0,
+            "nurse_note": "S1 start 06:15, chair C08, 240 min. Walks on unaided.",
+            "patient_id": "P08",
+            "recovery_buffer_min": 20,
+            "rider_id": "R07",
+            "runover_min": 0,
+            "rx_days": "MWF",
+            "rx_duration_min": 240,
+            "shift_id": "S1",
+            "start_time": "06:15"
+          },
+          "S-P08f": {
+            "dest_node": 14,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "10:45",
+            "rider_id": "R07",
+            "seq": 4,
+            "status": "scheduled",
+            "stops": [
+              {
+                "eta": "10:45",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V5"
+              },
+              {
+                "eta": "10:54",
+                "kind": "dropoff",
+                "node": 14,
+                "vehicle": "V5"
+              }
+            ],
+            "trip_id": "P08f",
+            "vehicle_id": "V5",
+            "window": [
+              "10:45",
+              "11:15"
+            ]
+          }
+        },
+        "review_item": null,
+        "subject_id": "P08"
+      }
+    },
+    "source": {
+      "explanation_id": "E08r",
+      "run": "runs/cp2",
+      "written": "2026-09-17"
+    }
+  },
+  {
+    "calibration_id": "C04",
+    "for_the_grader": {
+      "audience": "rider",
+      "chair_start_after": "06:30",
+      "chair_start_before": "06:30",
+      "contact": "the unit front desk",
+      "event": null,
+      "review_item": null,
+      "ride_window_after": [
+        "11:07",
+        "11:37"
+      ],
+      "ride_window_before": null,
+      "van_after": "V4",
+      "what_changed": "Your chair time is still 06:30. Your ride home is now between 11:07 and 11:37, on van V4, from the unit door.",
+      "why": "We moved your ride to van V4 so you don't have to wait on call anymore. If the van is late, call the unit front desk."
+    },
+    "human_notes": "",
+    "human_pass": null,
+    "record": {
+      "explanation": {
+        "audience": "rider",
+        "contact": "the unit front desk",
+        "ledger_refs": [
+          "L-8",
+          "S-P10",
+          "S-P10f",
+          "B-P10",
+          "B-P10f"
+        ],
+        "new_times": {
+          "chair_start": "06:30",
+          "pickup_window": [
+            "11:07",
+            "11:37"
+          ]
+        },
+        "reading_grade": 2.1,
+        "subject_id": "P10",
+        "what_changed": "Your chair time is still 06:30. Your ride home is now between 11:07 and 11:37, on van V4, from the unit door.",
+        "why": "We moved your ride to van V4 so you don't have to wait on call anymore. If the van is late, call the unit front desk."
+      },
+      "explanation_id": "E10r",
+      "facts": {
+        "after": {
+          "chair_start": "06:30",
+          "pickup_eta": "11:09",
+          "pickup_window": [
+            "11:07",
+            "11:37"
+          ],
+          "status": "scheduled",
+          "vehicle": "V4"
+        },
+        "audience": "rider",
+        "before": {
+          "chair_start": "06:30",
+          "pickup_eta": "13:17",
+          "pickup_window": null,
+          "status": "will_call",
+          "vehicle": "V1"
+        },
+        "caregiver_window": null,
+        "changes": [
+          {
+            "bundle_id": "I00-C001",
+            "moves": [
+              "P10f and P02f together on van V4"
+            ],
+            "rationale": "Lowest J; all vehicle reassignments on the broker side, no chair moves or consent changes, and it clears the will-call waits for six riders.",
+            "ref": "L-8"
+          }
+        ],
+        "contact": "the unit front desk",
+        "event": null,
+        "language": "zh",
+        "mobility": "ambulatory",
+        "name": "Stisfen Biomrin",
+        "ready_time": "11:07",
+        "refs": {
+          "B-P10": {
+            "chair_id": "C10",
+            "clinically_fixed": false,
+            "consent_to_move": false,
+            "display_name": "Stisfen Biomrin",
+            "fixed_reason": null,
+            "late_start_min": 0,
+            "mobility": "ambulatory",
+            "moves_this_week": 0,
+            "nurse_note": "S1 start 06:30, chair C10, 255 min. Walks on unaided. Has not consented to schedule changes.",
+            "patient_id": "P10",
+            "recovery_buffer_min": 20,
+            "rider_id": "R08",
+            "runover_min": 2,
+            "rx_days": "MWF",
+            "rx_duration_min": 255,
+            "shift_id": "S1",
+            "start_time": "06:30"
+          },
+          "B-P10f": {
+            "dest_node": 16,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "13:17",
+            "rider_id": "R08",
+            "seq": 19,
+            "status": "will_call",
+            "stops": [
+              {
+                "eta": "13:17",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V1"
+              },
+              {
+                "eta": "13:37",
+                "kind": "dropoff",
+                "node": 16,
+                "vehicle": "V1"
+              }
+            ],
+            "trip_id": "P10f",
+            "vehicle_id": "V1",
+            "window": null
+          },
+          "L-8": {
+            "actor": "tool",
+            "cost_usd": 0.0,
+            "effort": "medium",
+            "event": "apply_bundle",
+            "git_sha": "d862bec0a7a5409542d5a5c39d7a1a0bf049785b-dirty",
+            "iteration": 2,
+            "model_id": "claude-fable-5-1",
+            "payload": {
+              "input": {
+                "bundle_id": "I00-C001",
+                "rationale": "Lowest J; all vehicle reassignments on the broker side, no chair moves or consent changes, and it clears the will-call waits for six riders.",
+                "verify_hash": "sha256:dc62b17f3b31fa2263b88f1ed42d28ea31307be7e09a03513911d2ebca8c9d38"
+              },
+              "result": {
+                "applied": true,
+                "bundle": {
+                  "bundle_id": "I00-C001",
+                  "moves": [
+                    {
+                      "trip_id": "P04f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V2"
+                    },
+                    {
+                      "trip_id": "P02f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V4"
+                    },
+                    {
+                      "trip_ids": [
+                        "P10f",
+                        "P02f"
+                      ],
+                      "type": "pair_riders",
+                      "vehicle_id": "V4"
+                    },
+                    {
+                      "trip_id": "P08f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V5"
+                    },
+                    {
+                      "trip_id": "P15f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V3"
+                    },
+                    {
+                      "trip_id": "P16f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V3"
+                    }
+                  ],
+                  "notes_relevant": [],
+                  "predicted": {
+                    "chair_changes": 0,
+                    "consent_moves": 0,
+                    "delta_early_min": 0,
+                    "delta_wait_min": -741,
+                    "vehicle_min": 1
+                  },
+                  "side": "broker",
+                  "touches": [
+                    "P02",
+                    "P04",
+                    "P08",
+                    "P10",
+                    "P15",
+                    "P16"
+                  ]
+                },
+                "delta": {
+                  "chair_starts": {},
+                  "trips": {
+                    "P02f": {
+                      "pickup": [
+                        "13:13",
+                        "11:02"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V4"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "11:02",
+                          "11:32"
+                        ]
+                      ]
+                    },
+                    "P04f": {
+                      "pickup": [
+                        "12:26",
+                        "09:58"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V2"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "09:58",
+                          "10:28"
+                        ]
+                      ]
+                    },
+                    "P08f": {
+                      "pickup": [
+                        "12:55",
+                        "10:45"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V5"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "10:45",
+                          "11:15"
+                        ]
+                      ]
+                    },
+                    "P10f": {
+                      "pickup": [
+                        "13:17",
+                        "11:07"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V4"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "11:07",
+                          "11:37"
+                        ]
+                      ]
+                    },
+                    "P15f": {
+                      "pickup": [
+                        "17:45",
+                        "15:35"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V2",
+                        "V3"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "15:35",
+                          "16:05"
+                        ]
+                      ]
+                    },
+                    "P16f": {
+                      "pickup": [
+                        "16:23",
+                        "15:11"
+                      ],
+                      "vehicle": [
+                        "V2",
+                        "V3"
+                      ]
+                    }
+                  }
+                },
+                "j": 376.2,
+                "metrics": {
+                  "conflicts": 0,
+                  "early_wait_mean": 9.41,
+                  "equity_gap": 42.29,
+                  "mean_post_wait": 17.29,
+                  "p90_post_wait": 63.0,
+                  "riders_flagged": 4,
+                  "vehicle_min": 524.0,
+                  "wait_min_total": 242.0,
+                  "within_30_share": 0.7143
+                },
+                "schedule_version": 1,
+                "stop": {
+                  "below_min_improvement": false,
+                  "best_improvement_pct": 59.78,
+                  "elapsed_s": 19.5,
+                  "reason": "",
+                  "should_finish": false,
+                  "targets": {
+                    "equity_gap": 10,
+                    "post_wait": 30
+                  },
+                  "targets_met": false
+                },
+                "verify_hash": "sha256:dc62b17f3b31fa2263b88f1ed42d28ea31307be7e09a03513911d2ebca8c9d38"
+              }
+            },
+            "run_id": "20260917T181530Z-ba850d",
+            "ts": "2026-09-17T18:15:49+00:00",
+            "usage": {
+              "cache_read": 0,
+              "cache_write": 0,
+              "input": 0,
+              "output": 0
+            }
+          },
+          "S-P10": {
+            "chair_id": "C10",
+            "clinically_fixed": false,
+            "consent_to_move": false,
+            "display_name": "Stisfen Biomrin",
+            "fixed_reason": null,
+            "late_start_min": 0,
+            "mobility": "ambulatory",
+            "moves_this_week": 0,
+            "nurse_note": "S1 start 06:30, chair C10, 255 min. Walks on unaided. Has not consented to schedule changes.",
+            "patient_id": "P10",
+            "recovery_buffer_min": 20,
+            "rider_id": "R08",
+            "runover_min": 2,
+            "rx_days": "MWF",
+            "rx_duration_min": 255,
+            "shift_id": "S1",
+            "start_time": "06:30"
+          },
+          "S-P10f": {
+            "dest_node": 16,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "11:07",
+            "rider_id": "R08",
+            "seq": 6,
+            "status": "scheduled",
+            "stops": [
+              {
+                "eta": "11:09",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V4"
+              },
+              {
+                "eta": "11:24",
+                "kind": "dropoff",
+                "node": 16,
+                "vehicle": "V4"
+              }
+            ],
+            "trip_id": "P10f",
+            "vehicle_id": "V4",
+            "window": [
+              "11:07",
+              "11:37"
+            ]
+          }
+        },
+        "review_item": null,
+        "subject_id": "P10"
+      }
+    },
+    "source": {
+      "explanation_id": "E10r",
+      "run": "runs/cp2",
+      "written": "2026-09-17"
+    }
+  },
+  {
+    "calibration_id": "C05",
+    "for_the_grader": {
+      "audience": "rider",
+      "chair_start_after": "10:45",
+      "chair_start_before": "10:45",
+      "contact": "the unit front desk",
+      "event": null,
+      "review_item": null,
+      "ride_window_after": [
+        "14:50",
+        "15:20"
+      ],
+      "ride_window_before": [
+        "14:50",
+        "15:20"
+      ],
+      "van_after": "V3",
+      "what_changed": "Your chair time is still 10:45. Your ride home is now between 14:50 and 15:20, on van V3, from the unit door.",
+      "why": "We moved you to van V3 to cut wait time for you and other riders. If the van is late, call the unit front desk."
+    },
+    "human_notes": "",
+    "human_pass": null,
+    "record": {
+      "explanation": {
+        "audience": "rider",
+        "contact": "the unit front desk",
+        "ledger_refs": [
+          "L-8",
+          "S-P16",
+          "S-P16f",
+          "B-P16",
+          "B-P16f"
+        ],
+        "new_times": {
+          "chair_start": "10:45",
+          "pickup_window": [
+            "14:50",
+            "15:20"
+          ]
+        },
+        "reading_grade": 2.0,
+        "subject_id": "P16",
+        "what_changed": "Your chair time is still 10:45. Your ride home is now between 14:50 and 15:20, on van V3, from the unit door.",
+        "why": "We moved you to van V3 to cut wait time for you and other riders. If the van is late, call the unit front desk."
+      },
+      "explanation_id": "E16r",
+      "facts": {
+        "after": {
+          "chair_start": "10:45",
+          "pickup_eta": "15:11",
+          "pickup_window": [
+            "14:50",
+            "15:20"
+          ],
+          "status": "scheduled",
+          "vehicle": "V3"
+        },
+        "audience": "rider",
+        "before": {
+          "chair_start": "10:45",
+          "pickup_eta": "16:23",
+          "pickup_window": [
+            "14:50",
+            "15:20"
+          ],
+          "status": "scheduled",
+          "vehicle": "V2"
+        },
+        "caregiver_window": null,
+        "changes": [
+          {
+            "bundle_id": "I00-C001",
+            "moves": [
+              "P16f to van V3"
+            ],
+            "rationale": "Lowest J; all vehicle reassignments on the broker side, no chair moves or consent changes, and it clears the will-call waits for six riders.",
+            "ref": "L-8"
+          }
+        ],
+        "contact": "the unit front desk",
+        "event": null,
+        "language": "en",
+        "mobility": "assist",
+        "name": "Daskmyal Kreorhan",
+        "ready_time": "15:11",
+        "refs": {
+          "B-P16": {
+            "chair_id": "C04",
+            "clinically_fixed": false,
+            "consent_to_move": true,
+            "display_name": "Daskmyal Kreorhan",
+            "fixed_reason": null,
+            "late_start_min": 0,
+            "mobility": "assist",
+            "moves_this_week": 0,
+            "nurse_note": "S2 start 10:45, chair C04, 225 min. Needs a hand to transfer.",
+            "patient_id": "P16",
+            "recovery_buffer_min": 20,
+            "rider_id": "R11",
+            "runover_min": 21,
+            "rx_days": "MWF",
+            "rx_duration_min": 225,
+            "shift_id": "S2",
+            "start_time": "10:45"
+          },
+          "B-P16f": {
+            "dest_node": 8,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "15:05",
+            "rider_id": "R11",
+            "seq": 12,
+            "status": "scheduled",
+            "stops": [
+              {
+                "eta": "16:23",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V2"
+              },
+              {
+                "eta": "16:33",
+                "kind": "dropoff",
+                "node": 8,
+                "vehicle": "V2"
+              }
+            ],
+            "trip_id": "P16f",
+            "vehicle_id": "V2",
+            "window": [
+              "14:50",
+              "15:20"
+            ]
+          },
+          "L-8": {
+            "actor": "tool",
+            "cost_usd": 0.0,
+            "effort": "medium",
+            "event": "apply_bundle",
+            "git_sha": "d862bec0a7a5409542d5a5c39d7a1a0bf049785b-dirty",
+            "iteration": 2,
+            "model_id": "claude-fable-5-1",
+            "payload": {
+              "input": {
+                "bundle_id": "I00-C001",
+                "rationale": "Lowest J; all vehicle reassignments on the broker side, no chair moves or consent changes, and it clears the will-call waits for six riders.",
+                "verify_hash": "sha256:dc62b17f3b31fa2263b88f1ed42d28ea31307be7e09a03513911d2ebca8c9d38"
+              },
+              "result": {
+                "applied": true,
+                "bundle": {
+                  "bundle_id": "I00-C001",
+                  "moves": [
+                    {
+                      "trip_id": "P04f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V2"
+                    },
+                    {
+                      "trip_id": "P02f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V4"
+                    },
+                    {
+                      "trip_ids": [
+                        "P10f",
+                        "P02f"
+                      ],
+                      "type": "pair_riders",
+                      "vehicle_id": "V4"
+                    },
+                    {
+                      "trip_id": "P08f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V5"
+                    },
+                    {
+                      "trip_id": "P15f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V3"
+                    },
+                    {
+                      "trip_id": "P16f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V3"
+                    }
+                  ],
+                  "notes_relevant": [],
+                  "predicted": {
+                    "chair_changes": 0,
+                    "consent_moves": 0,
+                    "delta_early_min": 0,
+                    "delta_wait_min": -741,
+                    "vehicle_min": 1
+                  },
+                  "side": "broker",
+                  "touches": [
+                    "P02",
+                    "P04",
+                    "P08",
+                    "P10",
+                    "P15",
+                    "P16"
+                  ]
+                },
+                "delta": {
+                  "chair_starts": {},
+                  "trips": {
+                    "P02f": {
+                      "pickup": [
+                        "13:13",
+                        "11:02"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V4"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "11:02",
+                          "11:32"
+                        ]
+                      ]
+                    },
+                    "P04f": {
+                      "pickup": [
+                        "12:26",
+                        "09:58"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V2"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "09:58",
+                          "10:28"
+                        ]
+                      ]
+                    },
+                    "P08f": {
+                      "pickup": [
+                        "12:55",
+                        "10:45"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V5"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "10:45",
+                          "11:15"
+                        ]
+                      ]
+                    },
+                    "P10f": {
+                      "pickup": [
+                        "13:17",
+                        "11:07"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V4"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "11:07",
+                          "11:37"
+                        ]
+                      ]
+                    },
+                    "P15f": {
+                      "pickup": [
+                        "17:45",
+                        "15:35"
+                      ],
+                      "status": [
+                        "will_call",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        "V2",
+                        "V3"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "15:35",
+                          "16:05"
+                        ]
+                      ]
+                    },
+                    "P16f": {
+                      "pickup": [
+                        "16:23",
+                        "15:11"
+                      ],
+                      "vehicle": [
+                        "V2",
+                        "V3"
+                      ]
+                    }
+                  }
+                },
+                "j": 376.2,
+                "metrics": {
+                  "conflicts": 0,
+                  "early_wait_mean": 9.41,
+                  "equity_gap": 42.29,
+                  "mean_post_wait": 17.29,
+                  "p90_post_wait": 63.0,
+                  "riders_flagged": 4,
+                  "vehicle_min": 524.0,
+                  "wait_min_total": 242.0,
+                  "within_30_share": 0.7143
+                },
+                "schedule_version": 1,
+                "stop": {
+                  "below_min_improvement": false,
+                  "best_improvement_pct": 59.78,
+                  "elapsed_s": 19.5,
+                  "reason": "",
+                  "should_finish": false,
+                  "targets": {
+                    "equity_gap": 10,
+                    "post_wait": 30
+                  },
+                  "targets_met": false
+                },
+                "verify_hash": "sha256:dc62b17f3b31fa2263b88f1ed42d28ea31307be7e09a03513911d2ebca8c9d38"
+              }
+            },
+            "run_id": "20260917T181530Z-ba850d",
+            "ts": "2026-09-17T18:15:49+00:00",
+            "usage": {
+              "cache_read": 0,
+              "cache_write": 0,
+              "input": 0,
+              "output": 0
+            }
+          },
+          "S-P16": {
+            "chair_id": "C04",
+            "clinically_fixed": false,
+            "consent_to_move": true,
+            "display_name": "Daskmyal Kreorhan",
+            "fixed_reason": null,
+            "late_start_min": 0,
+            "mobility": "assist",
+            "moves_this_week": 0,
+            "nurse_note": "S2 start 10:45, chair C04, 225 min. Needs a hand to transfer.",
+            "patient_id": "P16",
+            "recovery_buffer_min": 20,
+            "rider_id": "R11",
+            "runover_min": 21,
+            "rx_days": "MWF",
+            "rx_duration_min": 225,
+            "shift_id": "S2",
+            "start_time": "10:45"
+          },
+          "S-P16f": {
+            "dest_node": 8,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "15:05",
+            "rider_id": "R11",
+            "seq": 6,
+            "status": "scheduled",
+            "stops": [
+              {
+                "eta": "15:11",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V3"
+              },
+              {
+                "eta": "15:21",
+                "kind": "dropoff",
+                "node": 8,
+                "vehicle": "V3"
+              }
+            ],
+            "trip_id": "P16f",
+            "vehicle_id": "V3",
+            "window": [
+              "14:50",
+              "15:20"
+            ]
+          }
+        },
+        "review_item": null,
+        "subject_id": "P16"
+      }
+    },
+    "source": {
+      "explanation_id": "E16r",
+      "run": "runs/cp2",
+      "written": "2026-09-17"
+    }
+  },
+  {
+    "calibration_id": "C06",
+    "for_the_grader": {
+      "audience": "rider",
+      "chair_start_after": "11:00",
+      "chair_start_before": "11:00",
+      "contact": "the unit front desk",
+      "event": null,
+      "review_item": null,
+      "ride_window_after": [
+        "14:50",
+        "15:20"
+      ],
+      "ride_window_before": [
+        "14:50",
+        "15:20"
+      ],
+      "van_after": "V5",
+      "what_changed": "Your chair time is still 11:00. Your ride home is now between 14:50 and 15:20, on van V5, from the unit door.",
+      "why": "We moved wheelchair riders onto lift vans to make pickups fairer for everyone. If the van is late, call the unit front desk."
+    },
+    "human_notes": "",
+    "human_pass": null,
+    "record": {
+      "explanation": {
+        "audience": "rider",
+        "contact": "the unit front desk",
+        "ledger_refs": [
+          "L-14",
+          "S-P17",
+          "S-P17f",
+          "B-P17",
+          "B-P17f"
+        ],
+        "new_times": {
+          "chair_start": "11:00",
+          "pickup_window": [
+            "14:50",
+            "15:20"
+          ]
+        },
+        "reading_grade": 3.2,
+        "subject_id": "P17",
+        "what_changed": "Your chair time is still 11:00. Your ride home is now between 14:50 and 15:20, on van V5, from the unit door.",
+        "why": "We moved wheelchair riders onto lift vans to make pickups fairer for everyone. If the van is late, call the unit front desk."
+      },
+      "explanation_id": "E17r",
+      "facts": {
+        "after": {
+          "chair_start": "11:00",
+          "pickup_eta": "14:50",
+          "pickup_window": [
+            "14:50",
+            "15:20"
+          ],
+          "status": "scheduled",
+          "vehicle": "V5"
+        },
+        "audience": "rider",
+        "before": {
+          "chair_start": "11:00",
+          "pickup_eta": "15:53",
+          "pickup_window": [
+            "14:50",
+            "15:20"
+          ],
+          "status": "scheduled",
+          "vehicle": "V2"
+        },
+        "caregiver_window": null,
+        "changes": [
+          {
+            "bundle_id": "I02-C001",
+            "moves": [
+              "P17f to van V5"
+            ],
+            "rationale": "Lowest J; broker-side only, moves wheelchair riders P03, P06, P17 onto lift vans and closes the wheelchair/ambulatory equity gap, no chair moves.",
+            "ref": "L-14"
+          }
+        ],
+        "contact": "the unit front desk",
+        "event": null,
+        "language": "en",
+        "mobility": "wheelchair",
+        "name": "Sulziond Gondkond",
+        "ready_time": "14:50",
+        "refs": {
+          "B-P17": {
+            "chair_id": "C05",
+            "clinically_fixed": false,
+            "consent_to_move": false,
+            "display_name": "Sulziond Gondkond",
+            "fixed_reason": null,
+            "late_start_min": 0,
+            "mobility": "wheelchair",
+            "moves_this_week": 0,
+            "nurse_note": "S2 start 11:00, chair C05, 210 min. Wheelchair. Has not consented to schedule changes.",
+            "patient_id": "P17",
+            "recovery_buffer_min": 20,
+            "rider_id": "R12",
+            "runover_min": 0,
+            "rx_days": "MWF",
+            "rx_duration_min": 210,
+            "shift_id": "S2",
+            "start_time": "11:00"
+          },
+          "B-P17f": {
+            "dest_node": 34,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "15:05",
+            "rider_id": "R12",
+            "seq": 10,
+            "status": "scheduled",
+            "stops": [
+              {
+                "eta": "15:53",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V2"
+              },
+              {
+                "eta": "16:08",
+                "kind": "dropoff",
+                "node": 34,
+                "vehicle": "V2"
+              }
+            ],
+            "trip_id": "P17f",
+            "vehicle_id": "V2",
+            "window": [
+              "14:50",
+              "15:20"
+            ]
+          },
+          "L-14": {
+            "actor": "tool",
+            "cost_usd": 0.0,
+            "effort": "medium",
+            "event": "apply_bundle",
+            "git_sha": "d862bec0a7a5409542d5a5c39d7a1a0bf049785b-dirty",
+            "iteration": 4,
+            "model_id": "claude-fable-5-1",
+            "payload": {
+              "input": {
+                "bundle_id": "I02-C001",
+                "rationale": "Lowest J; broker-side only, moves wheelchair riders P03, P06, P17 onto lift vans and closes the wheelchair/ambulatory equity gap, no chair moves.",
+                "verify_hash": "sha256:78b5f3ebccdb6e0470a5baf439c21395530ab03676840d8bf429a9801fce07ed"
+              },
+              "result": {
+                "applied": true,
+                "bundle": {
+                  "bundle_id": "I02-C001",
+                  "moves": [
+                    {
+                      "trip_id": "P17f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V5"
+                    },
+                    {
+                      "trip_id": "P03f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V5"
+                    },
+                    {
+                      "trip_id": "P06f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V4"
+                    },
+                    {
+                      "delta_min": 35,
+                      "trip_id": "P22f",
+                      "type": "shift_pickup_window"
+                    },
+                    {
+                      "delta_min": -130,
+                      "trip_id": "P27f",
+                      "type": "shift_pickup_window"
+                    },
+                    {
+                      "trip_id": "P31f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V2"
+                    }
+                  ],
+                  "notes_relevant": [],
+                  "predicted": {
+                    "chair_changes": 0,
+                    "consent_moves": 0,
+                    "delta_early_min": 0,
+                    "delta_wait_min": -196,
+                    "vehicle_min": 22
+                  },
+                  "side": "broker",
+                  "touches": [
+                    "P03",
+                    "P06",
+                    "P17",
+                    "P22",
+                    "P27",
+                    "P31"
+                  ]
+                },
+                "delta": {
+                  "chair_starts": {},
+                  "trips": {
+                    "P02f": {
+                      "pickup": [
+                        "11:02",
+                        "11:09"
+                      ]
+                    },
+                    "P03f": {
+                      "pickup": [
+                        "12:02",
+                        "11:03"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V5"
+                      ]
+                    },
+                    "P06f": {
+                      "pickup": [
+                        "11:32",
+                        "10:39"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V4"
+                      ]
+                    },
+                    "P10f": {
+                      "pickup": [
+                        "11:07",
+                        "11:12"
+                      ]
+                    },
+                    "P17f": {
+                      "pickup": [
+                        "15:53",
+                        "14:50"
+                      ],
+                      "vehicle": [
+                        "V2",
+                        "V5"
+                      ]
+                    },
+                    "P22f": {
+                      "pickup": [
+                        "16:43",
+                        "16:10"
+                      ],
+                      "window": [
+                        [
+                          "15:35",
+                          "16:05"
+                        ],
+                        [
+                          "16:10",
+                          "16:40"
+                        ]
+                      ]
+                    },
+                    "P27f": {
+                      "pickup": [
+                        null,
+                        "20:52"
+                      ],
+                      "status": [
+                        "queued",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        null,
+                        "V1"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "20:52",
+                          "21:22"
+                        ]
+                      ]
+                    },
+                    "P31f": {
+                      "pickup": [
+                        null,
+                        "20:35"
+                      ],
+                      "status": [
+                        "queued",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        null,
+                        "V2"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "20:35",
+                          "21:05"
+                        ]
+                      ]
+                    }
+                  }
+                },
+                "j": 151.3,
+                "metrics": {
+                  "conflicts": 0,
+                  "early_wait_mean": 9.41,
+                  "equity_gap": 1.92,
+                  "mean_post_wait": 2.88,
+                  "p90_post_wait": 13.0,
+                  "riders_flagged": 2,
+                  "vehicle_min": 546.0,
+                  "wait_min_total": 46.0,
+                  "within_30_share": 1.0
+                },
+                "schedule_version": 2,
+                "stop": {
+                  "below_min_improvement": false,
+                  "best_improvement_pct": 15.0,
+                  "elapsed_s": 32.4,
+                  "reason": "",
+                  "should_finish": false,
+                  "targets": {
+                    "equity_gap": 10,
+                    "post_wait": 30
+                  },
+                  "targets_met": false
+                },
+                "verify_hash": "sha256:78b5f3ebccdb6e0470a5baf439c21395530ab03676840d8bf429a9801fce07ed"
+              }
+            },
+            "run_id": "20260917T181530Z-ba850d",
+            "ts": "2026-09-17T18:16:02+00:00",
+            "usage": {
+              "cache_read": 0,
+              "cache_write": 0,
+              "input": 0,
+              "output": 0
+            }
+          },
+          "S-P17": {
+            "chair_id": "C05",
+            "clinically_fixed": false,
+            "consent_to_move": false,
+            "display_name": "Sulziond Gondkond",
+            "fixed_reason": null,
+            "late_start_min": 0,
+            "mobility": "wheelchair",
+            "moves_this_week": 0,
+            "nurse_note": "S2 start 11:00, chair C05, 210 min. Wheelchair. Has not consented to schedule changes.",
+            "patient_id": "P17",
+            "recovery_buffer_min": 20,
+            "rider_id": "R12",
+            "runover_min": 0,
+            "rx_days": "MWF",
+            "rx_duration_min": 210,
+            "shift_id": "S2",
+            "start_time": "11:00"
+          },
+          "S-P17f": {
+            "dest_node": 34,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "15:05",
+            "rider_id": "R12",
+            "seq": 8,
+            "status": "scheduled",
+            "stops": [
+              {
+                "eta": "14:50",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V5"
+              },
+              {
+                "eta": "15:05",
+                "kind": "dropoff",
+                "node": 34,
+                "vehicle": "V5"
+              }
+            ],
+            "trip_id": "P17f",
+            "vehicle_id": "V5",
+            "window": [
+              "14:50",
+              "15:20"
+            ]
+          }
+        },
+        "review_item": null,
+        "subject_id": "P17"
+      }
+    },
+    "source": {
+      "explanation_id": "E17r",
+      "run": "runs/cp2",
+      "written": "2026-09-17"
+    }
+  },
+  {
+    "calibration_id": "C07",
+    "for_the_grader": {
+      "audience": "rider",
+      "chair_start_after": "11:15",
+      "chair_start_before": "11:15",
+      "contact": "the unit front desk",
+      "event": null,
+      "review_item": null,
+      "ride_window_after": [
+        "16:10",
+        "16:40"
+      ],
+      "ride_window_before": [
+        "15:35",
+        "16:05"
+      ],
+      "van_after": "V2",
+      "what_changed": "Your chair time is still 11:15. Your ride home is now between 16:10 and 16:40, on van V2, from the unit door.",
+      "why": "We moved some wheelchair riders onto lift vans to make pickups fairer for everyone, which shifted your ride home window. If the van is late, call the unit front desk."
+    },
+    "human_notes": "",
+    "human_pass": null,
+    "record": {
+      "explanation": {
+        "audience": "rider",
+        "contact": "the unit front desk",
+        "ledger_refs": [
+          "L-14",
+          "S-P22",
+          "S-P22f",
+          "B-P22",
+          "B-P22f"
+        ],
+        "new_times": {
+          "chair_start": "11:15",
+          "pickup_window": [
+            "16:10",
+            "16:40"
+          ]
+        },
+        "reading_grade": 4.0,
+        "subject_id": "P22",
+        "what_changed": "Your chair time is still 11:15. Your ride home is now between 16:10 and 16:40, on van V2, from the unit door.",
+        "why": "We moved some wheelchair riders onto lift vans to make pickups fairer for everyone, which shifted your ride home window. If the van is late, call the unit front desk."
+      },
+      "explanation_id": "E22r",
+      "facts": {
+        "after": {
+          "chair_start": "11:15",
+          "pickup_eta": "16:10",
+          "pickup_window": [
+            "16:10",
+            "16:40"
+          ],
+          "status": "scheduled",
+          "vehicle": "V2"
+        },
+        "audience": "rider",
+        "before": {
+          "chair_start": "11:15",
+          "pickup_eta": "16:43",
+          "pickup_window": [
+            "15:35",
+            "16:05"
+          ],
+          "status": "scheduled",
+          "vehicle": "V2"
+        },
+        "caregiver_window": null,
+        "changes": [
+          {
+            "bundle_id": "I02-C001",
+            "moves": [
+              "P22f pickup window +35 min"
+            ],
+            "rationale": "Lowest J; broker-side only, moves wheelchair riders P03, P06, P17 onto lift vans and closes the wheelchair/ambulatory equity gap, no chair moves.",
+            "ref": "L-14"
+          }
+        ],
+        "contact": "the unit front desk",
+        "event": null,
+        "language": "en",
+        "mobility": "ambulatory",
+        "name": "Veirnhal Myarnmya",
+        "ready_time": "16:10",
+        "refs": {
+          "B-P22": {
+            "chair_id": "C10",
+            "clinically_fixed": false,
+            "consent_to_move": true,
+            "display_name": "Veirnhal Myarnmya",
+            "fixed_reason": null,
+            "late_start_min": 35,
+            "mobility": "ambulatory",
+            "moves_this_week": 0,
+            "nurse_note": "S2 start 11:15, chair C10, 240 min. Walks on unaided.",
+            "patient_id": "P22",
+            "recovery_buffer_min": 20,
+            "rider_id": "R14",
+            "runover_min": 0,
+            "rx_days": "MWF",
+            "rx_duration_min": 240,
+            "shift_id": "S2",
+            "start_time": "11:15"
+          },
+          "B-P22f": {
+            "dest_node": 39,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "15:50",
+            "rider_id": "R14",
+            "seq": 14,
+            "status": "scheduled",
+            "stops": [
+              {
+                "eta": "16:43",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V2"
+              },
+              {
+                "eta": "16:52",
+                "kind": "dropoff",
+                "node": 39,
+                "vehicle": "V2"
+              }
+            ],
+            "trip_id": "P22f",
+            "vehicle_id": "V2",
+            "window": [
+              "15:35",
+              "16:05"
+            ]
+          },
+          "L-14": {
+            "actor": "tool",
+            "cost_usd": 0.0,
+            "effort": "medium",
+            "event": "apply_bundle",
+            "git_sha": "d862bec0a7a5409542d5a5c39d7a1a0bf049785b-dirty",
+            "iteration": 4,
+            "model_id": "claude-fable-5-1",
+            "payload": {
+              "input": {
+                "bundle_id": "I02-C001",
+                "rationale": "Lowest J; broker-side only, moves wheelchair riders P03, P06, P17 onto lift vans and closes the wheelchair/ambulatory equity gap, no chair moves.",
+                "verify_hash": "sha256:78b5f3ebccdb6e0470a5baf439c21395530ab03676840d8bf429a9801fce07ed"
+              },
+              "result": {
+                "applied": true,
+                "bundle": {
+                  "bundle_id": "I02-C001",
+                  "moves": [
+                    {
+                      "trip_id": "P17f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V5"
+                    },
+                    {
+                      "trip_id": "P03f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V5"
+                    },
+                    {
+                      "trip_id": "P06f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V4"
+                    },
+                    {
+                      "delta_min": 35,
+                      "trip_id": "P22f",
+                      "type": "shift_pickup_window"
+                    },
+                    {
+                      "delta_min": -130,
+                      "trip_id": "P27f",
+                      "type": "shift_pickup_window"
+                    },
+                    {
+                      "trip_id": "P31f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V2"
+                    }
+                  ],
+                  "notes_relevant": [],
+                  "predicted": {
+                    "chair_changes": 0,
+                    "consent_moves": 0,
+                    "delta_early_min": 0,
+                    "delta_wait_min": -196,
+                    "vehicle_min": 22
+                  },
+                  "side": "broker",
+                  "touches": [
+                    "P03",
+                    "P06",
+                    "P17",
+                    "P22",
+                    "P27",
+                    "P31"
+                  ]
+                },
+                "delta": {
+                  "chair_starts": {},
+                  "trips": {
+                    "P02f": {
+                      "pickup": [
+                        "11:02",
+                        "11:09"
+                      ]
+                    },
+                    "P03f": {
+                      "pickup": [
+                        "12:02",
+                        "11:03"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V5"
+                      ]
+                    },
+                    "P06f": {
+                      "pickup": [
+                        "11:32",
+                        "10:39"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V4"
+                      ]
+                    },
+                    "P10f": {
+                      "pickup": [
+                        "11:07",
+                        "11:12"
+                      ]
+                    },
+                    "P17f": {
+                      "pickup": [
+                        "15:53",
+                        "14:50"
+                      ],
+                      "vehicle": [
+                        "V2",
+                        "V5"
+                      ]
+                    },
+                    "P22f": {
+                      "pickup": [
+                        "16:43",
+                        "16:10"
+                      ],
+                      "window": [
+                        [
+                          "15:35",
+                          "16:05"
+                        ],
+                        [
+                          "16:10",
+                          "16:40"
+                        ]
+                      ]
+                    },
+                    "P27f": {
+                      "pickup": [
+                        null,
+                        "20:52"
+                      ],
+                      "status": [
+                        "queued",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        null,
+                        "V1"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "20:52",
+                          "21:22"
+                        ]
+                      ]
+                    },
+                    "P31f": {
+                      "pickup": [
+                        null,
+                        "20:35"
+                      ],
+                      "status": [
+                        "queued",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        null,
+                        "V2"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "20:35",
+                          "21:05"
+                        ]
+                      ]
+                    }
+                  }
+                },
+                "j": 151.3,
+                "metrics": {
+                  "conflicts": 0,
+                  "early_wait_mean": 9.41,
+                  "equity_gap": 1.92,
+                  "mean_post_wait": 2.88,
+                  "p90_post_wait": 13.0,
+                  "riders_flagged": 2,
+                  "vehicle_min": 546.0,
+                  "wait_min_total": 46.0,
+                  "within_30_share": 1.0
+                },
+                "schedule_version": 2,
+                "stop": {
+                  "below_min_improvement": false,
+                  "best_improvement_pct": 15.0,
+                  "elapsed_s": 32.4,
+                  "reason": "",
+                  "should_finish": false,
+                  "targets": {
+                    "equity_gap": 10,
+                    "post_wait": 30
+                  },
+                  "targets_met": false
+                },
+                "verify_hash": "sha256:78b5f3ebccdb6e0470a5baf439c21395530ab03676840d8bf429a9801fce07ed"
+              }
+            },
+            "run_id": "20260917T181530Z-ba850d",
+            "ts": "2026-09-17T18:16:02+00:00",
+            "usage": {
+              "cache_read": 0,
+              "cache_write": 0,
+              "input": 0,
+              "output": 0
+            }
+          },
+          "S-P22": {
+            "chair_id": "C10",
+            "clinically_fixed": false,
+            "consent_to_move": true,
+            "display_name": "Veirnhal Myarnmya",
+            "fixed_reason": null,
+            "late_start_min": 35,
+            "mobility": "ambulatory",
+            "moves_this_week": 0,
+            "nurse_note": "S2 start 11:15, chair C10, 240 min. Walks on unaided.",
+            "patient_id": "P22",
+            "recovery_buffer_min": 20,
+            "rider_id": "R14",
+            "runover_min": 0,
+            "rx_days": "MWF",
+            "rx_duration_min": 240,
+            "shift_id": "S2",
+            "start_time": "11:15"
+          },
+          "S-P22f": {
+            "dest_node": 39,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "15:50",
+            "rider_id": "R14",
+            "seq": 14,
+            "status": "scheduled",
+            "stops": [
+              {
+                "eta": "16:10",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V2"
+              },
+              {
+                "eta": "16:19",
+                "kind": "dropoff",
+                "node": 39,
+                "vehicle": "V2"
+              }
+            ],
+            "trip_id": "P22f",
+            "vehicle_id": "V2",
+            "window": [
+              "16:10",
+              "16:40"
+            ]
+          }
+        },
+        "review_item": null,
+        "subject_id": "P22"
+      }
+    },
+    "source": {
+      "explanation_id": "E22r",
+      "run": "runs/cp2",
+      "written": "2026-09-17"
+    }
+  },
+  {
+    "calibration_id": "C08",
+    "for_the_grader": {
+      "audience": "rider",
+      "chair_start_after": "16:00",
+      "chair_start_before": "16:00",
+      "contact": "the unit front desk",
+      "event": null,
+      "review_item": null,
+      "ride_window_after": [
+        "20:52",
+        "21:22"
+      ],
+      "ride_window_before": null,
+      "van_after": "V1",
+      "what_changed": "Your chair time stays at 16:00. Your ride home is now booked between 20:52 and 21:22, on van V1. Wait at the unit door.",
+      "why": "We moved some riders to different vans to make pickups fairer for everyone. If your ride is late, call the unit front desk."
+    },
+    "human_notes": "",
+    "human_pass": null,
+    "record": {
+      "explanation": {
+        "audience": "rider",
+        "contact": "the unit front desk",
+        "ledger_refs": [
+          "L-14",
+          "S-P27",
+          "S-P27f",
+          "B-P27",
+          "B-P27f"
+        ],
+        "new_times": {
+          "chair_start": "16:00",
+          "pickup_window": [
+            "20:52",
+            "21:22"
+          ]
+        },
+        "reading_grade": 2.4,
+        "subject_id": "P27",
+        "what_changed": "Your chair time stays at 16:00. Your ride home is now booked between 20:52 and 21:22, on van V1. Wait at the unit door.",
+        "why": "We moved some riders to different vans to make pickups fairer for everyone. If your ride is late, call the unit front desk."
+      },
+      "explanation_id": "E27r",
+      "facts": {
+        "after": {
+          "chair_start": "16:00",
+          "pickup_eta": "20:52",
+          "pickup_window": [
+            "20:52",
+            "21:22"
+          ],
+          "status": "scheduled",
+          "vehicle": "V1"
+        },
+        "audience": "rider",
+        "before": {
+          "chair_start": "16:00",
+          "pickup_eta": null,
+          "pickup_window": null,
+          "status": "queued",
+          "vehicle": null
+        },
+        "caregiver_window": null,
+        "changes": [
+          {
+            "bundle_id": "I02-C001",
+            "moves": [
+              "P27f pickup window -130 min"
+            ],
+            "rationale": "Lowest J; broker-side only, moves wheelchair riders P03, P06, P17 onto lift vans and closes the wheelchair/ambulatory equity gap, no chair moves.",
+            "ref": "L-14"
+          }
+        ],
+        "contact": "the unit front desk",
+        "event": null,
+        "language": "en",
+        "mobility": "ambulatory",
+        "name": "Teornsto Zournia",
+        "ready_time": "20:52",
+        "refs": {
+          "B-P27": {
+            "chair_id": "C03",
+            "clinically_fixed": false,
+            "consent_to_move": true,
+            "display_name": "Teornsto Zournia",
+            "fixed_reason": null,
+            "late_start_min": 17,
+            "mobility": "ambulatory",
+            "moves_this_week": 0,
+            "nurse_note": "S3 start 16:00, chair C03, 240 min. Walks on unaided. Hypotension on previous sessions; extended recovery buffer.",
+            "patient_id": "P27",
+            "recovery_buffer_min": 35,
+            "rider_id": "R17",
+            "runover_min": 0,
+            "rx_days": "MWF",
+            "rx_duration_min": 240,
+            "shift_id": "S3",
+            "start_time": "16:00"
+          },
+          "B-P27f": {
+            "dest_node": 19,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "23:02",
+            "rider_id": "R17",
+            "seq": null,
+            "status": "queued",
+            "stops": [],
+            "trip_id": "P27f",
+            "vehicle_id": null,
+            "window": null
+          },
+          "L-14": {
+            "actor": "tool",
+            "cost_usd": 0.0,
+            "effort": "medium",
+            "event": "apply_bundle",
+            "git_sha": "d862bec0a7a5409542d5a5c39d7a1a0bf049785b-dirty",
+            "iteration": 4,
+            "model_id": "claude-fable-5-1",
+            "payload": {
+              "input": {
+                "bundle_id": "I02-C001",
+                "rationale": "Lowest J; broker-side only, moves wheelchair riders P03, P06, P17 onto lift vans and closes the wheelchair/ambulatory equity gap, no chair moves.",
+                "verify_hash": "sha256:78b5f3ebccdb6e0470a5baf439c21395530ab03676840d8bf429a9801fce07ed"
+              },
+              "result": {
+                "applied": true,
+                "bundle": {
+                  "bundle_id": "I02-C001",
+                  "moves": [
+                    {
+                      "trip_id": "P17f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V5"
+                    },
+                    {
+                      "trip_id": "P03f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V5"
+                    },
+                    {
+                      "trip_id": "P06f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V4"
+                    },
+                    {
+                      "delta_min": 35,
+                      "trip_id": "P22f",
+                      "type": "shift_pickup_window"
+                    },
+                    {
+                      "delta_min": -130,
+                      "trip_id": "P27f",
+                      "type": "shift_pickup_window"
+                    },
+                    {
+                      "trip_id": "P31f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V2"
+                    }
+                  ],
+                  "notes_relevant": [],
+                  "predicted": {
+                    "chair_changes": 0,
+                    "consent_moves": 0,
+                    "delta_early_min": 0,
+                    "delta_wait_min": -196,
+                    "vehicle_min": 22
+                  },
+                  "side": "broker",
+                  "touches": [
+                    "P03",
+                    "P06",
+                    "P17",
+                    "P22",
+                    "P27",
+                    "P31"
+                  ]
+                },
+                "delta": {
+                  "chair_starts": {},
+                  "trips": {
+                    "P02f": {
+                      "pickup": [
+                        "11:02",
+                        "11:09"
+                      ]
+                    },
+                    "P03f": {
+                      "pickup": [
+                        "12:02",
+                        "11:03"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V5"
+                      ]
+                    },
+                    "P06f": {
+                      "pickup": [
+                        "11:32",
+                        "10:39"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V4"
+                      ]
+                    },
+                    "P10f": {
+                      "pickup": [
+                        "11:07",
+                        "11:12"
+                      ]
+                    },
+                    "P17f": {
+                      "pickup": [
+                        "15:53",
+                        "14:50"
+                      ],
+                      "vehicle": [
+                        "V2",
+                        "V5"
+                      ]
+                    },
+                    "P22f": {
+                      "pickup": [
+                        "16:43",
+                        "16:10"
+                      ],
+                      "window": [
+                        [
+                          "15:35",
+                          "16:05"
+                        ],
+                        [
+                          "16:10",
+                          "16:40"
+                        ]
+                      ]
+                    },
+                    "P27f": {
+                      "pickup": [
+                        null,
+                        "20:52"
+                      ],
+                      "status": [
+                        "queued",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        null,
+                        "V1"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "20:52",
+                          "21:22"
+                        ]
+                      ]
+                    },
+                    "P31f": {
+                      "pickup": [
+                        null,
+                        "20:35"
+                      ],
+                      "status": [
+                        "queued",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        null,
+                        "V2"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "20:35",
+                          "21:05"
+                        ]
+                      ]
+                    }
+                  }
+                },
+                "j": 151.3,
+                "metrics": {
+                  "conflicts": 0,
+                  "early_wait_mean": 9.41,
+                  "equity_gap": 1.92,
+                  "mean_post_wait": 2.88,
+                  "p90_post_wait": 13.0,
+                  "riders_flagged": 2,
+                  "vehicle_min": 546.0,
+                  "wait_min_total": 46.0,
+                  "within_30_share": 1.0
+                },
+                "schedule_version": 2,
+                "stop": {
+                  "below_min_improvement": false,
+                  "best_improvement_pct": 15.0,
+                  "elapsed_s": 32.4,
+                  "reason": "",
+                  "should_finish": false,
+                  "targets": {
+                    "equity_gap": 10,
+                    "post_wait": 30
+                  },
+                  "targets_met": false
+                },
+                "verify_hash": "sha256:78b5f3ebccdb6e0470a5baf439c21395530ab03676840d8bf429a9801fce07ed"
+              }
+            },
+            "run_id": "20260917T181530Z-ba850d",
+            "ts": "2026-09-17T18:16:02+00:00",
+            "usage": {
+              "cache_read": 0,
+              "cache_write": 0,
+              "input": 0,
+              "output": 0
+            }
+          },
+          "S-P27": {
+            "chair_id": "C03",
+            "clinically_fixed": false,
+            "consent_to_move": true,
+            "display_name": "Teornsto Zournia",
+            "fixed_reason": null,
+            "late_start_min": 17,
+            "mobility": "ambulatory",
+            "moves_this_week": 0,
+            "nurse_note": "S3 start 16:00, chair C03, 240 min. Walks on unaided. Hypotension on previous sessions; extended recovery buffer.",
+            "patient_id": "P27",
+            "recovery_buffer_min": 35,
+            "rider_id": "R17",
+            "runover_min": 0,
+            "rx_days": "MWF",
+            "rx_duration_min": 240,
+            "shift_id": "S3",
+            "start_time": "16:00"
+          },
+          "S-P27f": {
+            "dest_node": 19,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "20:52",
+            "rider_id": "R17",
+            "seq": 14,
+            "status": "scheduled",
+            "stops": [
+              {
+                "eta": "20:52",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V1"
+              },
+              {
+                "eta": "21:01",
+                "kind": "dropoff",
+                "node": 19,
+                "vehicle": "V1"
+              }
+            ],
+            "trip_id": "P27f",
+            "vehicle_id": "V1",
+            "window": [
+              "20:52",
+              "21:22"
+            ]
+          }
+        },
+        "review_item": null,
+        "subject_id": "P27"
+      }
+    },
+    "source": {
+      "explanation_id": "E27r",
+      "run": "runs/cp2",
+      "written": "2026-09-17"
+    }
+  },
+  {
+    "calibration_id": "C09",
+    "for_the_grader": {
+      "audience": "rider",
+      "chair_start_after": "15:30",
+      "chair_start_before": "15:30",
+      "contact": "the unit front desk",
+      "event": null,
+      "review_item": null,
+      "ride_window_after": [
+        "20:35",
+        "21:05"
+      ],
+      "ride_window_before": null,
+      "van_after": "V2",
+      "what_changed": "Your chair time is still 15:30. Your ride home is now booked between 20:35 and 21:05, on van V2, from the unit door.",
+      "why": "We moved wheelchair riders onto lift vans to make pickups fairer, and that gave you a ride home with less waiting. If the van is late, call the unit front desk."
+    },
+    "human_notes": "",
+    "human_pass": null,
+    "record": {
+      "explanation": {
+        "audience": "rider",
+        "contact": "the unit front desk",
+        "ledger_refs": [
+          "L-14",
+          "S-P31",
+          "S-P31f",
+          "B-P31",
+          "B-P31f"
+        ],
+        "new_times": {
+          "chair_start": "15:30",
+          "pickup_window": [
+            "20:35",
+            "21:05"
+          ]
+        },
+        "reading_grade": 3.4,
+        "subject_id": "P31",
+        "what_changed": "Your chair time is still 15:30. Your ride home is now booked between 20:35 and 21:05, on van V2, from the unit door.",
+        "why": "We moved wheelchair riders onto lift vans to make pickups fairer, and that gave you a ride home with less waiting. If the van is late, call the unit front desk."
+      },
+      "explanation_id": "E31r",
+      "facts": {
+        "after": {
+          "chair_start": "15:30",
+          "pickup_eta": "20:35",
+          "pickup_window": [
+            "20:35",
+            "21:05"
+          ],
+          "status": "scheduled",
+          "vehicle": "V2"
+        },
+        "audience": "rider",
+        "before": {
+          "chair_start": "15:30",
+          "pickup_eta": null,
+          "pickup_window": null,
+          "status": "queued",
+          "vehicle": null
+        },
+        "caregiver_window": [
+          "14:00",
+          "20:00"
+        ],
+        "changes": [
+          {
+            "bundle_id": "I02-C001",
+            "moves": [
+              "P31f to van V2"
+            ],
+            "rationale": "Lowest J; broker-side only, moves wheelchair riders P03, P06, P17 onto lift vans and closes the wheelchair/ambulatory equity gap, no chair moves.",
+            "ref": "L-14"
+          }
+        ],
+        "contact": "the unit front desk",
+        "event": null,
+        "language": "es",
+        "mobility": "ambulatory",
+        "name": "Tronvon Leimjath",
+        "ready_time": "20:35",
+        "refs": {
+          "B-P31": {
+            "chair_id": "C07",
+            "clinically_fixed": false,
+            "consent_to_move": true,
+            "display_name": "Tronvon Leimjath",
+            "fixed_reason": null,
+            "late_start_min": 0,
+            "mobility": "ambulatory",
+            "moves_this_week": 0,
+            "nurse_note": "S3 start 15:30, chair C07, 270 min. Walks on unaided. Hypotension on previous sessions; extended recovery buffer.",
+            "patient_id": "P31",
+            "recovery_buffer_min": 35,
+            "rider_id": "R20",
+            "runover_min": 0,
+            "rx_days": "MWF",
+            "rx_duration_min": 270,
+            "shift_id": "S3",
+            "start_time": "15:30"
+          },
+          "B-P31f": {
+            "dest_node": 24,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "22:45",
+            "rider_id": "R20",
+            "seq": null,
+            "status": "queued",
+            "stops": [],
+            "trip_id": "P31f",
+            "vehicle_id": null,
+            "window": null
+          },
+          "L-14": {
+            "actor": "tool",
+            "cost_usd": 0.0,
+            "effort": "medium",
+            "event": "apply_bundle",
+            "git_sha": "d862bec0a7a5409542d5a5c39d7a1a0bf049785b-dirty",
+            "iteration": 4,
+            "model_id": "claude-fable-5-1",
+            "payload": {
+              "input": {
+                "bundle_id": "I02-C001",
+                "rationale": "Lowest J; broker-side only, moves wheelchair riders P03, P06, P17 onto lift vans and closes the wheelchair/ambulatory equity gap, no chair moves.",
+                "verify_hash": "sha256:78b5f3ebccdb6e0470a5baf439c21395530ab03676840d8bf429a9801fce07ed"
+              },
+              "result": {
+                "applied": true,
+                "bundle": {
+                  "bundle_id": "I02-C001",
+                  "moves": [
+                    {
+                      "trip_id": "P17f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V5"
+                    },
+                    {
+                      "trip_id": "P03f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V5"
+                    },
+                    {
+                      "trip_id": "P06f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V4"
+                    },
+                    {
+                      "delta_min": 35,
+                      "trip_id": "P22f",
+                      "type": "shift_pickup_window"
+                    },
+                    {
+                      "delta_min": -130,
+                      "trip_id": "P27f",
+                      "type": "shift_pickup_window"
+                    },
+                    {
+                      "trip_id": "P31f",
+                      "type": "reassign_vehicle",
+                      "vehicle_id": "V2"
+                    }
+                  ],
+                  "notes_relevant": [],
+                  "predicted": {
+                    "chair_changes": 0,
+                    "consent_moves": 0,
+                    "delta_early_min": 0,
+                    "delta_wait_min": -196,
+                    "vehicle_min": 22
+                  },
+                  "side": "broker",
+                  "touches": [
+                    "P03",
+                    "P06",
+                    "P17",
+                    "P22",
+                    "P27",
+                    "P31"
+                  ]
+                },
+                "delta": {
+                  "chair_starts": {},
+                  "trips": {
+                    "P02f": {
+                      "pickup": [
+                        "11:02",
+                        "11:09"
+                      ]
+                    },
+                    "P03f": {
+                      "pickup": [
+                        "12:02",
+                        "11:03"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V5"
+                      ]
+                    },
+                    "P06f": {
+                      "pickup": [
+                        "11:32",
+                        "10:39"
+                      ],
+                      "vehicle": [
+                        "V1",
+                        "V4"
+                      ]
+                    },
+                    "P10f": {
+                      "pickup": [
+                        "11:07",
+                        "11:12"
+                      ]
+                    },
+                    "P17f": {
+                      "pickup": [
+                        "15:53",
+                        "14:50"
+                      ],
+                      "vehicle": [
+                        "V2",
+                        "V5"
+                      ]
+                    },
+                    "P22f": {
+                      "pickup": [
+                        "16:43",
+                        "16:10"
+                      ],
+                      "window": [
+                        [
+                          "15:35",
+                          "16:05"
+                        ],
+                        [
+                          "16:10",
+                          "16:40"
+                        ]
+                      ]
+                    },
+                    "P27f": {
+                      "pickup": [
+                        null,
+                        "20:52"
+                      ],
+                      "status": [
+                        "queued",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        null,
+                        "V1"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "20:52",
+                          "21:22"
+                        ]
+                      ]
+                    },
+                    "P31f": {
+                      "pickup": [
+                        null,
+                        "20:35"
+                      ],
+                      "status": [
+                        "queued",
+                        "scheduled"
+                      ],
+                      "vehicle": [
+                        null,
+                        "V2"
+                      ],
+                      "window": [
+                        null,
+                        [
+                          "20:35",
+                          "21:05"
+                        ]
+                      ]
+                    }
+                  }
+                },
+                "j": 151.3,
+                "metrics": {
+                  "conflicts": 0,
+                  "early_wait_mean": 9.41,
+                  "equity_gap": 1.92,
+                  "mean_post_wait": 2.88,
+                  "p90_post_wait": 13.0,
+                  "riders_flagged": 2,
+                  "vehicle_min": 546.0,
+                  "wait_min_total": 46.0,
+                  "within_30_share": 1.0
+                },
+                "schedule_version": 2,
+                "stop": {
+                  "below_min_improvement": false,
+                  "best_improvement_pct": 15.0,
+                  "elapsed_s": 32.4,
+                  "reason": "",
+                  "should_finish": false,
+                  "targets": {
+                    "equity_gap": 10,
+                    "post_wait": 30
+                  },
+                  "targets_met": false
+                },
+                "verify_hash": "sha256:78b5f3ebccdb6e0470a5baf439c21395530ab03676840d8bf429a9801fce07ed"
+              }
+            },
+            "run_id": "20260917T181530Z-ba850d",
+            "ts": "2026-09-17T18:16:02+00:00",
+            "usage": {
+              "cache_read": 0,
+              "cache_write": 0,
+              "input": 0,
+              "output": 0
+            }
+          },
+          "S-P31": {
+            "chair_id": "C07",
+            "clinically_fixed": false,
+            "consent_to_move": true,
+            "display_name": "Tronvon Leimjath",
+            "fixed_reason": null,
+            "late_start_min": 0,
+            "mobility": "ambulatory",
+            "moves_this_week": 0,
+            "nurse_note": "S3 start 15:30, chair C07, 270 min. Walks on unaided. Hypotension on previous sessions; extended recovery buffer.",
+            "patient_id": "P31",
+            "recovery_buffer_min": 35,
+            "rider_id": "R20",
+            "runover_min": 0,
+            "rx_days": "MWF",
+            "rx_duration_min": 270,
+            "shift_id": "S3",
+            "start_time": "15:30"
+          },
+          "S-P31f": {
+            "dest_node": 24,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "20:35",
+            "rider_id": "R20",
+            "seq": 16,
+            "status": "scheduled",
+            "stops": [
+              {
+                "eta": "20:35",
+                "kind": "pickup",
+                "node": 0,
+                "vehicle": "V2"
+              },
+              {
+                "eta": "20:44",
+                "kind": "dropoff",
+                "node": 24,
+                "vehicle": "V2"
+              }
+            ],
+            "trip_id": "P31f",
+            "vehicle_id": "V2",
+            "window": [
+              "20:35",
+              "21:05"
+            ]
+          }
+        },
+        "review_item": null,
+        "subject_id": "P31"
+      }
+    },
+    "source": {
+      "explanation_id": "E31r",
+      "run": "runs/cp2",
+      "written": "2026-09-17"
+    }
+  },
+  {
+    "calibration_id": "C10",
+    "for_the_grader": {
+      "audience": "dispatcher",
+      "chair_start_after": "15:45",
+      "chair_start_before": "15:45",
+      "contact": "the charge nurse",
+      "event": null,
+      "review_item": "Dispatcher books a two-crew stretcher return by hand for P30 inside the 19:50-20:20 window, within the caregiver's 15:00-20:00 availability at Node 37.",
+      "ride_window_after": [
+        "19:50",
+        "20:20"
+      ],
+      "ride_window_before": [
+        "19:50",
+        "20:20"
+      ],
+      "van_after": null,
+      "what_changed": "Patient P30 (Randbind Paelslios) has chair start at 15:45. The ride home window is 19:50 to 20:20, but no van or crew is booked yet. This needs a hand-booked stretcher ride with two crew.",
+      "why": "Stretcher rides are never auto-assigned, so this one stayed queued with no van. The caregiver is only free until 20:00, so please try to book the early part of the window. Please contact the charge nurse."
+    },
+    "human_notes": "",
+    "human_pass": null,
+    "record": {
+      "explanation": {
+        "audience": "dispatcher",
+        "contact": "the charge nurse",
+        "ledger_refs": [
+          "R-R01",
+          "S-P30",
+          "S-P30f",
+          "B-P30",
+          "B-P30f"
+        ],
+        "new_times": {
+          "chair_start": "15:45",
+          "pickup_window": null
+        },
+        "reading_grade": 3.6,
+        "subject_id": "P30",
+        "what_changed": "Patient P30 (Randbind Paelslios) has chair start at 15:45. The ride home window is 19:50 to 20:20, but no van or crew is booked yet. This needs a hand-booked stretcher ride with two crew.",
+        "why": "Stretcher rides are never auto-assigned, so this one stayed queued with no van. The caregiver is only free until 20:00, so please try to book the early part of the window. Please contact the charge nurse."
+      },
+      "explanation_id": "E30d",
+      "facts": {
+        "after": {
+          "chair_start": "15:45",
+          "pickup_eta": null,
+          "pickup_window": [
+            "19:50",
+            "20:20"
+          ],
+          "status": "queued",
+          "vehicle": null
+        },
+        "audience": "dispatcher",
+        "before": {
+          "chair_start": "15:45",
+          "pickup_eta": null,
+          "pickup_window": [
+            "19:50",
+            "20:20"
+          ],
+          "status": "queued",
+          "vehicle": null
+        },
+        "caregiver_window": [
+          "15:00",
+          "20:00"
+        ],
+        "changes": [],
+        "contact": "the charge nurse",
+        "event": null,
+        "language": "en",
+        "mobility": "stretcher",
+        "name": "Randbind Paelslios",
+        "ready_time": "19:50",
+        "refs": {
+          "B-P30": {
+            "chair_id": "C06",
+            "clinically_fixed": false,
+            "consent_to_move": true,
+            "display_name": "Randbind Paelslios",
+            "fixed_reason": null,
+            "late_start_min": 0,
+            "mobility": "stretcher",
+            "moves_this_week": 0,
+            "nurse_note": "S3 start 15:45, chair C06, 225 min. Stretcher transfer, two crew.",
+            "patient_id": "P30",
+            "recovery_buffer_min": 20,
+            "rider_id": "R19",
+            "runover_min": 0,
+            "rx_days": "MWF",
+            "rx_duration_min": 225,
+            "shift_id": "S3",
+            "start_time": "15:45"
+          },
+          "B-P30f": {
+            "dest_node": 37,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "20:05",
+            "rider_id": "R19",
+            "seq": null,
+            "status": "queued",
+            "stops": [],
+            "trip_id": "P30f",
+            "vehicle_id": null,
+            "window": [
+              "19:50",
+              "20:20"
+            ]
+          },
+          "R-R01": {
+            "draft_message": "SYNTHETIC: P30 (Randbind Paelslios) needs a hand-booked stretcher return today, two crew, unit to Node 37, Zone B, requested 20:05 with window 19:50-20:20. Caregiver is available until 20:00, so please aim for the early part of the window. The outbound leg P30t (window 15:15-15:45) also has no vehicle assigned yet.",
+            "item_id": "R01",
+            "owner": "dispatcher",
+            "reason_code": "STRETCHER",
+            "recommended_action": "Dispatcher books a two-crew stretcher return by hand for P30 inside the 19:50-20:20 window, within the caregiver's 15:00-20:00 availability at Node 37.",
+            "subject": "P30f",
+            "urgency": "today",
+            "what_was_tried": [
+              "Stretcher trips are never auto-assigned under broker policy; no candidate bundle could place P30f on any van (fleet stretcher capacity is 0).",
+              "Return leg left queued with window 19:50-20:20 pending manual crew booking."
+            ]
+          },
+          "S-P30": {
+            "chair_id": "C06",
+            "clinically_fixed": false,
+            "consent_to_move": true,
+            "display_name": "Randbind Paelslios",
+            "fixed_reason": null,
+            "late_start_min": 0,
+            "mobility": "stretcher",
+            "moves_this_week": 0,
+            "nurse_note": "S3 start 15:45, chair C06, 225 min. Stretcher transfer, two crew.",
+            "patient_id": "P30",
+            "recovery_buffer_min": 20,
+            "rider_id": "R19",
+            "runover_min": 0,
+            "rx_days": "MWF",
+            "rx_duration_min": 225,
+            "shift_id": "S3",
+            "start_time": "15:45"
+          },
+          "S-P30f": {
+            "dest_node": 37,
+            "leg": "from",
+            "origin_node": 0,
+            "requested_time": "20:05",
+            "rider_id": "R19",
+            "seq": null,
+            "status": "queued",
+            "stops": [],
+            "trip_id": "P30f",
+            "vehicle_id": null,
+            "window": [
+              "19:50",
+              "20:20"
+            ]
+          }
+        },
+        "review_item": {
+          "draft_message": "SYNTHETIC: P30 (Randbind Paelslios) needs a hand-booked stretcher return today, two crew, unit to Node 37, Zone B, requested 20:05 with window 19:50-20:20. Caregiver is available until 20:00, so please aim for the early part of the window. The outbound leg P30t (window 15:15-15:45) also has no vehicle assigned yet.",
+          "item_id": "R01",
+          "owner": "dispatcher",
+          "reason_code": "STRETCHER",
+          "recommended_action": "Dispatcher books a two-crew stretcher return by hand for P30 inside the 19:50-20:20 window, within the caregiver's 15:00-20:00 availability at Node 37.",
+          "subject": "P30f",
+          "urgency": "today",
+          "what_was_tried": [
+            "Stretcher trips are never auto-assigned under broker policy; no candidate bundle could place P30f on any van (fleet stretcher capacity is 0).",
+            "Return leg left queued with window 19:50-20:20 pending manual crew booking."
+          ]
+        },
+        "subject_id": "P30"
+      }
+    },
+    "source": {
+      "explanation_id": "E30d",
+      "run": "runs/cp2",
+      "written": "2026-09-17"
+    }
+  }
+]

@@ -1,11 +1,14 @@
 """Eval entry point; --gate runs the repo and data suites and prints one summary line.
 
+--judge-only scores the 12-item golden explanation set with the live judge (Fable 5.1, low)
+and reports agreement with the hand verdicts, plus the clinical teammate's calibration status.
 Tests marked ``llm`` call the API and are reserved for the full pass (--full, CP4).
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -50,6 +53,45 @@ def _gate() -> int:
     return proc.returncode
 
 
+AGREEMENT_FLOOR = 11  # of 12: the CP4 gate's "judge pass rate >= 90% on the golden set"
+
+
+def _judge_only() -> int:
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        print("JUDGE SKIP (ANTHROPIC_API_KEY is not set; run under uv run --env-file .env)")
+        return 2
+    from c2r import judge
+    from c2r.llm import AnthropicWriter
+
+    started = time.monotonic()
+    out = ROOT / "runs" / "golden-judge"
+    client = AnthropicWriter(model=judge.MODEL, effort=judge.EFFORT, max_tokens=1200)
+    summary = judge.judge_golden(client, out)
+    means = " ".join(f"{d} {v:.2f}" for d, v in summary["mean_scores"].items())
+    print(f"judge: golden agreement {summary['golden_agreement']}; mean scores {means}")
+    for miss in summary["disagreements"]:
+        print(
+            f"judge: disagreement {miss['explanation_id']}: expected pass={miss['expected_pass']}, "
+            f"judge pass={miss['judge_pass']}: {miss['rationale']}"
+        )
+    calibration = judge.judge_calibration(client, out)
+    print(
+        f"judge: calibration {calibration['graded']}/{calibration['items']} graded by the "
+        f"clinical teammate; agreement {calibration['agreement']}/{calibration['graded']}"
+        + (" (not graded yet)" if not calibration["graded"] else "")
+    )
+    agreed = int(summary["golden_agreement"].split("/")[0])
+    calls = summary["usage"]["iterations"] + calibration["items"]
+    cost = summary["usage"]["cost_usd"]
+    elapsed = round(time.monotonic() - started, 1)
+    verdict = "PASS" if agreed >= AGREEMENT_FLOOR else "FAIL"
+    print(
+        f"JUDGE {verdict} (golden agreement {summary['golden_agreement']}, {calls} calls, "
+        f"golden cost ${cost:.2f}, {elapsed}s; {out / 'judge_summary.json'})"
+    )
+    return 0 if verdict == "PASS" else 1
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     mode = parser.add_mutually_exclusive_group(required=True)
@@ -61,8 +103,7 @@ def main() -> int:
         print("not available until CP4")
         return 3
     if args.judge_only:
-        print("not available until CP3")
-        return 3
+        return _judge_only()
     return _gate()
 
 

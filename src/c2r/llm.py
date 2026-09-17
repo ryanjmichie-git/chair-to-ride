@@ -280,6 +280,26 @@ class FakeWriter:
         return Completion(data, json.dumps(data), usage, 0.0, "end_turn")
 
 
+class FakeJudge:
+    """The offline judge: 2 on every dimension; the deterministic overrides do the judging."""
+
+    model_id = FAKE_MODEL
+    effort = "none"
+    DIMENSIONS = ("accuracy", "actionable", "plain", "tone", "complete", "safe")
+
+    def complete(self, system: str, user: str, schema: dict[str, Any]) -> Completion:
+        del system, schema
+        record = json.loads(user)
+        data = {
+            "explanation_id": record.get("explanation_id", "?"),
+            "rationale": "fake judge: only the deterministic checks apply",
+            "scores": {d: 2 for d in self.DIMENSIONS},
+            "pass": True,
+        }
+        usage = Usage(input=2000, cache_read=0, cache_write=0, output=150)
+        return Completion(data, json.dumps(data), usage, 0.0, "end_turn")
+
+
 def _payload(block: dict[str, Any]) -> Any:
     raw = block.get("content") if block.get("type") == "tool_result" else block.get("text", "")
     if isinstance(raw, list):
