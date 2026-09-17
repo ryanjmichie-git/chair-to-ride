@@ -1,7 +1,7 @@
 # Demo runbook (3 minutes on stage, 10 minutes of set-up)
 
-Written for the person driving the terminal. Every command runs from the repo root in
-PowerShell. Numbers in brackets are what the same commands produced on 2026-09-17; read the
+Written for the person driving the terminal. Every command runs from the repo root in cmd or
+PowerShell. The audience sees one browser page (`runs\demo.html`), not the terminal. Numbers in brackets are what the same commands produced on 2026-09-17; read the
 live ones off the screen, do not quote these.
 
 ## 10 minutes before: pre-flight (about $0.85, 3 minutes of runtime)
@@ -20,26 +20,23 @@ live ones off the screen, do not quote these.
    make explain
    make judge
    ```
-4. Render the re-plan timeline and open both timelines in the browser, each in its own tab:
+4. Terminal B, start the live page and open it in the browser, full screen (F11). Leave the
+   terminal running; it rewrites the page every 2 s and the page reloads itself every 3 s:
    ```
-   uv run python -m c2r.viz.timeline runs/cp2
-   uv run python -m c2r.viz.timeline runs/cp3
-   start runs\cp2\timeline.html
-   start runs\cp3\timeline.html
+   make dashboard
+   start runs\demo.html
    ```
-   Tab 1 = the day (before/after), tab 2 = the re-plan (heading names the event).
-5. Terminal B, three commands, one per beat (tested 2026-09-17; `explanations.json` is 175 KB,
-   so the second line prints one note instead of the whole file):
+   The page reads `runs\cp2` (the day) and `runs\cp3` (the re-plan). If `runs\cp3` is from an
+   earlier run it already shows "Done"; the panel resets to "Waiting" the moment `make perturb`
+   starts, then fills in turn by turn. Both timelines sit at the bottom under "Day timeline" and
+   "Re-plan timeline" (click to expand).
+5. Backup screens if the browser misbehaves (cmd and PowerShell alike):
    ```
-   type runs\cp2\review_queue.json
+   type runs\cp2eview_queue.json
    python scripts\show_note.py runs\cp2
    python scripts\show_note.py runs\cp3 E16d
    type cost_report.md
    ```
-   These work in cmd and PowerShell alike. The dispatcher note `E16d` is the breakdown story
-   in one paragraph: P16's ride lost its van at 13:40, decide by 15:11 or hold for will-call.
-   `cost_report.md` only changes when you run `make cost-report`; do that after the pre-flight
-   runs if you want tonight's dollars in it.
 6. Clear terminal A (`cls`). Say the words "synthetic data" once, on screen and aloud; the
    banner prints it on every run.
 
@@ -47,22 +44,29 @@ live ones off the screen, do not quote these.
 
 | Clock | Do | Say (one line) |
 |---|---|---|
-| 0:00 | Browser tab 1, scroll to the "before" Gantt: 12 chair rows, 5 van rows, red wait bars. | "After four hours on a machine these riders wait about seventy minutes for a van booked days ago. Nobody re-times the chairs and the rides together. All of this is synthetic data." [before: mean 70.2 min, p90 131] |
-| 0:30 | Terminal A: `make mediate` (runs live, 57-89 s; let it scroll). | "Chair-to-Ride reads both rulebooks and both schedules, then negotiates chair times against pickup windows inside the sixty-minute ADA rule and the nurse's notes. The model chooses; deterministic code counts; nothing is applied without a zero-violation check." |
-| 1:30 | When it ends, point at the closing metrics line, then `type runs\cp2\review_queue.json`. | "Mean wait from seventy to under two minutes, p90 from 131 to 6, zero chair conflicts. The riders it could not fix inside the rules it queued for a person, with the reason and a draft message." [today: 4 flagged before, 1-2 after] |
-| 1:50 | Terminal A: `make perturb`. Browser tab 2 once it ends. | "Now Van 3 dies at 1:40. Same rules, same receipts. Every return on that van is re-homed or handed to the dispatcher, and it finishes in about fifteen seconds." [today: 13.3-25 s, P15f to V4, P29f to V2, P16f held] |
-| 2:20 | Terminal B: `type runs\cp2\explanations.json` (scroll to one rider note), then `type cost_report.md`. | "Every rider gets a plain-English note whose numbers are checked against the ledger. Every decision is in a ledger a charge nurse can audit. The run cost under a dollar on Fable 5.1, with about ninety percent of the prompt read from cache." [day $0.72, re-plan $0.11, cache read 85-94 %] |
-| 2:50 | Terminal A: `make gate` output line from earlier, or say it. | "Three hundred and six checks pass in half a minute: invariants, the golden judge set twelve of twelve, cost and runtime receipts. The chair schedule and the ride schedule finally talk to each other." |
+| 0:00 | Browser, top of the page: banner and "The day" cards (was 70 min, now under 2). | "After four hours on a machine these riders waited about seventy minutes for a van booked days ago. Nobody re-times the chairs and the rides together. This ran a few minutes ago on synthetic data: mean wait from seventy minutes to under two, every rider picked up within thirty." |
+| 0:40 | Expand "Day timeline" at the bottom: 12 chair rows, 5 van rows, the wait bars shrink. | "Chair-to-Ride reads both rulebooks and both schedules, then negotiates chair times against pickup windows inside the sixty-minute ADA rule and the nurse's notes. The model chooses; deterministic code counts; nothing is applied without a zero-violation check." |
+| 1:10 | Terminal A: `make perturb`. Back to the browser at once. | "Now Van 3 dies at 1:40. Watch the second panel." The panel goes Waiting, then Running with each turn's sentence and tool calls, then Done in about fifteen seconds. "Every return on that van is re-homed or handed to the dispatcher. Same rules, same receipts." [today: 15-25 s, P15f to V4, P29f to V2, P16f held] |
+| 2:00 | "Handed to a person" and "What riders and staff are told". | "The rider it could not fix inside the rules goes to a person with the reason and a draft message. Every rider gets a plain-English note whose numbers are checked against the ledger; grade-six reading level." |
+| 2:30 | "Receipts". | "The day run cost under thirty cents on Fable 5.1 with ninety-five percent of the prompt read from cache. Three hundred and six checks pass in half a minute, the golden judge set twelve of twelve. The chair schedule and the ride schedule finally talk to each other." |
 
 `make demo` runs both steps back to back if you prefer one command; splitting them gives you
 the pause at 1:30 to show the queue.
 
 ## If the API is down (no network, key rejected, or a turn hangs past 30 s)
 
-Same commands, offline scripted mediator, identical screens, $0:
+Same commands, offline scripted mediator, identical screens, $0. Point the page at the fake
+re-plan (Ctrl+C the watcher in terminal B first):
+```
+make perturb-fake
+uv run python -m c2r.viz.dashboard --watch --replan runs/cp3-fake
+```
+or the full offline set:
 ```
 make mediate-fake
 make perturb-fake
+make dashboard-fake
+start runs\demo-fake.html
 uv run python -m c2r.explain runs/cp2-fake --fake
 uv run python -m c2r.viz.timeline runs/cp2-fake
 uv run python -m c2r.viz.timeline runs/cp3-fake

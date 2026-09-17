@@ -1,6 +1,7 @@
 # Session handoff
 
-Updated 2026-09-17 at the end of CP4 (evals + freeze). Start a fresh session from here.
+Updated 2026-09-17 after CP4 plus the demo-day extras (runbook, `scripts/show_note.py`, live
+dashboard). Start a fresh session from here.
 Every number below is from a command run this session and is also in docs/cp4-decisions.md
 with the file it came from.
 
@@ -78,6 +79,10 @@ CP4 landed in seven `cp4:` commits on top of `3284b10` (details in docs/cp4-deci
 - `runs/.fake-run-cache/<digest>/`: the gate's shared fake run (safe to delete; rebuilt in 14 s).
 - `runs/cp2`, `runs/cp3`, `runs/golden-judge`: unchanged from CP3; the receipts point at them.
 - `cost_report.md` (committed): regenerated at the end of `--full`.
+- `runs/demo.html`: the audience page, written by `make dashboard` (`src/c2r/viz/dashboard.py`,
+  allowed under the freeze). It reads `runs/cp2` and `runs/cp3` only, rewrites every 2 s and
+  reloads itself every 3 s, so the re-plan panel fills in while `make perturb` runs. Stage flow in
+  `docs/demo_runbook.md`. Offline check done: watcher went Waiting -> Done on `make perturb-fake`.
 
 ## Acceptance status
 - `time uv run python evals/run_evals.py --gate`: `GATE PASS`, 306 passed, 46.9 s with a cold
