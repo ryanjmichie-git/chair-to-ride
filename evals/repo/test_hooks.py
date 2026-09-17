@@ -327,6 +327,8 @@ def test_render_timeline_skips_without_renderer(repo: Path) -> None:
     proc = run_hook("render_timeline.py", event, repo)
     assert proc.returncode == 0
     assert proc.stdout.strip() == ""
+
+
 HOOK_COMMAND_PREFIX = 'python "${CLAUDE_PROJECT_DIR}/.claude/hooks/'
 BLOCK_FROZEN = (
     "---\nname: judge\nversion: 2\neval_result:\n  accuracy: 0.91\n  plain: 0.88\n---\n\nbody\n"
@@ -378,7 +380,7 @@ def agent_hook_commands() -> list[tuple[str, str]]:
 
 def test_settings_hook_commands_are_project_dir_absolute() -> None:
     commands = settings_hook_commands()
-    assert len(commands) == 7
+    assert len(commands) == 8
     for command in commands:
         assert command.startswith(HOOK_COMMAND_PREFIX), command
 
@@ -469,3 +471,48 @@ def test_eval_gate_blocks_when_the_runner_fails(repo: Path) -> None:
     assert "GATE FAIL" in proc.stderr
     assert json.loads(proc.stdout)["decision"] == "block"
     assert not (repo / "runs" / ".gate_ok").is_file()
+
+
+def _git_repo(repo: Path, src_lines: int) -> None:
+    env = {
+        **os.environ,
+        "GIT_AUTHOR_NAME": "t",
+        "GIT_AUTHOR_EMAIL": "t@x",
+        "GIT_COMMITTER_NAME": "t",
+        "GIT_COMMITTER_EMAIL": "t@x",
+    }
+    subprocess.run(["git", "init", "-q"], cwd=str(repo), check=True, env=env)
+    subprocess.run(["git", "add", "-A"], cwd=str(repo), check=True, env=env)
+    subprocess.run(["git", "commit", "-q", "-m", "base"], cwd=str(repo), check=True, env=env)
+    (repo / "src" / "c2r" / "big.py").write_text("x = 1\n" * src_lines, encoding="utf-8")
+
+
+def test_k2_guard_blocks_a_large_staged_src_diff(repo: Path) -> None:
+    _git_repo(repo, 401)
+    subprocess.run(["git", "add", "-A"], cwd=str(repo), check=True)
+    proc = run_hook("k2_guard.py", bash_event(repo, 'git commit -m "cp1: big"'), repo)
+    assert proc.returncode == 2
+    assert "401 lines" in proc.stderr and "src/c2r/big.py" in proc.stderr
+
+
+def test_k2_guard_counts_what_git_add_would_stage(repo: Path) -> None:
+    _git_repo(repo, 401)
+    proc = run_hook("k2_guard.py", bash_event(repo, 'git add -A && git commit -m "cp1: big"'), repo)
+    assert proc.returncode == 2
+    proc = run_hook("k2_guard.py", bash_event(repo, 'git commit -m "cp1: nothing staged"'), repo)
+    assert proc.returncode == 0, proc.stderr
+
+
+@pytest.mark.parametrize(
+    "command", ['git commit -m "cp1: small"', 'echo "git commit"', "git status"]
+)
+def test_k2_guard_allows_small_diffs_and_other_commands(repo: Path, command: str) -> None:
+    _git_repo(repo, 400)
+    subprocess.run(["git", "add", "-A"], cwd=str(repo), check=True)
+    proc = run_hook("k2_guard.py", bash_event(repo, command), repo)
+    assert proc.returncode == 0, proc.stderr
+
+
+def test_k2_guard_fails_open_outside_a_git_repo(repo: Path) -> None:
+    proc = run_hook("k2_guard.py", bash_event(repo, 'git commit -m "x"'), repo)
+    assert proc.returncode == 0, proc.stderr

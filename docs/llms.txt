@@ -43,7 +43,7 @@ An agent re-times a dialysis unit's chair schedule against a paratransit manifes
 
 ## .claude/
 - [.claude/settings.json](../.claude/settings.json): hook registrations (`PreToolUse`, `PostToolUse`, `Stop`, `SessionStart`) and permission denies.
-- [.claude/hooks/](../.claude/hooks/): the guard scripts settings.json registers — PHI, prompt-freeze, danger, pytest-quick, render-timeline, eval-gate, session-brief, plus the `path_guard`/`bash_allow` CLIs subagents use.
+- [.claude/hooks/](../.claude/hooks/): the guard scripts settings.json registers — PHI, prompt-freeze, danger, K2 diff size (`k2_guard`, refuses a `git commit` whose `src/` diff exceeds 400 lines), pytest-quick, render-timeline, eval-gate, session-brief, plus the `path_guard`/`bash_allow` CLIs subagents use.
 - [.claude/skills/kickoff/SKILL.md](../.claude/skills/kickoff/SKILL.md): `/kickoff [cpN]` — spec check, plan mode, implement, review, commit.
 - [.claude/skills/review/SKILL.md](../.claude/skills/review/SKILL.md): `/review` — reviewer subagent reports gaps vs. spec.
 - [.claude/skills/run-demo/SKILL.md](../.claude/skills/run-demo/SKILL.md): `/run-demo` — run and summarise `make demo`.

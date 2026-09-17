@@ -12,7 +12,8 @@
       {
         "matcher": "Bash|PowerShell",
         "hooks": [
-          { "type": "command", "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/danger_guard.py\"", "timeout": 10 }
+          { "type": "command", "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/danger_guard.py\"", "timeout": 10 },
+          { "type": "command", "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/k2_guard.py\"", "timeout": 15 }
         ]
       }
     ],

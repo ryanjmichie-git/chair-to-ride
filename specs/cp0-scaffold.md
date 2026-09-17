@@ -21,7 +21,7 @@ Stand up the whole repo skeleton and prove the synthetic "before" schedule is re
 ## Definition of done
 - `make setup models synth baseline gate` all exit 0.
 - Baseline mean post-wait ∈ [65, 80] min, p90 ∈ [100, 140] min (seed 42).
-- `/hooks` lists seven hooks (phi_guard, prompt_freeze, danger_guard, pytest_quick, render_timeline, eval_gate, session_brief).
+- `/hooks` lists seven hooks (phi_guard, prompt_freeze, danger_guard, pytest_quick, render_timeline, eval_gate, session_brief); CP1 added an eighth, k2_guard.
 - Zero PHI-regex matches across `data/`, `runs/`, `prompts/`.
 - `CLAUDE.md` ≤ 60 lines; `specs/INDEX.md` has exactly one `active` row (CP0).
 - B (clinical teammate) has edited `config/rules.yaml` and read 10 nurse notes in `data/synthetic/42/roster.json`.
