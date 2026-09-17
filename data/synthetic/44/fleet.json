@@ -1,0 +1,67 @@
+{
+  "generator": "c2r.synth v1",
+  "seed": 44,
+  "synthetic": true,
+  "vehicles": [
+    {
+      "cap_ambulatory": 4,
+      "cap_stretcher": 0,
+      "cap_wheelchair": 1,
+      "depot_node": 1,
+      "shift": [
+        "05:30",
+        "21:30"
+      ],
+      "status": "ok",
+      "vehicle_id": "V1"
+    },
+    {
+      "cap_ambulatory": 4,
+      "cap_stretcher": 0,
+      "cap_wheelchair": 1,
+      "depot_node": 1,
+      "shift": [
+        "05:30",
+        "21:30"
+      ],
+      "status": "ok",
+      "vehicle_id": "V2"
+    },
+    {
+      "cap_ambulatory": 4,
+      "cap_stretcher": 0,
+      "cap_wheelchair": 1,
+      "depot_node": 1,
+      "shift": [
+        "05:30",
+        "21:30"
+      ],
+      "status": "ok",
+      "vehicle_id": "V3"
+    },
+    {
+      "cap_ambulatory": 3,
+      "cap_stretcher": 0,
+      "cap_wheelchair": 2,
+      "depot_node": 1,
+      "shift": [
+        "05:30",
+        "21:30"
+      ],
+      "status": "ok",
+      "vehicle_id": "V4"
+    },
+    {
+      "cap_ambulatory": 3,
+      "cap_stretcher": 0,
+      "cap_wheelchair": 2,
+      "depot_node": 1,
+      "shift": [
+        "05:30",
+        "21:30"
+      ],
+      "status": "ok",
+      "vehicle_id": "V5"
+    }
+  ]
+}

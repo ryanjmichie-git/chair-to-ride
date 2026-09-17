@@ -1,4 +1,4 @@
-.PHONY: setup models synth baseline solve mediate mediate-fake perturb perturb-fake explain judge judge-only timeline test test-live gate demo check-models
+.PHONY: setup models synth baseline solve mediate mediate-fake perturb perturb-fake explain judge judge-only timeline test test-live gate full full-fake full-collect cost-report demo check-models
 
 ENV_FILE := $(wildcard .env)
 UV_RUN := uv run $(if $(ENV_FILE),--env-file $(ENV_FILE),)
@@ -52,6 +52,18 @@ test-live:
 
 gate:
 	$(UV_RUN) python evals/run_evals.py --gate
+
+full:
+	$(UV_RUN) python evals/run_evals.py --full
+
+full-fake:
+	$(UV_RUN) python evals/run_evals.py --full --fake
+
+full-collect:
+	$(UV_RUN) python evals/run_evals.py --full-collect
+
+cost-report:
+	$(UV_RUN) python evals/cost_report.py
 
 demo:
 	$(MAKE) mediate

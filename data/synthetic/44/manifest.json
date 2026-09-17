@@ -1,0 +1,1211 @@
+{
+  "broker_policy_text": "SYNTHETIC DATA \u2014 requires reviewer sign-off\n\n# Paratransit broker \u2014 dispatch policy\n\nDialysis riders travel on standing orders. Each treatment day the outbound leg is\nbooked to arrive before the chair start, and the return leg is anchored thirty\nminutes after the scheduled session end.\n\nEvery trip gets a thirty-minute pickup window. The vehicle is on time if it arrives\nanywhere inside that window; arriving outside it is a late trip and is recorded.\n\nWe may negotiate a requested time by up to sixty minutes either side. That is the\nwhole of our discretion. A trip that cannot be placed inside that band is not\nscheduled; it is queued as a denial and the reason is logged for the record.\n\nNo vehicle picks anyone up before 05:30, when the fleet's shift starts.\n\nA driver waits five minutes at the curb. After that the vehicle continues and the\nrider is put back into the queue rather than left waiting for a vehicle that has gone.\n\nCapacity is counted by mobility class at every stop, not per trip. A standard van\ncarries four ambulatory riders and one wheelchair. A lift van carries three\nambulatory riders and two wheelchairs. Neither carries a stretcher.\n\nStretcher trips are never auto-assigned. They go to a dispatcher, who books the\ncrew and the equipment by hand.\n\nNo rider spends more than sixty minutes on board, and no ride is longer than twice\nthe direct trip. If a shared route would break that, the pairing is dropped.\n\nNobody is stranded. Every return leg is either scheduled or sitting in the review\nqueue on will-call, and a will-call is a promise to come, not a cancellation.\n\nVehicles are on the road from 05:30 to 21:30. Outside those hours there is no service.\n",
+  "generator": "c2r.synth v1",
+  "routes": [
+    {
+      "stops": [
+        {
+          "eta": "05:41",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 34,
+          "trip_id": "P02t"
+        },
+        {
+          "eta": "05:50",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P02t"
+        },
+        {
+          "eta": "10:21",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 1
+          },
+          "node": 11,
+          "trip_id": "P20t"
+        },
+        {
+          "eta": "10:35",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P20t"
+        },
+        {
+          "eta": "10:41",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 1
+          },
+          "node": 0,
+          "trip_id": "P09f"
+        },
+        {
+          "eta": "10:59",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 24,
+          "trip_id": "P09f"
+        },
+        {
+          "eta": "11:14",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P07f"
+        },
+        {
+          "eta": "11:33",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 23,
+          "trip_id": "P07f"
+        },
+        {
+          "eta": "11:52",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P01f"
+        },
+        {
+          "eta": "12:05",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 37,
+          "trip_id": "P01f"
+        },
+        {
+          "eta": "12:18",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P02f"
+        },
+        {
+          "eta": "12:27",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 34,
+          "trip_id": "P02f"
+        },
+        {
+          "eta": "12:36",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P04f"
+        },
+        {
+          "eta": "12:47",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 32,
+          "trip_id": "P04f"
+        },
+        {
+          "eta": "15:10",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 19,
+          "trip_id": "P32t"
+        },
+        {
+          "eta": "15:20",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P32t"
+        },
+        {
+          "eta": "15:37",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 1
+          },
+          "node": 29,
+          "trip_id": "P27t"
+        },
+        {
+          "eta": "15:50",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P27t"
+        }
+      ],
+      "vehicle_id": "V1"
+    },
+    {
+      "stops": [
+        {
+          "eta": "05:40",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 1
+          },
+          "node": 24,
+          "trip_id": "P09t"
+        },
+        {
+          "eta": "05:55",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P09t"
+        },
+        {
+          "eta": "10:23",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 12,
+          "trip_id": "P24t"
+        },
+        {
+          "eta": "10:35",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P24t"
+        },
+        {
+          "eta": "15:03",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 17,
+          "trip_id": "P36t"
+        },
+        {
+          "eta": "15:20",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P36t"
+        },
+        {
+          "eta": "15:38",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 1
+          },
+          "node": 8,
+          "trip_id": "P29t"
+        },
+        {
+          "eta": "15:50",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P29t"
+        },
+        {
+          "eta": "15:56",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 1
+          },
+          "node": 0,
+          "trip_id": "P20f"
+        },
+        {
+          "eta": "16:10",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 11,
+          "trip_id": "P20f"
+        },
+        {
+          "eta": "16:24",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P24f"
+        },
+        {
+          "eta": "16:36",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 12,
+          "trip_id": "P24f"
+        },
+        {
+          "eta": "17:30",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P19f"
+        },
+        {
+          "eta": "17:39",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 13,
+          "trip_id": "P19f"
+        },
+        {
+          "eta": "17:48",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P13f"
+        },
+        {
+          "eta": "18:03",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 2,
+          "trip_id": "P13f"
+        },
+        {
+          "eta": "18:27",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 1
+          },
+          "node": 0,
+          "trip_id": "P18f"
+        },
+        {
+          "eta": "18:41",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 5,
+          "trip_id": "P18f"
+        }
+      ],
+      "vehicle_id": "V2"
+    },
+    {
+      "stops": [
+        {
+          "eta": "05:52",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 37,
+          "trip_id": "P01t"
+        },
+        {
+          "eta": "06:05",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P01t"
+        },
+        {
+          "eta": "10:35",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 2,
+          "trip_id": "P13t"
+        },
+        {
+          "eta": "10:50",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P13t"
+        },
+        {
+          "eta": "15:26",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 18,
+          "trip_id": "P25t"
+        },
+        {
+          "eta": "15:35",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P25t"
+        },
+        {
+          "eta": "19:23",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P36f"
+        },
+        {
+          "eta": "19:40",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 17,
+          "trip_id": "P36f"
+        },
+        {
+          "eta": "19:57",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P32f"
+        },
+        {
+          "eta": "20:07",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 19,
+          "trip_id": "P32f"
+        },
+        {
+          "eta": "20:35",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P28f"
+        },
+        {
+          "eta": "20:53",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 9,
+          "trip_id": "P28f"
+        }
+      ],
+      "vehicle_id": "V3"
+    },
+    {
+      "stops": [
+        {
+          "eta": "05:54",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 32,
+          "trip_id": "P04t"
+        },
+        {
+          "eta": "06:05",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P04t"
+        },
+        {
+          "eta": "10:36",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 1
+          },
+          "node": 5,
+          "trip_id": "P18t"
+        },
+        {
+          "eta": "10:50",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P18t"
+        },
+        {
+          "eta": "15:17",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 9,
+          "trip_id": "P28t"
+        },
+        {
+          "eta": "15:35",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P28t"
+        }
+      ],
+      "vehicle_id": "V4"
+    },
+    {
+      "stops": [
+        {
+          "eta": "05:46",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 23,
+          "trip_id": "P07t"
+        },
+        {
+          "eta": "06:05",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P07t"
+        },
+        {
+          "eta": "10:41",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 1,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 13,
+          "trip_id": "P19t"
+        },
+        {
+          "eta": "10:50",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P19t"
+        },
+        {
+          "eta": "15:20",
+          "kind": "pickup",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 1
+          },
+          "node": 36,
+          "trip_id": "P31t"
+        },
+        {
+          "eta": "15:35",
+          "kind": "dropoff",
+          "load_after": {
+            "ambulatory": 0,
+            "stretcher": 0,
+            "wheelchair": 0
+          },
+          "node": 0,
+          "trip_id": "P31t"
+        }
+      ],
+      "vehicle_id": "V5"
+    }
+  ],
+  "seed": 44,
+  "synthetic": true,
+  "trips": [
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 37,
+      "requested_time": "05:55",
+      "rider_id": "R01",
+      "seq": 0,
+      "status": "scheduled",
+      "trip_id": "P01t",
+      "vehicle_id": "V3",
+      "window": [
+        "05:45",
+        "06:15"
+      ]
+    },
+    {
+      "dest_node": 37,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "11:05",
+      "rider_id": "R01",
+      "seq": 8,
+      "status": "scheduled",
+      "trip_id": "P01f",
+      "vehicle_id": "V1",
+      "window": [
+        "10:50",
+        "11:20"
+      ]
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 34,
+      "requested_time": "05:40",
+      "rider_id": "R02",
+      "seq": 0,
+      "status": "scheduled",
+      "trip_id": "P02t",
+      "vehicle_id": "V1",
+      "window": [
+        "05:30",
+        "06:00"
+      ]
+    },
+    {
+      "dest_node": 34,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "12:06",
+      "rider_id": "R02",
+      "seq": 10,
+      "status": "will_call",
+      "trip_id": "P02f",
+      "vehicle_id": "V1",
+      "window": null
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 32,
+      "requested_time": "05:55",
+      "rider_id": "R03",
+      "seq": 0,
+      "status": "scheduled",
+      "trip_id": "P04t",
+      "vehicle_id": "V4",
+      "window": [
+        "05:45",
+        "06:15"
+      ]
+    },
+    {
+      "dest_node": 32,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "12:30",
+      "rider_id": "R03",
+      "seq": 12,
+      "status": "will_call",
+      "trip_id": "P04f",
+      "vehicle_id": "V1",
+      "window": null
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 23,
+      "requested_time": "05:55",
+      "rider_id": "R05",
+      "seq": 0,
+      "status": "scheduled",
+      "trip_id": "P07t",
+      "vehicle_id": "V5",
+      "window": [
+        "05:45",
+        "06:15"
+      ]
+    },
+    {
+      "dest_node": 23,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "10:50",
+      "rider_id": "R05",
+      "seq": 6,
+      "status": "scheduled",
+      "trip_id": "P07f",
+      "vehicle_id": "V1",
+      "window": [
+        "10:35",
+        "11:05"
+      ]
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 24,
+      "requested_time": "05:40",
+      "rider_id": "R06",
+      "seq": 0,
+      "status": "scheduled",
+      "trip_id": "P09t",
+      "vehicle_id": "V2",
+      "window": [
+        "05:30",
+        "06:00"
+      ]
+    },
+    {
+      "dest_node": 24,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "10:35",
+      "rider_id": "R06",
+      "seq": 4,
+      "status": "scheduled",
+      "trip_id": "P09f",
+      "vehicle_id": "V1",
+      "window": [
+        "10:20",
+        "10:50"
+      ]
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 28,
+      "requested_time": "05:40",
+      "rider_id": "R07",
+      "seq": null,
+      "status": "queued",
+      "trip_id": "P12t",
+      "vehicle_id": null,
+      "window": [
+        "05:30",
+        "06:00"
+      ]
+    },
+    {
+      "dest_node": 28,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "10:35",
+      "rider_id": "R07",
+      "seq": null,
+      "status": "queued",
+      "trip_id": "P12f",
+      "vehicle_id": null,
+      "window": [
+        "10:20",
+        "10:50"
+      ]
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 2,
+      "requested_time": "10:40",
+      "rider_id": "R08",
+      "seq": 2,
+      "status": "scheduled",
+      "trip_id": "P13t",
+      "vehicle_id": "V3",
+      "window": [
+        "10:30",
+        "11:00"
+      ]
+    },
+    {
+      "dest_node": 2,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "17:36",
+      "rider_id": "R08",
+      "seq": 14,
+      "status": "will_call",
+      "trip_id": "P13f",
+      "vehicle_id": "V2",
+      "window": null
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 5,
+      "requested_time": "10:40",
+      "rider_id": "R09",
+      "seq": 2,
+      "status": "scheduled",
+      "trip_id": "P18t",
+      "vehicle_id": "V4",
+      "window": [
+        "10:30",
+        "11:00"
+      ]
+    },
+    {
+      "dest_node": 5,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "18:27",
+      "rider_id": "R09",
+      "seq": 16,
+      "status": "will_call",
+      "trip_id": "P18f",
+      "vehicle_id": "V2",
+      "window": null
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 13,
+      "requested_time": "10:40",
+      "rider_id": "R10",
+      "seq": 2,
+      "status": "scheduled",
+      "trip_id": "P19t",
+      "vehicle_id": "V5",
+      "window": [
+        "10:30",
+        "11:00"
+      ]
+    },
+    {
+      "dest_node": 13,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "17:30",
+      "rider_id": "R10",
+      "seq": 12,
+      "status": "will_call",
+      "trip_id": "P19f",
+      "vehicle_id": "V2",
+      "window": null
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 11,
+      "requested_time": "10:25",
+      "rider_id": "R11",
+      "seq": 2,
+      "status": "scheduled",
+      "trip_id": "P20t",
+      "vehicle_id": "V1",
+      "window": [
+        "10:15",
+        "10:45"
+      ]
+    },
+    {
+      "dest_node": 11,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "15:35",
+      "rider_id": "R11",
+      "seq": 8,
+      "status": "scheduled",
+      "trip_id": "P20f",
+      "vehicle_id": "V2",
+      "window": [
+        "15:20",
+        "15:50"
+      ]
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 12,
+      "requested_time": "10:25",
+      "rider_id": "R12",
+      "seq": 2,
+      "status": "scheduled",
+      "trip_id": "P24t",
+      "vehicle_id": "V2",
+      "window": [
+        "10:15",
+        "10:45"
+      ]
+    },
+    {
+      "dest_node": 12,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "15:20",
+      "rider_id": "R12",
+      "seq": 10,
+      "status": "scheduled",
+      "trip_id": "P24f",
+      "vehicle_id": "V2",
+      "window": [
+        "15:05",
+        "15:35"
+      ]
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 18,
+      "requested_time": "15:25",
+      "rider_id": "R13",
+      "seq": 4,
+      "status": "scheduled",
+      "trip_id": "P25t",
+      "vehicle_id": "V3",
+      "window": [
+        "15:15",
+        "15:45"
+      ]
+    },
+    {
+      "dest_node": 18,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "22:54",
+      "rider_id": "R13",
+      "seq": null,
+      "status": "queued",
+      "trip_id": "P25f",
+      "vehicle_id": null,
+      "window": null
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 29,
+      "requested_time": "15:40",
+      "rider_id": "R14",
+      "seq": 16,
+      "status": "scheduled",
+      "trip_id": "P27t",
+      "vehicle_id": "V1",
+      "window": [
+        "15:30",
+        "16:00"
+      ]
+    },
+    {
+      "dest_node": 29,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "22:45",
+      "rider_id": "R14",
+      "seq": null,
+      "status": "queued",
+      "trip_id": "P27f",
+      "vehicle_id": null,
+      "window": null
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 9,
+      "requested_time": "15:25",
+      "rider_id": "R15",
+      "seq": 4,
+      "status": "scheduled",
+      "trip_id": "P28t",
+      "vehicle_id": "V4",
+      "window": [
+        "15:15",
+        "15:45"
+      ]
+    },
+    {
+      "dest_node": 9,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "20:50",
+      "rider_id": "R15",
+      "seq": 10,
+      "status": "scheduled",
+      "trip_id": "P28f",
+      "vehicle_id": "V3",
+      "window": [
+        "20:35",
+        "21:05"
+      ]
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 8,
+      "requested_time": "15:40",
+      "rider_id": "R16",
+      "seq": 6,
+      "status": "scheduled",
+      "trip_id": "P29t",
+      "vehicle_id": "V2",
+      "window": [
+        "15:30",
+        "16:00"
+      ]
+    },
+    {
+      "dest_node": 8,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "23:28",
+      "rider_id": "R16",
+      "seq": null,
+      "status": "queued",
+      "trip_id": "P29f",
+      "vehicle_id": null,
+      "window": null
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 36,
+      "requested_time": "15:25",
+      "rider_id": "R18",
+      "seq": 4,
+      "status": "scheduled",
+      "trip_id": "P31t",
+      "vehicle_id": "V5",
+      "window": [
+        "15:15",
+        "15:45"
+      ]
+    },
+    {
+      "dest_node": 36,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "20:50",
+      "rider_id": "R18",
+      "seq": null,
+      "status": "queued",
+      "trip_id": "P31f",
+      "vehicle_id": null,
+      "window": [
+        "20:35",
+        "21:05"
+      ]
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 19,
+      "requested_time": "15:10",
+      "rider_id": "R19",
+      "seq": 14,
+      "status": "scheduled",
+      "trip_id": "P32t",
+      "vehicle_id": "V1",
+      "window": [
+        "15:00",
+        "15:30"
+      ]
+    },
+    {
+      "dest_node": 19,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "19:50",
+      "rider_id": "R19",
+      "seq": 8,
+      "status": "scheduled",
+      "trip_id": "P32f",
+      "vehicle_id": "V3",
+      "window": [
+        "19:35",
+        "20:05"
+      ]
+    },
+    {
+      "dest_node": 0,
+      "leg": "to",
+      "origin_node": 17,
+      "requested_time": "15:10",
+      "rider_id": "R22",
+      "seq": 4,
+      "status": "scheduled",
+      "trip_id": "P36t",
+      "vehicle_id": "V2",
+      "window": [
+        "15:00",
+        "15:30"
+      ]
+    },
+    {
+      "dest_node": 17,
+      "leg": "from",
+      "origin_node": 0,
+      "requested_time": "19:35",
+      "rider_id": "R22",
+      "seq": 6,
+      "status": "scheduled",
+      "trip_id": "P36f",
+      "vehicle_id": "V3",
+      "window": [
+        "19:20",
+        "19:50"
+      ]
+    }
+  ]
+}

@@ -26,7 +26,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 GATE_DIRS = ("evals/repo", "evals/data", "evals/invariants", "evals/scenarios")
-WORKERS = 10  # measured 2026-09-17 on 12 CPUs: 95 s serial, 51 s at 6 workers, 46 s at 10
+WORKERS = 4  # measured 2026-09-17 on a 10-core laptop: 95 s serial; 4 workers beat 10 once the solver processes throttle the clock
 GOLDEN = ROOT / "evals" / "golden"
 RECEIPTS = GOLDEN / "receipts.json"
 BASELINE_GOLDEN = GOLDEN / "baseline.json"
