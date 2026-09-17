@@ -1,7 +1,8 @@
 """One client wrapper: model, effort, thinking, cache blocks, timeouts, retries, usage and cost.
 
-``FakeMediator`` plays the same protocol without the network, so the loop, the ledger and the
-invariants run in the gate; the live client is the demo.
+``AnthropicMediator`` drives the tool loop; ``AnthropicWriter`` makes one structured-output call
+(explainer, judge). ``FakeMediator`` and ``FakeWriter`` play the same protocols without the
+network, so the loop, the ledger and the invariants run in the gate; the live clients are the demo.
 """
 
 from __future__ import annotations
@@ -13,9 +14,11 @@ from typing import Any, Protocol
 
 from c2r.models import Usage
 
-# Dollars per million tokens, handoff section 5 (verified 2026-09-17).
+# Dollars per million tokens: Fable 5.1 from handoff section 5 (verified 2026-09-17); Sonnet 5
+# from the Claude API skill's model table (2026-09-17), cache read 0.1x and write 1.25x of input.
 PRICES: dict[str, dict[str, float]] = {
     "claude-fable-5-1": {"input": 10.0, "output": 50.0, "cache_read": 0.25, "cache_write": 12.5},
+    "claude-sonnet-5": {"input": 2.0, "output": 10.0, "cache_read": 0.2, "cache_write": 2.5},
 }
 FAKE_MODEL = "fake-mediator"
 
@@ -126,6 +129,155 @@ class AnthropicMediator:
         return Turn(
             text, calls, usage, cost_usd(self.model_id, usage), response.stop_reason or "", content
         )
+
+
+@dataclass
+class Completion:
+    data: dict[str, Any] | None  # the parsed JSON, or None on refusal, truncation or bad JSON
+    text: str
+    usage: Usage
+    cost_usd: float
+    stop_reason: str
+
+
+class Writer(Protocol):
+    model_id: str
+    effort: str
+
+    def complete(self, system: str, user: str, schema: dict[str, Any]) -> Completion: ...
+
+
+class AnthropicWriter:
+    """One structured-output call: system + user -> JSON matching ``schema``.
+
+    Thinking is left at the model's default (adaptive on Sonnet 5, always on for Fable 5.1);
+    ``effort`` rides in ``output_config`` beside the JSON schema. A refusal or a truncated
+    answer comes back with ``data=None`` and the stop reason; the caller decides what that means.
+    """
+
+    def __init__(
+        self,
+        model: str = "claude-sonnet-5",
+        effort: str = "medium",
+        max_tokens: int = 1500,
+        timeout: float = 30.0,
+        retries: int = 2,
+    ) -> None:
+        import anthropic
+
+        self._anthropic = anthropic
+        self.client = anthropic.Anthropic(timeout=timeout, max_retries=0)
+        self.model_id = model
+        self.effort = effort
+        self.max_tokens = max_tokens
+        self.retries = retries
+
+    def complete(self, system: str, user: str, schema: dict[str, Any]) -> Completion:
+        a = self._anthropic
+        kwargs: dict[str, Any] = {
+            "model": self.model_id,
+            "max_tokens": self.max_tokens,
+            "system": system,
+            "messages": [{"role": "user", "content": user}],
+            "output_config": {
+                "effort": self.effort,
+                "format": {"type": "json_schema", "schema": schema},
+            },
+        }
+        attempt = 0
+        while True:
+            try:
+                response = self.client.messages.create(**kwargs)
+            except (a.APIConnectionError, a.RateLimitError, a.InternalServerError) as exc:
+                if attempt >= self.retries:
+                    raise MediatorError(f"{type(exc).__name__}: {exc}") from exc
+                attempt += 1
+                time.sleep(2.0 * attempt)
+                continue
+            usage = Usage(
+                input=response.usage.input_tokens,
+                cache_read=response.usage.cache_read_input_tokens or 0,
+                cache_write=response.usage.cache_creation_input_tokens or 0,
+                output=response.usage.output_tokens,
+            )
+            text = "\n".join(block.text for block in response.content if block.type == "text")
+            stop = response.stop_reason or ""
+            data: dict[str, Any] | None = None
+            if stop == "end_turn":
+                try:
+                    data = json.loads(text)
+                except ValueError:
+                    data = None
+                if not isinstance(data, dict):
+                    data = None
+                    if attempt < self.retries:  # the grammar should prevent this; ask once more
+                        attempt += 1
+                        continue
+                    stop = "invalid_json"
+            return Completion(data, text, usage, cost_usd(self.model_id, usage), stop)
+
+
+def fake_explanation(card: dict[str, Any]) -> dict[str, str]:
+    """Templated prose from a facts card: the offline explainer for the gate."""
+    after, before = card.get("after") or {}, card.get("before") or {}
+    event = card.get("event")
+    window = after.get("pickup_window")
+    ride = (
+        f"Your ride home is booked between {window[0]} and {window[1]} on van {after['vehicle']}, "
+        "from the unit door."
+        if window and after.get("vehicle")
+        else "Your ride home is not booked yet. The front desk will call you."
+    )
+    why_event = (
+        f"Van {event['payload'].get('vehicle_id', '?')} broke down at {event['t']}, "
+        "so your ride moved to another van."
+        if event
+        else "We moved the vans around so nobody waits long after treatment."
+    )
+    late = f"If the van is late, call {card['contact']}."
+    if card["audience"] == "rider":
+        return {
+            "what_changed": f"Your chair time is {after.get('chair_start')}. {ride}",
+            "why": f"{why_event} {late}",
+            "contact": card["contact"],
+        }
+    if card["audience"] == "nurse":
+        start = (
+            f"chair start moved from {before.get('chair_start')} to {after.get('chair_start')}"
+            if before.get("chair_start") != after.get("chair_start")
+            else f"chair start stays {after.get('chair_start')}"
+        )
+        ride = (
+            f"ride home window {window[0]} to {window[1]} on van {after['vehicle']}"
+            if window and after.get("vehicle")
+            else "ride home not yet booked"
+        )
+        return {
+            "what_changed": f"{card['subject_id']} ({card.get('name')}): {start}; {ride}.",
+            "why": f"{why_event} {late}",
+            "contact": card["contact"],
+        }
+    item = card.get("review_item") or {}
+    return {
+        "what_changed": (
+            f"{card['subject_id']} needs a person: {item.get('recommended_action', 'see the queue')}."
+        ),
+        "why": f"{item.get('reason_code', 'queued')}: the rules could not settle it. {late}",
+        "contact": card["contact"],
+    }
+
+
+class FakeWriter:
+    """The offline explainer: deterministic prose from the card; usage numbers are imitation."""
+
+    model_id = FAKE_MODEL
+    effort = "none"
+
+    def complete(self, system: str, user: str, schema: dict[str, Any]) -> Completion:
+        del system, schema
+        data = fake_explanation(json.loads(user))
+        usage = Usage(input=1500, cache_read=0, cache_write=0, output=120)
+        return Completion(data, json.dumps(data), usage, 0.0, "end_turn")
 
 
 def _payload(block: dict[str, Any]) -> Any:
