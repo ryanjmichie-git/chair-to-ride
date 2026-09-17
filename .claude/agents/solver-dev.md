@@ -1,13 +1,7 @@
 ---
 name: solver-dev
 description: Implements and fixes the deterministic solver, verifier, and party modules for a checkpoint. Use for work on src/c2r/solver.py, verify.py, or parties/.
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
-  - Grep
-  - Glob
+tools: Read, Edit, Write, Bash, Grep, Glob
 model: inherit
 hooks:
   PreToolUse:

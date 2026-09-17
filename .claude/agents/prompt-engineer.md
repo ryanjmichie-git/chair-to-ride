@@ -1,11 +1,7 @@
 ---
 name: prompt-engineer
 description: Edits prompts to fix judge failures. Use when a judge bucket is failing and a prompt needs a new version.
-tools:
-  - Read
-  - Edit
-  - Write
-  - Bash
+tools: Read, Edit, Write, Bash
 model: inherit
 hooks:
   PreToolUse:

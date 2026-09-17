@@ -1,11 +1,7 @@
 ---
 name: reviewer
 description: Read-only reviewer that reports gaps between a diff and its checkpoint spec. Use after a checkpoint is implemented, before commit.
-tools:
-  - Read
-  - Grep
-  - Glob
-  - Bash
+tools: Read, Grep, Glob, Bash
 model: inherit
 hooks:
   PreToolUse:

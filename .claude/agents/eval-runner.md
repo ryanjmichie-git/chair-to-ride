@@ -1,10 +1,7 @@
 ---
 name: eval-runner
 description: Runs eval suites and grades prompt-engineer's changes. Use to run invariants, scenarios, or judge-only passes and report results.
-tools:
-  - Read
-  - Bash
-  - Write
+tools: Read, Bash, Write
 model: inherit
 hooks:
   PreToolUse:

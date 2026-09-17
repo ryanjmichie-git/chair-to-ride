@@ -1,10 +1,7 @@
 ---
 name: data-synth
 description: Regenerates and calibrates synthetic data. Use for changes to src/c2r/synth.py output or data/synthetic/ calibration.
-tools:
-  - Read
-  - Bash
-  - Write
+tools: Read, Bash, Write
 model: inherit
 hooks:
   PreToolUse:

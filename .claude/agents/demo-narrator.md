@@ -1,9 +1,7 @@
 ---
 name: demo-narrator
 description: Writes the demo script from the latest run. Use at CP5 to draft or update docs/demo_script.md.
-tools:
-  - Read
-  - Write
+tools: Read, Write
 model: sonnet
 hooks:
   PreToolUse:
