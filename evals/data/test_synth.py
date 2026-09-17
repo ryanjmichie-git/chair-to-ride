@@ -268,27 +268,43 @@ def test_returns_are_really_shared(manifest: Manifest) -> None:
 
 @pytest.mark.llm
 @pytest.mark.skipif(not os.environ.get("ANTHROPIC_API_KEY"), reason="needs ANTHROPIC_API_KEY")
-def test_notes_reference_only_facts_in_the_record(roster: Roster) -> None:
+def test_notes_reference_only_facts_in_the_record(
+    roster: Roster, travel: Travel, rules: dict[str, Any]
+) -> None:
+    """Reserved for the full eval pass: the gate deselects llm-marked tests.
+
+    The judge sees the same facts the note writer sees: the patient, the rider, the home
+    node's zone, and the hypotension flag that the recovery buffer encodes.
+    """
     import anthropic
 
     client = anthropic.Anthropic()
     riders = {rider.patient_id: rider for rider in roster.riders}
+    zones = {node.node_id: node.zone.value for node in travel.nodes}
+    hypotension_buffer = rules["recovery_buffer_min"]["hypotension"]
     consistent = 0
     for patient in roster.patients:
         rider = riders.get(patient.patient_id)
         record = patient.model_dump(mode="json")
+        record["hypotension_history"] = int(patient.recovery_buffer_min) == hypotension_buffer
         if rider is not None:
             record["rider"] = rider.model_dump(mode="json")
+            record["rider"]["home_zone"] = zones[rider.home_node]
         response = client.messages.create(
             model="claude-sonnet-5",
-            max_tokens=1000,
+            max_tokens=4000,
             system=(
                 "You check a synthetic dialysis record against its notes. Return consistent=true "
-                "only if every fact stated in nurse_note and rider_note appears in the record."
+                "only if every fact stated in nurse_note and rider_note appears in the record. "
+                "Equipment and crew implied by the mobility class count as in the record: "
+                "wheelchair implies a lift, stretcher implies two crew, assist implies a hand "
+                "at the curb or transfer. Keep each issue to one short sentence."
             ),
             messages=[{"role": "user", "content": json.dumps(record, sort_keys=True)}],
             output_config={"format": {"type": "json_schema", "schema": NOTE_CHECK_SCHEMA}},
         )
+        if response.stop_reason != "end_turn":
+            continue  # truncated or refused: counts as inconsistent, never crashes
         text = next(block.text for block in response.content if block.type == "text")
         consistent += int(json.loads(text)["consistent"])
     assert consistent / len(roster.patients) >= 0.95

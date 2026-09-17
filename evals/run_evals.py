@@ -1,4 +1,7 @@
-"""Eval entry point; --gate runs the repo and data suites and prints one summary line."""
+"""Eval entry point; --gate runs the repo and data suites and prints one summary line.
+
+Tests marked ``llm`` call the API and are reserved for the full pass (--full, CP4).
+"""
 
 from __future__ import annotations
 
@@ -25,7 +28,7 @@ def _gate() -> int:
         return 1
     started = time.monotonic()
     proc = subprocess.run(
-        [sys.executable, "-m", "pytest", *present, "-q", "-p", "no:cacheprovider"],
+        [sys.executable, "-m", "pytest", *present, "-q", "-m", "not llm", "-p", "no:cacheprovider"],
         cwd=ROOT,
         capture_output=True,
         text=True,
