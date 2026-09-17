@@ -1,4 +1,4 @@
-.PHONY: setup models synth baseline test gate demo check-models
+.PHONY: setup models synth baseline solve timeline test gate demo check-models
 
 ENV_FILE := $(wildcard .env)
 UV_RUN := uv run $(if $(ENV_FILE),--env-file $(ENV_FILE),)
@@ -15,6 +15,12 @@ synth:
 baseline:
 	$(UV_RUN) python -m c2r.metrics data/synthetic/42
 
+solve:
+	$(UV_RUN) python -m c2r.solver data/synthetic/42 --out runs/cp1
+
+timeline:
+	$(UV_RUN) python -m c2r.viz.timeline runs/cp1
+
 test:
 	$(UV_RUN) pytest -q
 
@@ -22,7 +28,8 @@ gate:
 	$(UV_RUN) python evals/run_evals.py --gate
 
 demo:
-	$(MAKE) baseline
+	$(MAKE) solve
+	$(MAKE) timeline
 
 check-models:
 	$(UV_RUN) python scripts/check_models.py

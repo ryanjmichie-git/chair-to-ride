@@ -1,0 +1,66 @@
+# Session handoff
+
+Updated 2026-09-17 during CP1 (solver + verifier). Start a fresh session from here.
+
+## Built this session
+Committed first (4 commits, each under 400 changed lines in `src/`):
+- `src/c2r/state.py`: `State` loader, `scheduled_ready`, `actual_ready`.
+- `src/c2r/verify.py`: `ride_checks.py` renamed and extended to H1-H13, `schedule_hash`,
+  `verify(candidate, baseline, version)`; H7 anchors on the baseline request.
+- `src/c2r/routing.py`: `Plan`/`Batch`, `plan_from_manifest`, `committed_vans`, `build_manifest`
+  (byte-for-byte rebuild of the baseline from its own plan).
+- `src/c2r/parties/{__init__,unit,broker}.py`: deterministic parties with reason codes and hints.
+- `evals/invariants/test_verify.py`, `test_routing.py`, `test_parties.py`.
+
+Committed at the end of the session (4 more commits, 8 for CP1 in all):
+- `src/c2r/moves.py`: `apply`, `j_score`, `honest_opens`, `_moves`, window fixes.
+- `src/c2r/review.py`: `legal_options`, `review_queue` (the human-review items).
+- `src/c2r/solver.py`: `generate_candidates`, greedy `solve`, closing window pass, run
+  artefacts, CLI `python -m c2r.solver <data_dir> --out runs/cp1`.
+- `src/c2r/routing.py` (`Infeasible`, any-leg van pool, shallow copies), `src/c2r/verify.py`
+  (`is_will_call`; H7 anchors will-call riders on the roster's actual ready time).
+- `src/c2r/viz/timeline.py`: before/after Gantt as one self-contained HTML file.
+- `evals/invariants/test_invariants.py` I1-I15 on the after-state; new routing/party/verify tests.
+- `Makefile`: `solve`, `timeline`; `demo` runs both. `docs/cp1-decisions.md`, `docs/llms.txt`,
+  CLAUDE.md lessons 1-2.
+
+## Decisions made (details and numbers in docs/cp1-decisions.md)
+1. A shift's return pool is every van the baseline already sends for that shift's riders, either
+   leg (all five on seed 42). One van per shift made the target physically unreachable.
+2. A return with no standing window is a will-call whatever its status; its request time becomes
+   the actual ready time when scheduled. Standing orders keep the baseline request, read from the
+   baseline in verify and the broker party.
+3. H6 keeps scheduled ready; the solver plans against actual ready.
+4. Sub-codes H9_SHIFT/H9_ROUTE/BROKER_EARLIEST report as H9 (schema enum).
+5. Windows follow the van: touched returns are re-timed to where the van arrives, inside the
+   ADA band; a closing pass re-times riders whose pickup drifted.
+6. Riders still over 45 min after the loop are held for will-call on the record (`H<n>` bundles,
+   metrics printed before any hold). On seed 42 nobody is held.
+7. The step cap is `stop.max_iterations x max_moves_per_bundle`; the early stop needs every
+   non-stretcher return scheduled.
+8. A queued rider with a legal, accepted candidate gets a `BROKER_POLICY` item naming the bundle
+   and both J values, judged on the final state, not `NO_FEASIBLE_WINDOW`.
+9. Lesson 3 (will-call opens) was dropped again: it duplicated code comments.
+
+## Artifacts
+- `runs/cp1/`: schedule_before/after.json, verify_after.json, bundles.json, review_queue.json,
+  metrics.json, timeline.html. Git-ignored; `make demo` regenerates them.
+- Seed 42: mean post-wait 70.21 -> 3.38, p90 131 -> 21, equity gap 32.14 -> 6.28,
+  flagged 4 -> 2 (stretcher, P31f), J 1262.7 -> 297.35, 14 bundles, 0 violations, ~13 s.
+
+## Acceptance status
+- `uv run pytest evals/invariants -q`: 57 passed (19.8 s).
+- `make gate`: 188 passed, GATE PASS (52.9 s).
+- `make solve`: 0 violations, after beats baseline, target (mean <= 25, p90 <= 45) met.
+- `make timeline`: runs/cp1/timeline.html, two panels, no external assets.
+- Reviews: four reviewer passes (verifier; routing+parties; solver; solver fixes + timeline),
+  every finding fixed or recorded in docs/cp1-decisions.md. Nothing waived.
+
+## What's next
+1. Open `runs/cp1/timeline.html` in a browser and eyeball it (not done: no browser this session).
+2. Decide whether to add a pre-commit K2 hook (staged `src/` diff over 400 lines blocks the
+   commit); the reviewer recommended it, nothing enforces K2 today.
+3. Decide whether `metrics.vehicle_min` should count on-task minutes rather than a van's span
+   (B's call; it is why P31f stays queued on seed 42).
+4. CP2 starts with `/kickoff cp2`; `generate_candidates(baseline, state, plan, side, k=6)` is
+   the tool the mediator calls, and `unit.respond` / `broker.respond` are the parties.

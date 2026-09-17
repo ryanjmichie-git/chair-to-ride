@@ -6,7 +6,7 @@ An agent re-times a dialysis unit's chair schedule against a paratransit manifes
 - [CHAIR-TO-RIDE-HANDOFF.md](../CHAIR-TO-RIDE-HANDOFF.md): the full product and technical spec this repo is built from.
 - [CLAUDE.md](../CLAUDE.md): commands, rules of engagement, and lessons for a Claude Code session.
 - [KICKOFF.md](../KICKOFF.md): tonight's build runbook — roles, session table, emergency cut.
-- [Makefile](../Makefile): `setup`, `models`, `synth`, `baseline`, `test`, `gate`, `demo` targets.
+- [Makefile](../Makefile): `setup`, `models`, `synth`, `baseline`, `solve`, `timeline`, `test`, `gate`, `demo` targets.
 - [pyproject.toml](../pyproject.toml): package `c2r`, dependencies, ruff/pytest config.
 - [config/](../config/): `rules.yaml` (constants + weights), `unit_policy.md`, `broker_policy.md`.
 - [data/](../data/): `names.json` and `synthetic/<seed>/` — the only data this project ever reads.
@@ -27,6 +27,13 @@ An agent re-times a dialysis unit's chair schedule against a paratransit manifes
 - [src/c2r/metrics.py](../src/c2r/metrics.py): `compute_metrics()` — the one place wait/equity numbers are computed.
 - [src/c2r/timeutil.py](../src/c2r/timeutil.py): `to_min`, `to_hhmm`, `p90` helpers.
 - [src/c2r/banner.py](../src/c2r/banner.py): the required "SYNTHETIC DATA" output banner.
+- [src/c2r/state.py](../src/c2r/state.py): `State` (unit, roster, manifest, fleet, travel, rules), `load_state`, `scheduled_ready`, `actual_ready`.
+- [src/c2r/verify.py](../src/c2r/verify.py): `verify(candidate, baseline)` — H1-H13, metrics and hash, recomputed from the roster and stop sequence.
+- [src/c2r/routing.py](../src/c2r/routing.py): `Plan`/`Batch`, `plan_from_manifest`, `committed_vans`, `build_manifest` — the only place ETAs are laid out.
+- [src/c2r/moves.py](../src/c2r/moves.py): `apply`, `j_score`, `honest_opens`, single-step move enumeration and window fixes.
+- [src/c2r/solver.py](../src/c2r/solver.py): `generate_candidates`, greedy `solve`, review queue, run artefacts (`python -m c2r.solver <data_dir> --out runs/<name>`).
+- [src/c2r/parties/](../src/c2r/parties/): `unit.respond` and `broker.respond` — deterministic accept/reject with reason codes and hints.
+- [src/c2r/viz/timeline.py](../src/c2r/viz/timeline.py): before/after Gantt as one self-contained HTML file (`python -m c2r.viz.timeline runs/<name>`).
 
 ## specs/
 - [specs/TEMPLATE.md](../specs/TEMPLATE.md): the five-header template every checkpoint spec follows.
