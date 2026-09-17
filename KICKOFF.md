@@ -8,7 +8,7 @@
 ## Before opening Claude Code
 ```
 make setup && make models && make synth && make baseline
-uv run python scripts/check_models.py
+make check-models   # reads ANTHROPIC_API_KEY from .env (git-ignored); Claude Code never sees the key
 ```
 Start `claude` from the repo root, run `/hooks`, confirm **7 hooks** are registered. Confirm `/rename` and `/model` exist with `/help` — API surface can drift between builds.
 
