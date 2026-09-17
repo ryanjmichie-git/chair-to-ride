@@ -1,0 +1,52 @@
+# Chair-to-Ride
+
+An agent re-times a dialysis unit's chair schedule against a paratransit manifest. Synthetic data only.
+
+## Top level
+- [CHAIR-TO-RIDE-HANDOFF.md](../CHAIR-TO-RIDE-HANDOFF.md): the full product and technical spec this repo is built from.
+- [CLAUDE.md](../CLAUDE.md): commands, rules of engagement, and lessons for a Claude Code session.
+- [KICKOFF.md](../KICKOFF.md): tonight's build runbook — roles, session table, emergency cut.
+- [Makefile](../Makefile): `setup`, `models`, `synth`, `baseline`, `test`, `gate`, `demo` targets.
+- [pyproject.toml](../pyproject.toml): package `c2r`, dependencies, ruff/pytest config.
+- [config/](../config/): `rules.yaml` (constants + weights), `unit_policy.md`, `broker_policy.md`.
+- [data/](../data/): `names.json` and `synthetic/<seed>/` — the only data this project ever reads.
+- [docs/](../docs/): this index and `demo_script.md` / `backup.mp4` once CP5 lands.
+- [evals/](../evals/): `invariants/` (I1–I20), `scenarios/`, `golden/`, `repo/`, `data/`, `run_evals.py`.
+- [prompts/](../prompts/): versioned LLM prompts (`synth_notes`, `mediator`, `explainer`, `judge`).
+- [runs/](../runs/): per-run outputs — schedules, ledger, metrics, timeline.
+- [scripts/](../scripts/): `spec_check.py`, `add_lesson.py`, `check_models.py`.
+- [specs/](../specs/): checkpoint specs and JSON Schemas.
+- [src/c2r/](../src/c2r/): the `c2r` package (see below).
+- [.claude/](../.claude/): skills, agents, hooks, settings (see below).
+
+## src/c2r/
+- [src/c2r/__init__.py](../src/c2r/__init__.py): package version.
+- [src/c2r/models.py](../src/c2r/models.py): Pydantic v2 models generated from `specs/schemas/`.
+- [src/c2r/phi.py](../src/c2r/phi.py): `PATTERNS` and `find_phi()` — the PHI regex guard used by hooks and evals.
+- [src/c2r/synth.py](../src/c2r/synth.py): synthetic data generator (`python -m c2r.synth --seed 42`).
+- [src/c2r/metrics.py](../src/c2r/metrics.py): `compute_metrics()` — the one place wait/equity numbers are computed.
+- [src/c2r/timeutil.py](../src/c2r/timeutil.py): `to_min`, `to_hhmm`, `p90` helpers.
+- [src/c2r/banner.py](../src/c2r/banner.py): the required "SYNTHETIC DATA" output banner.
+
+## specs/
+- [specs/TEMPLATE.md](../specs/TEMPLATE.md): the five-header template every checkpoint spec follows.
+- [specs/INDEX.md](../specs/INDEX.md): the CP0–CP5 status table; `@`-imported into `CLAUDE.md`.
+- [specs/cp0-scaffold.md](../specs/cp0-scaffold.md) … [specs/cp5-rehearse.md](../specs/cp5-rehearse.md): one spec per checkpoint.
+- [specs/schemas/](../specs/schemas/): JSON Schema draft 2020-12 for every model, `common.schema.json` plus one file per entity.
+
+## .claude/
+- [.claude/settings.json](../.claude/settings.json): hook registrations (`PreToolUse`, `PostToolUse`, `Stop`, `SessionStart`) and permission denies.
+- [.claude/hooks/](../.claude/hooks/): the guard scripts settings.json registers — PHI, prompt-freeze, danger, pytest-quick, render-timeline, eval-gate, session-brief, plus the `path_guard`/`bash_allow` CLIs subagents use.
+- [.claude/skills/kickoff/SKILL.md](../.claude/skills/kickoff/SKILL.md): `/kickoff [cpN]` — spec check, plan mode, implement, review, commit.
+- [.claude/skills/review/SKILL.md](../.claude/skills/review/SKILL.md): `/review` — reviewer subagent reports gaps vs. spec.
+- [.claude/skills/run-demo/SKILL.md](../.claude/skills/run-demo/SKILL.md): `/run-demo` — run and summarise `make demo`.
+- [.claude/skills/run-evals/SKILL.md](../.claude/skills/run-evals/SKILL.md): `/run-evals` — run and summarise the eval suite.
+- [.claude/skills/lesson/SKILL.md](../.claude/skills/lesson/SKILL.md): `/lesson` — append a lesson, propose a hook if mechanical.
+- [.claude/skills/commit/SKILL.md](../.claude/skills/commit/SKILL.md): `/commit` — lint, test, commit, never push.
+- [.claude/skills/domain-rules/SKILL.md](../.claude/skills/domain-rules/SKILL.md): H1–H13, immovables, objective `J`, autonomy table, glossary.
+- [.claude/agents/solver-dev.md](../.claude/agents/solver-dev.md): writes `solver.py` / `verify.py` / `parties/*`.
+- [.claude/agents/reviewer.md](../.claude/agents/reviewer.md): read-only diff-vs-spec reviewer.
+- [.claude/agents/eval-runner.md](../.claude/agents/eval-runner.md): runs eval suites, writes only under `runs/`.
+- [.claude/agents/data-synth.md](../.claude/agents/data-synth.md): regenerates/calibrates data under `data/synthetic/`.
+- [.claude/agents/prompt-engineer.md](../.claude/agents/prompt-engineer.md): edits `prompts/`, bumps versions, reports pass-rate deltas.
+- [.claude/agents/demo-narrator.md](../.claude/agents/demo-narrator.md): writes `docs/demo_script.md` from `runs/`.
