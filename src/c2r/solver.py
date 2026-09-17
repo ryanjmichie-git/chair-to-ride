@@ -187,15 +187,101 @@ def solve(baseline: State) -> Result:
             and metrics.equity_gap <= stop["target_equity_gap"]
         ):
             break
+    return finish_run(baseline, state, plan, run, rejected)
+
+
+def chain_bundle(
+    baseline: State, state: State, plan: Plan, tag: str, first: list[Candidate] | None = None
+) -> Candidate | None:
+    """Up to ``max_moves_per_bundle`` greedy, party-accepted single moves as one bundle.
+
+    The mediator (CP2) applies one bundle per turn, so this is how a turn moves six things.
+    The chained bundle is re-applied from the starting state so it reproduces on replay.
+    """
+    stop = baseline.rules["stop"]
+    limit = baseline.rules["max_moves_per_bundle"]
+    moves: list = []
+    sides: set[str] = set()
+    cur_state, cur_plan = state, plan
+    j = j_score(
+        state,
+        baseline,
+        compute_metrics(state.roster, state.manifest, state.rules),
+        _queued_returns(state),
+    )
+    while True:
+        pool = first if first is not None and not moves else None
+        cands = pool or generate_candidates(baseline, cur_state, cur_plan, k=None, tag="chain-")
+        chosen = _first_accepted(baseline, cands, [])
+        if chosen is None or j - chosen.j < j * stop["min_improvement_pct"] / 100:
+            break
+        if len(moves) + len(chosen.bundle.moves) > limit:
+            break
+        moves.extend(chosen.bundle.moves)
+        sides.add(chosen.bundle.side)
+        cur_state, cur_plan, j = chosen.state, chosen.plan, chosen.j
+    if len(moves) < 2:
+        return None
+    side = sides.pop() if len(sides) == 1 else "both"
+    bundle = _bundle(f"{tag}C001", side, moves, [])
+    try:
+        new_state, new_plan = apply(baseline, state, plan, bundle)
+    except Infeasible:
+        return None
+    if all_violations(new_state, baseline):
+        return None
+    before = compute_metrics(state.roster, state.manifest, state.rules)
+    metrics = compute_metrics(new_state.roster, new_state.manifest, new_state.rules)
+    touched = sorted(
+        {new_state.patient_of(t).patient_id for t in _touched_returns(new_state, bundle)}
+    )
+    changed = chair_changes(new_state, baseline)
+    bundle.touches = touched
+    bundle.predicted = Predicted(
+        delta_wait_min=sum(post_waits(new_state).values()) - sum(post_waits(state).values()),
+        delta_early_min=_early_total(new_state) - _early_total(state),
+        chair_changes=len([pid for pid in touched if pid in changed]),
+        consent_moves=0,
+        vehicle_min=int(metrics.vehicle_min - before.vehicle_min),
+    )
+    new_j = j_score(new_state, baseline, metrics, _queued_returns(new_state))
+    return Candidate(bundle, new_state, new_plan, metrics, new_j)
+
+
+def finish_run(
+    baseline: State,
+    state: State,
+    plan: Plan,
+    run: Result,
+    rejected: list,
+    flagged: list[ReviewItem] | None = None,
+) -> Result:
+    """Closing pass shared by the solver and the mediator: honest windows, the review queue,
+    holds for riders still over 45 min, then the final verify.
+
+    ``flagged`` are review items the mediator raised itself; they come first, and the
+    deterministic queue adds every subject they missed. Only deterministic items hold a rider.
+    """
+    j = j_score(
+        state,
+        baseline,
+        compute_metrics(state.roster, state.manifest, state.rules),
+        _queued_returns(state),
+    )
     state, plan, j = _retime_stale_windows(baseline, state, plan, run, rejected)
     run.served = compute_metrics(state.roster, state.manifest, state.rules)
     # Judge options on the final state, not on the last loop's stale candidate list.
     final = generate_candidates(baseline, state, plan, k=None, tag="F-")
     options = legal_options(baseline, state, final)
-    run.review = review_queue(baseline, state, plan, rejected, options, j)
+    computed = review_queue(baseline, state, plan, rejected, options, j)
+    seen = {item.subject for item in flagged or []}
+    merged = [*(flagged or []), *[item for item in computed if item.subject not in seen]]
+    run.review = [
+        item.model_copy(update={"item_id": f"R{n + 1:02d}"}) for n, item in enumerate(merged)
+    ]
     holds = [
         item
-        for item in run.review
+        for item in computed
         if item.reason_code == ReasonCode.NO_FEASIBLE_WINDOW and item.subject in plan.status
     ]
     for item in holds:  # the handoff's stop rule: still over 45 min -> queued, on the record
@@ -303,7 +389,8 @@ def _retime_stale_windows(
     return state, plan, j
 
 
-def write_run(run: Result, out_dir: Path) -> None:
+def write_run(run: Result, out_dir: Path, extra: dict[str, Any] | None = None) -> None:
+    """Write the run artefacts; ``extra`` (usage, cost) is merged into metrics.json."""
     out_dir.mkdir(parents=True, exist_ok=True)
 
     def dump(name: str, payload: Any) -> None:
@@ -331,6 +418,7 @@ def write_run(run: Result, out_dir: Path) -> None:
             "after_before_holds": run.served.model_dump(mode="json") if run.served else None,
             "j_before": run.j_before,
             "j_after": run.j_after,
+            **(extra or {}),
         },
     )
 
